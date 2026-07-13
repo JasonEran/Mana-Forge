@@ -26,6 +26,7 @@ if (skipHeavy){
   const tests = [
     ['node', ['--test', path.join(testDir, 'mobile-device-store.test.js')]],
     ['node', ['--test', path.join(testDir, 'e2e-pairing-smoke.test.js')]],
+    ['node', ['--test', path.join(testDir, 'runtime-supervisor.test.js')]],
   ];
   for (const [cmd, args] of tests){
     console.log('Running fast test:', cmd, args.join(' '));
