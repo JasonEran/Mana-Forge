@@ -23,7 +23,7 @@ Development helper notes
   npm start
 
 - Desktop (electron):
-  cd desktop-client
+  cd windows-launcher
   npm start
 
 5) Enabling advanced llama options (only if your llama binary supports them)

@@ -1,4 +1,7 @@
 const { loadManaConfig, withPath } = require("../runtime/config");
+const {
+  createBackendServiceDescriptor,
+} = require("../runtime/services/backend");
 const { RuntimeSupervisor } = require("../runtime/supervisor");
 
 loadManaConfig();
@@ -15,7 +18,6 @@ let fallbackTtsProcess = null;
 let retrieverProcess = null;
 let fallbackKokoroProcess = null;
 let searxngProcess = null;
-const BACKEND_URL = withPath(process.env.MANA_BACKEND_URL, "health");
 const CHATTERBOX_TTS_URL = withPath(process.env.CHATTERBOX_TTS_URL, "health");
 const KOKORO_TTS_URL = withPath(process.env.KOKORO_TTS_URL, "health");
 const GPT_SOVITS_TTS_URL = "http://127.0.0.1:9880/";
@@ -38,33 +40,11 @@ const VISION_HOTKEY = process.env.MANA_VISION_HOTKEY || "Control+Alt+M";
 const WINDOW_HOTKEY = process.env.MANA_WINDOW_HOTKEY || "Control+Alt+Space";
 const runtimeSupervisor = new RuntimeSupervisor();
 
-runtimeSupervisor.register({
-  id: "backend",
-  required: true,
-  command: "node",
-  args: [path.join(ROOT_DIR, "node-bot", "server.js")],
-  cwd: path.join(ROOT_DIR, "node-bot"),
-  env: {
-    PORT: String(
-      Number(
-        new URL(BACKEND_URL).port ||
-          (BACKEND_URL.startsWith("https:") ? 443 : 80),
-      ),
-    ),
-    VTUBE_STUDIO_URL:
-      process.env.VTUBE_STUDIO_URL || "ws://127.0.0.1:8001",
-    VTUBE_STUDIO_ENABLED: process.env.VTUBE_STUDIO_ENABLED || "1",
-  },
-  healthUrl: BACKEND_URL,
-  allowExisting: true,
-  startupTimeoutMs: Number(process.env.MANA_BACKEND_STARTUP_TIMEOUT_MS || 30_000),
-  restart: {
-    enabled: true,
-    maxAttempts: 3,
-    baseDelayMs: 500,
-    maxDelayMs: 5_000,
-  },
-});
+runtimeSupervisor.register(
+  createBackendServiceDescriptor({
+    repoRoot: ROOT_DIR,
+  }),
+);
 
 async function isServiceRunning(url) {
   try {

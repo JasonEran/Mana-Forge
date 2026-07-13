@@ -57,13 +57,20 @@ never emitted with their values.
 The Windows launcher starts the required backend through the shared runtime
 supervisor. `MANA_BACKEND_URL` controls both its readiness endpoint and local
 listening port. `MANA_BACKEND_STARTUP_TIMEOUT_MS` controls how long the launcher
-waits for `/health` before reporting an actionable startup failure.
+waits for `/health` before reporting an actionable startup failure, while
+`MANA_BACKEND_SHUTDOWN_TIMEOUT_MS` bounds process and port cleanup.
 
 The supervisor owns backend state and bounded logs, treats repeated starts as
 one operation, reports unhealthy port conflicts, restarts unexpected exits with
 bounded exponential backoff, and uses Windows process-tree termination on
 shutdown. A backend that was already healthy before the launcher started is
 left running because the launcher does not own that process.
+
+Electron, `npm start`, `run_node_server.bat`, and existing
+`start_mana.ps1` shortcuts all use the same backend descriptor and supervisor.
+The command stays in the foreground so Ctrl+C can verify process and port
+cleanup before it returns. Use `npm run start:raw` only for low-level backend
+debugging where supervision is intentionally bypassed.
 
 This is the first supervised-service migration. Optional TTS, retriever, and
 search processes retain their existing lifecycle until their descriptors are

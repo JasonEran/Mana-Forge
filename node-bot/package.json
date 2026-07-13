@@ -6,7 +6,8 @@
   "main": "server.js",
   "scripts": {
     "doctor": "node doctor.js",
-    "start": "node server.js",
+    "start": "node ../runtime/start-backend.js",
+    "start:raw": "node server.js",
     "test": "node run_tests.js"
   },
   "dependencies": {
