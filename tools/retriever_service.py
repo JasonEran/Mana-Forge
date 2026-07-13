@@ -168,4 +168,6 @@ if __name__ == "__main__":
     import uvicorn
 
     # Run the FastAPI app directly to avoid module import path issues on Windows
-    uvicorn.run(app, host="127.0.0.1", port=9000, log_level="info")
+    retriever_host = os.environ.get("RETRIEVER_HOST", "127.0.0.1")
+    retriever_port = int(os.environ.get("RETRIEVER_PORT", "9000"))
+    uvicorn.run(app, host=retriever_host, port=retriever_port, log_level="info")

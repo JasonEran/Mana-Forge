@@ -1,33 +1,17 @@
-const { loadManaConfig, withPath } = require("../runtime/config");
+const { loadManaConfig } = require("../runtime/config");
 const {
-  createBackendServiceDescriptor,
-} = require("../runtime/services/backend");
-const {
-  createKokoroServiceDescriptor,
-} = require("../runtime/services/kokoro");
+  createLauncherServicePlan,
+} = require("../runtime/services/launcher");
 const { RuntimeSupervisor } = require("../runtime/supervisor");
 
 loadManaConfig();
 
 const { app, BrowserWindow, Menu, Tray, desktopCapturer, dialog, globalShortcut, ipcMain, nativeImage, screen } = require("electron");
-const fs = require("fs");
 const path = require("path");
-const { spawn } = require("child_process");
 
 let mainWindow;
 let avatarWindow;
-let ttsProcess = null;
-let fallbackTtsProcess = null;
-let retrieverProcess = null;
-let fallbackKokoroProcess = null;
-let searxngProcess = null;
-const CHATTERBOX_TTS_URL = withPath(process.env.CHATTERBOX_TTS_URL, "health");
-const KOKORO_TTS_URL = withPath(process.env.KOKORO_TTS_URL, "health");
-const GPT_SOVITS_TTS_URL = "http://127.0.0.1:9880/";
 const ROOT_DIR = path.join(__dirname, "..");
-const TTS_DIR = path.join(ROOT_DIR, "tts-service");
-const START_FALLBACK_CHATTERBOX =
-  process.env.START_FALLBACK_CHATTERBOX === "1";
 const HIDE_MAIN_WINDOW_AFTER_STARTUP =
   process.env.HIDE_MAIN_WINDOW_AFTER_STARTUP !== "0";
 const AVATAR_SIZE = {
@@ -43,321 +27,16 @@ const VISION_HOTKEY = process.env.MANA_VISION_HOTKEY || "Control+Alt+M";
 const WINDOW_HOTKEY = process.env.MANA_WINDOW_HOTKEY || "Control+Alt+Space";
 const runtimeSupervisor = new RuntimeSupervisor();
 
-runtimeSupervisor.register(
-  createBackendServiceDescriptor({
-    repoRoot: ROOT_DIR,
-  }),
-);
-if ((process.env.TTS_PROVIDER || "kokoro") === "kokoro") {
-  runtimeSupervisor.register(createKokoroServiceDescriptor({ repoRoot: ROOT_DIR }));
+const launcherServicePlan = createLauncherServicePlan({ repoRoot: ROOT_DIR });
+for (const descriptor of launcherServicePlan.descriptors) {
+  runtimeSupervisor.register(descriptor);
 }
-
-async function isServiceRunning(url) {
-  try {
-    const response = await fetch(url);
-    return response.ok;
-  } catch (error) {
-    return false;
-  }
-}
-
-async function isTtsRunning() {
-  const provider = process.env.TTS_PROVIDER || "chatterbox";
-  if (provider === "kokoro") {
-    return isServiceRunning(KOKORO_TTS_URL);
-  }
-  if (provider === "gpt_sovits") {
-    return isGptSovitsRunning();
-  }
-  return isServiceRunning(CHATTERBOX_TTS_URL);
-}
-
-// GPT-SoVITS's api_v2.py has no dedicated /health route, so any HTTP
-// response (even a 404/422 from an unmatched or param-less route) confirms
-// the process is alive; only a connection failure means it's not running.
-async function isGptSovitsRunning() {
-  try {
-    await fetch(GPT_SOVITS_TTS_URL);
-    return true;
-  } catch (error) {
-    return false;
-  }
-}
-
-async function isChatterboxRunning() {
-  return isServiceRunning(CHATTERBOX_TTS_URL);
-}
-
-async function startTtsService() {
-  if (ttsProcess) {
-    return;
-  }
-
-  const provider = process.env.TTS_PROVIDER || "chatterbox";
-  if (!["kokoro", "chatterbox", "gpt_sovits"].includes(provider)) {
-    return;
-  }
-
-  if (provider === "kokoro") {
-    await runtimeSupervisor.start("kokoro");
-    return;
-  } else if (provider === "gpt_sovits") {
-    ttsProcess = startGptSovitsService();
-    startFallbackKokoroIfEnabled();
-  } else {
-    ttsProcess = startTtsSetupScript("start.ps1");
-    startFallbackKokoroIfEnabled();
-  }
-
-  ttsProcess.on("error", (error) => {
-    console.error("Failed to start TTS service:", error);
-    dialog.showErrorBox(
-      "TTS start error",
-      `Failed to start Chatterbox TTS service: ${error.message}`,
-    );
-  });
-
-  ttsProcess.stdout.on("data", (data) => {
-    console.log(`TTS: ${data}`);
-  });
-  ttsProcess.stderr.on("data", (data) => {
-    console.error(`TTS ERR: ${data}`);
-  });
-  ttsProcess.on("close", (code) => {
-    console.log(`TTS service exited with code ${code}`);
-    ttsProcess = null;
-  });
-}
-
-function startKokoroService() {
-  const python = path.join(TTS_DIR, "venv", "Scripts", "python.exe");
-  const model = path.join(TTS_DIR, "kokoro", "kokoro-v1.0.int8.onnx");
-  const voices = path.join(TTS_DIR, "kokoro", "voices-v1.0.bin");
-
-  if (
-    !fs.existsSync(python) ||
-    !fs.existsSync(model) ||
-    !fs.existsSync(voices)
-  ) {
-    return startTtsSetupScript("start_kokoro.ps1");
-  }
-
-  console.log("Starting Kokoro TTS service directly:", python);
-  return spawn(
-    python,
-    ["-m", "uvicorn", "kokoro_service:app", "--host", "127.0.0.1", "--port", "5011"],
-    {
-      cwd: TTS_DIR,
-      windowsHide: true,
-    },
-  );
-}
-
-// Keep Kokoro warm as the fallback voice so Mana never goes silent if the
-// cloning model can't get GPU memory mid-game.
-function startFallbackKokoroIfEnabled() {
-  if (process.env.MANA_START_KOKORO_FALLBACK === "0" || fallbackKokoroProcess) {
-    return;
-  }
-  fallbackKokoroProcess = startKokoroService();
-  fallbackKokoroProcess.on("error", (error) => {
-    console.warn("Fallback Kokoro failed to start:", error.message);
-    fallbackKokoroProcess = null;
-  });
-  fallbackKokoroProcess.on("close", () => {
-    fallbackKokoroProcess = null;
-  });
-}
-
-// GPT-SoVITS is a trial voice option (see docs/gpt_sovits_setup.md): a large
-// self-contained package under tools/gpt-sovits with its own bundled Python
-// runtime, so it is launched via its own runtime.bat/python rather than a
-// venv python.exe like the other TTS services.
-function startGptSovitsService() {
-  const gptSovitsDir = path.join(ROOT_DIR, "tools", "gpt-sovits");
-  const runtimePython = path.join(gptSovitsDir, "runtime", "python.exe");
-  const apiScript = path.join(gptSovitsDir, "api_v2.py");
-
-  if (!fs.existsSync(runtimePython) || !fs.existsSync(apiScript)) {
-    console.warn(
-      `GPT-SoVITS not found at ${gptSovitsDir}; see docs/gpt_sovits_setup.md`,
-    );
-    dialog.showErrorBox(
-      "GPT-SoVITS not installed",
-      `TTS_PROVIDER is set to gpt_sovits, but ${gptSovitsDir} is missing its runtime. See docs/gpt_sovits_setup.md, or set TTS_PROVIDER back to chatterbox.`,
-    );
-    return startKokoroService();
-  }
-
-  console.log("Starting GPT-SoVITS:", runtimePython, apiScript);
-  return spawn(runtimePython, [apiScript, "-a", "127.0.0.1", "-p", "9880"], {
-    cwd: gptSovitsDir,
-    windowsHide: true,
-    env: {
-      ...process.env,
-      // GPT-SoVITS's TTS.py prints a Chinese debug line on every inference
-      // call. Windows' console defaults to cp1252, which cannot encode
-      // those characters, so the print() throws and GPT-SoVITS's own
-      // except-block "safety net" catches it and silently returns 1 second
-      // of digital silence instead of real audio, still as HTTP 200 — every
-      // reply synthesizes successfully but produces no sound. Forcing UTF-8
-      // stdio makes the print succeed so real inference actually runs.
-      PYTHONIOENCODING: "utf-8",
-      PYTHONUTF8: "1",
-    },
-  });
-}
-
-function startTtsSetupScript(scriptName) {
-  const ttsStartScript = path.join(TTS_DIR, scriptName);
-  console.log("Starting TTS setup script:", ttsStartScript);
-  return spawn(
-    "powershell",
-    ["-ExecutionPolicy", "Bypass", "-File", ttsStartScript],
-    {
-      cwd: TTS_DIR,
-      windowsHide: true,
-    },
-  );
-}
-
-function startFallbackChatterboxService() {
-  if (fallbackTtsProcess) {
-    return;
-  }
-
-  if (!START_FALLBACK_CHATTERBOX) {
-    return;
-  }
-
-  if ((process.env.TTS_PROVIDER || "kokoro") !== "kokoro") {
-    return;
-  }
-
-  const ttsStartScript = path.join(ROOT_DIR, "tts-service", "start.ps1");
-  console.log("Starting fallback Chatterbox TTS service:", ttsStartScript);
-  fallbackTtsProcess = spawn(
-    "powershell",
-    ["-ExecutionPolicy", "Bypass", "-File", ttsStartScript],
-    {
-      cwd: path.join(ROOT_DIR, "tts-service"),
-    },
-  );
-
-  fallbackTtsProcess.on("error", (error) => {
-    console.error("Failed to start fallback Chatterbox TTS:", error);
-  });
-
-  fallbackTtsProcess.stdout.on("data", (data) => {
-    console.log(`Fallback TTS: ${data}`);
-  });
-  fallbackTtsProcess.stderr.on("data", (data) => {
-    console.error(`Fallback TTS ERR: ${data}`);
-  });
-  fallbackTtsProcess.on("close", (code) => {
-    console.log(`Fallback Chatterbox TTS exited with code ${code}`);
-    fallbackTtsProcess = null;
-  });
-}
-
-const RETRIEVER_URL = "http://127.0.0.1:9000/health";
-
-async function isRetrieverRunning() {
-  return isServiceRunning(RETRIEVER_URL);
-}
-
-// The Python retriever gives Mana retrieval context and exact token counts.
-// It is optional (the backend falls back to heuristics), so failures here
-// only warn. Set MANA_START_RETRIEVER=0 to skip starting it.
-function startRetrieverService() {
-  if (retrieverProcess || process.env.MANA_START_RETRIEVER === "0") {
-    return;
-  }
-
-  const retrieverScript = path.join(ROOT_DIR, "tools", "retriever_service.py");
-  const venvPython = path.join(ROOT_DIR, "venv", "Scripts", "python.exe");
-  if (!fs.existsSync(retrieverScript)) {
-    console.warn(`Retriever script not found at ${retrieverScript}; skipping`);
-    return;
-  }
-  const python = fs.existsSync(venvPython) ? venvPython : "python";
-
-  console.log("Starting Python retriever:", python, retrieverScript);
-  retrieverProcess = spawn(python, ["-u", retrieverScript], {
-    cwd: ROOT_DIR,
-    windowsHide: true,
-  });
-
-  retrieverProcess.on("error", (error) => {
-    console.warn("Failed to start Python retriever:", error.message);
-    retrieverProcess = null;
-  });
-  retrieverProcess.stdout.on("data", (data) => {
-    console.log(`Retriever: ${data}`);
-  });
-  retrieverProcess.stderr.on("data", (data) => {
-    console.error(`Retriever ERR: ${data}`);
-  });
-  retrieverProcess.on("close", (code) => {
-    console.log(`Python retriever exited with code ${code}`);
-    retrieverProcess = null;
-  });
-}
-
-const SEARXNG_URL = "http://127.0.0.1:8890/";
-
-async function isSearxngRunning() {
-  return isServiceRunning(SEARXNG_URL);
-}
-
-// Local SearXNG gives Mana web search, wiki lookups, and page browsing. It
-// is optional (those replies just fail gracefully without it), so failures
-// here only warn. Set MANA_START_SEARXNG=0 to skip starting it.
-function startSearxngService() {
-  if (searxngProcess || process.env.MANA_START_SEARXNG === "0") {
-    return;
-  }
-
-  const searxngDir = path.join(ROOT_DIR, "tools", "searxng");
-  const searxngVenvPython = path.join(searxngDir, "venv", "Scripts", "python.exe");
-  const settingsPath = path.join(searxngDir, "mana-settings.yml");
-  if (!fs.existsSync(searxngVenvPython)) {
-    console.warn(
-      `SearXNG venv not found at ${searxngVenvPython}; skipping. See docs/web_access_setup.md.`,
-    );
-    return;
-  }
-
-  console.log("Starting local SearXNG:", searxngVenvPython);
-  searxngProcess = spawn(searxngVenvPython, ["-m", "searx.webapp"], {
-    cwd: searxngDir,
-    windowsHide: true,
-    env: {
-      ...process.env,
-      SEARXNG_SETTINGS_PATH: settingsPath,
-    },
-  });
-
-  searxngProcess.on("error", (error) => {
-    console.warn("Failed to start SearXNG:", error.message);
-    searxngProcess = null;
-  });
-  searxngProcess.stdout.on("data", (data) => {
-    console.log(`SearXNG: ${data}`);
-  });
-  searxngProcess.stderr.on("data", (data) => {
-    console.error(`SearXNG ERR: ${data}`);
-  });
-  searxngProcess.on("close", (code) => {
-    console.log(`SearXNG exited with code ${code}`);
-    searxngProcess = null;
-  });
-}
+for (const warning of launcherServicePlan.warnings) console.warn(warning);
 
 async function startWindowsServices() {
   if (runtimeShutdownStarted) return;
   try {
-    await runtimeSupervisor.start("backend");
+    await runtimeSupervisor.startAll();
   } catch (error) {
     console.error("Failed to start Node bot:", error);
     throw error;
@@ -531,37 +210,7 @@ app.whenReady().then(() => {
     return;
   }
 
-  // Start the local Node backend before opening the UI.
-  const ttsProvider = process.env.TTS_PROVIDER || "kokoro";
-  Promise.all([
-    ttsProvider === "kokoro" ? Promise.resolve(false) : isTtsRunning(),
-    isChatterboxRunning(),
-    isRetrieverRunning(),
-    isSearxngRunning(),
-  ])
-    .then(
-      async ([
-        ttsRunning,
-        chatterboxRunning,
-        retrieverRunning,
-        searxngRunning,
-      ]) => {
-        if (runtimeShutdownStarted) return;
-        if (START_FALLBACK_CHATTERBOX && !chatterboxRunning) {
-          startFallbackChatterboxService();
-        }
-        if (!retrieverRunning) {
-          startRetrieverService();
-        }
-        if (!searxngRunning) {
-          startSearxngService();
-        }
-        await Promise.all([
-          startWindowsServices(),
-          ttsRunning ? Promise.resolve() : startTtsService(),
-        ]);
-      },
-    )
+  startWindowsServices()
     .catch((e) => {
       dialog.showErrorBox("Start error", e?.message || String(e));
     });
@@ -580,7 +229,6 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
-
 let tray = null;
 
 function createTray() {
@@ -671,7 +319,6 @@ ipcMain.on("avatar:set-state", (event, state) => {
 
   avatarWindow.webContents.send("avatar:state", state);
 });
-
 // Relays speech amplitude from the control window to the avatar for lip sync.
 ipcMain.on("avatar:set-mouth", (event, rms) => {
   if (!avatarWindow) {
@@ -680,7 +327,6 @@ ipcMain.on("avatar:set-mouth", (event, rms) => {
 
   avatarWindow.webContents.send("avatar:mouth", rms);
 });
-
 ipcMain.handle("screen:capture-primary", async () => {
   const primaryDisplay = screen.getPrimaryDisplay();
   const sources = await desktopCapturer.getSources({
@@ -728,32 +374,4 @@ app.on("before-quit", (event) => {
         `${error.message}\n\nMana is still running so it does not leave an unmanaged backend process. Resolve the reported process or port conflict, then quit again.`,
       );
     });
-});
-
-app.on("quit", () => {
-  if (ttsProcess) {
-    try {
-      ttsProcess.kill();
-    } catch (e) {}
-  }
-  if (fallbackTtsProcess) {
-    try {
-      fallbackTtsProcess.kill();
-    } catch (e) {}
-  }
-  if (retrieverProcess) {
-    try {
-      retrieverProcess.kill();
-    } catch (e) {}
-  }
-  if (fallbackKokoroProcess) {
-    try {
-      fallbackKokoroProcess.kill();
-    } catch (e) {}
-  }
-  if (searxngProcess) {
-    try {
-      searxngProcess.kill();
-    } catch (e) {}
-  }
 });

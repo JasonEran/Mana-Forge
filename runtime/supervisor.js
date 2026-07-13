@@ -134,17 +134,18 @@ class RuntimeSupervisor extends EventEmitter {
   }
 
   async startAll() {
+    const entries = [...this.services.entries()];
     const results = {};
-    for (const [id, record] of this.services) {
-      try {
-        results[id] = await this.start(id);
-      } catch (error) {
-        results[id] = this.getState(id);
-        if (record.descriptor.required) {
-          throw error;
+    await Promise.all(
+      entries.map(async ([id, record]) => {
+        try {
+          results[id] = await this.start(id);
+        } catch (error) {
+          results[id] = this.getState(id);
+          if (record.descriptor.required) throw error;
         }
-      }
-    }
+      }),
+    );
     return results;
   }
 
