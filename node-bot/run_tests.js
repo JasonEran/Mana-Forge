@@ -26,6 +26,7 @@ if (skipHeavy){
   const tests = [
     ['node', ['--test', path.join(testDir, 'mobile-device-store.test.js')]],
     ['node', ['--test', path.join(testDir, 'e2e-pairing-smoke.test.js')]],
+    ['node', ['--test', path.join(testDir, 'kokoro-service-descriptor.test.js')]],
     ['node', ['--test', path.join(testDir, 'runtime-entrypoints.test.js')]],
     ['node', ['--test', path.join(testDir, 'runtime-supervisor.test.js')]],
   ];

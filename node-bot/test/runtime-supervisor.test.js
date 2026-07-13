@@ -158,6 +158,7 @@ test("restarts with backoff after an unexpected ready-process exit", async () =>
   assert.equal(supervisor.getState("backend").restartAttempts, 1);
   assert.equal(supervisor.getState("backend").pid, 401);
   assert.equal(supervisor.getState("backend").lastExit.code, 9);
+  assert.equal(supervisor.getState("backend").lastExit.expected, false);
 });
 
 test("explicit stop cancels restarts and verifies process and port release", async () => {
@@ -192,6 +193,27 @@ test("explicit stop cancels restarts and verifies process and port release", asy
   assert.equal(state.status, "stopped");
   assert.equal(supervisor.getState("backend").pid, null);
   assert.equal(supervisor.getState("backend").owned, false);
+  assert.equal(supervisor.getState("backend").lastExit.expected, true);
+});
+
+test("normalizes an IPv6 loopback endpoint before checking its port", async () => {
+  const supervisor = new RuntimeSupervisor({
+    logger: silentLogger(),
+    probeService: async () => false,
+    isPortInUse: async ({ host, port }) => {
+      assert.equal(host, "::1");
+      assert.equal(port, 5005);
+      return true;
+    },
+  });
+  supervisor.register(
+    descriptor({ healthUrl: "http://[::1]:5005/health" }),
+  );
+
+  await assert.rejects(
+    supervisor.start("backend"),
+    (error) => error.code === "RUNTIME_PORT_CONFLICT",
+  );
 });
 
 test("adopts an existing healthy service only when explicitly allowed", async () => {

@@ -362,6 +362,7 @@ class RuntimeSupervisor extends EventEmitter {
       const exit = {
         code: code ?? null,
         signal: signal || null,
+        expected: record.manualStop || record.status === "stopping",
         at: new Date().toISOString(),
       };
       if (error) exit.error = error.message;
@@ -679,7 +680,7 @@ function endpointFromDescriptor(descriptor) {
   if (!descriptor.healthUrl) return null;
   const url = new URL(descriptor.healthUrl);
   return {
-    host: url.hostname,
+    host: url.hostname === "[::1]" ? "::1" : url.hostname,
     port: Number(url.port || (url.protocol === "https:" ? 443 : 80)),
   };
 }
