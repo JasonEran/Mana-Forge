@@ -10,7 +10,7 @@ $ErrorActionPreference = 'Stop'
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 Push-Location $scriptDir
 
-# Load .env if present
+# Load the repository-root .env without overriding the calling environment.
 $envFile = Join-Path $scriptDir "..\.env"
 if (Test-Path $envFile) {
     Write-Host "Loading environment from $envFile"
@@ -21,8 +21,14 @@ if (Test-Path $envFile) {
             if ($parts.Count -eq 2) {
                 $name = $parts[0].Trim()
                 $value = $parts[1].Trim().Trim('"')
-                $env:$name = $value
-                Write-Host "  $name="$value""
+                $existing = [Environment]::GetEnvironmentVariable($name, "Process")
+                if ($null -eq $existing) {
+                    [Environment]::SetEnvironmentVariable($name, $value, "Process")
+                    $display = if ($name -match 'API_KEY|TOKEN|SECRET|PASSCODE|PASSWORD|PRIVATE_KEY') { '[redacted]' } else { $value }
+                    Write-Host "  $name=$display"
+                } else {
+                    Write-Host "  $name already set by process environment"
+                }
             }
         }
     }
@@ -64,16 +70,16 @@ function Wait-ForUrl($url, $retries, $delayMs, $name) {
                 Write-Host "[$name] not ready (status=$($r.status)) - attempt $i/$retries"
             }
         } catch {
-            Write-Host "[$name] health check attempt $i/$retries: $($_.Exception.Message)"
+            Write-Host "[$name] health check attempt $i/${retries}: $($_.Exception.Message)"
         }
         Start-Sleep -Milliseconds $delayMs
     }
     return $false
 }
 
-$retrieverHealthUrl = $env:RETRIEVER_HEALTH_URL -or 'http://127.0.0.1:9000/health'
-$retries = [int]($env:RETRIEVER_HEALTH_RETRIES -or 60)
-$delayMs = [int]($env:RETRIEVER_HEALTH_DELAY_MS -or 2000)
+$retrieverHealthUrl = if ($env:RETRIEVER_HEALTH_URL) { $env:RETRIEVER_HEALTH_URL } else { 'http://127.0.0.1:9000/health' }
+$retries = if ($env:RETRIEVER_HEALTH_RETRIES) { [int]$env:RETRIEVER_HEALTH_RETRIES } else { 60 }
+$delayMs = if ($env:RETRIEVER_HEALTH_DELAY_MS) { [int]$env:RETRIEVER_HEALTH_DELAY_MS } else { 2000 }
 Write-Host "Waiting for retriever health at $retrieverHealthUrl (retries=$retries, delayMs=$delayMs)"
 $ok = Wait-ForUrl $retrieverHealthUrl $retries $delayMs 'Retriever'
 if (-not $ok) {
@@ -91,7 +97,9 @@ Write-Host "Node PID: $($nodeProc.Id)"
 
 # Wait for Node health
 $nodeHealthUrl = 'http://127.0.0.1:5005/health'
-$okNode = Wait-ForUrl $nodeHealthUrl ([int]($env:NODE_HEALTH_RETRIES -or 30)) ([int]($env:NODE_HEALTH_DELAY_MS -or 1000)) 'Node'
+$nodeRetries = if ($env:NODE_HEALTH_RETRIES) { [int]$env:NODE_HEALTH_RETRIES } else { 30 }
+$nodeDelayMs = if ($env:NODE_HEALTH_DELAY_MS) { [int]$env:NODE_HEALTH_DELAY_MS } else { 1000 }
+$okNode = Wait-ForUrl $nodeHealthUrl $nodeRetries $nodeDelayMs 'Node'
 if (-not $okNode) {
     Write-Error "Node failed to become healthy in time. Check Node logs."
     Pop-Location

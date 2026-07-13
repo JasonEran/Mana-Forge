@@ -33,6 +33,10 @@ Environment variables (set before running):
 This server aims to avoid Python. You must download and place the whisper.cpp and llama.cpp binaries and model files yourself.
 */
 
+const { loadManaConfig } = require("../runtime/config");
+
+loadManaConfig();
+
 const express = require("express");
 const multer = require("multer");
 const cors = require("cors");

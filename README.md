@@ -37,6 +37,9 @@ npm run start
 
 For the full setup flow, including model paths, Whisper, TTS services, gaming mode, and optional market helpers, see [docs/quick_start_windows.md](docs/quick_start_windows.md).
 
+Runtime settings use the repository-root `.env` and shared discovery contract;
+see [runtime configuration](docs/runtime_configuration.md).
+
 ## Highlights
 
 - **Local AI by default**: Mana uses local `llama.cpp` models unless remote AI is explicitly enabled.

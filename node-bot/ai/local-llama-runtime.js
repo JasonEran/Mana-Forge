@@ -42,14 +42,7 @@ function createLocalLlamaRuntime(options = {}) {
       candidates.push(env.LLAMA_BIN);
     }
 
-    const bundledLlamaDir = path.join(
-      toolsDir,
-      "llama-b9436-bin-win-cuda-12.4-x64",
-    );
     candidates.push(
-      path.join(bundledLlamaDir, "llama-cli.exe"),
-      path.join(bundledLlamaDir, "llama.exe"),
-      path.join(bundledLlamaDir, "llama-completion.exe"),
       path.join(toolsDir, "llama-cli.exe"),
       path.join(toolsDir, "llama.exe"),
     );
