@@ -16,7 +16,9 @@ RuntimeSupervisor
        -> createApp()
             -> transitional registerRoutes()
                  -> capability registry
-                 -> core routes
+                 -> transitional core routes
+                      -> conversation routes
+                      -> speech routes
                  -> VTube Studio routes
                  -> mobile routes
             -> admin static files
@@ -27,7 +29,9 @@ RuntimeSupervisor
 | Owner | Public surface | State |
 | --- | --- | --- |
 | `server.js` | health, Doctor, editor/model status, admin memory/retriever, gaming/perf | Transitional |
-| `server-routes.js` | reply, speech, synthesis, screen/vision, stock market, restart | Transitional |
+| `server-routes.js` | screen/vision, stock market, restart | Transitional |
+| `conversation-routes.js` | `/reply` | Owned domain module |
+| `speech-routes.js` | `/transcribe-only`, `/transcribe`, `/synthesize` | Owned domain module |
 | `mobile-routes.js` | `/mobile` | Owned module |
 | `vtube-routes.js` | `/vtube` | Owned module |
 | FFXIV capability | `/ffxiv` | Owned capability |

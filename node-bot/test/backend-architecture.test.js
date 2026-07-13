@@ -113,16 +113,35 @@ test("no public HTTP method and path is declared twice", () => {
   }
 });
 
-test("the composition root registers each route module exactly once", () => {
-  const source = fs.readFileSync(path.join(nodeBotRoot, "server.js"), "utf8");
-  for (const registrar of [
-    "registerCapabilities",
-    "registerCoreRoutes",
-    "registerVTubeRoutes",
-    "registerMobileRoutes",
-  ]) {
-    const calls = source.match(new RegExp(`\\b${registrar}\\s*\\(`, "g")) || [];
-    assert.equal(calls.length, 1, `${registrar} must be called exactly once`);
+test("each composition layer registers its route modules exactly once", () => {
+  const contracts = [
+    {
+      source: "server.js",
+      registrars: [
+        "registerCapabilities",
+        "registerCoreRoutes",
+        "registerVTubeRoutes",
+        "registerMobileRoutes",
+      ],
+    },
+    {
+      source: "server-routes.js",
+      registrars: ["registerConversationRoutes", "registerSpeechRoutes"],
+    },
+  ];
+  for (const contract of contracts) {
+    const source = fs.readFileSync(
+      path.join(nodeBotRoot, contract.source),
+      "utf8",
+    );
+    for (const registrar of contract.registrars) {
+      const calls = source.match(new RegExp(`\\b${registrar}\\s*\\(`, "g")) || [];
+      assert.equal(
+        calls.length,
+        1,
+        `${contract.source} must call ${registrar} exactly once`,
+      );
+    }
   }
 });
 
