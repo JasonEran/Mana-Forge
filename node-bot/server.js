@@ -147,9 +147,6 @@ function createApp(deps = {}) {
 	  // serve small admin UI
 	  app.use('/admin/mobile-devices', express.static(path.join(__dirname, 'admin')));
 
-	  // register mobile routes on the app
-	  registerMobileRoutes(app, { deviceStore });
-
 	  return app;
 }
 
@@ -4397,9 +4394,6 @@ async function startServer() {
     }
   });
 
-  return server.listen(port, () =>
-    console.log("Node local bot listening on", port),
-  );
   return server.listen(port, () =>
     console.log("Node local bot listening on", port),
   );
