@@ -28,4 +28,6 @@ if (-not (Test-Path $voicesPath)) {
     Invoke-WebRequest -Uri $voicesUrl -OutFile $voicesPath
 }
 
-& $venvPython -m uvicorn kokoro_service:app --host 127.0.0.1 --port 5011
+$port = if ($env:KOKORO_PORT) { [int]$env:KOKORO_PORT } else { 5011 }
+$hostAddress = if ($env:KOKORO_HOST) { $env:KOKORO_HOST } else { '127.0.0.1' }
+& $venvPython -m uvicorn kokoro_service:app --host $hostAddress --port $port

@@ -72,6 +72,6 @@ The command stays in the foreground so Ctrl+C can verify process and port
 cleanup before it returns. Use `npm run start:raw` only for low-level backend
 debugging where supervision is intentionally bypassed.
 
-This is the first supervised-service migration. Optional TTS, retriever, and
-search processes retain their existing lifecycle until their descriptors are
-migrated in later reviewable slices.
+The supported backend and default Kokoro TTS provider are supervised services.
+Alternate TTS providers, retriever, and search retain their existing lifecycle
+until their optional-capability policy is defined in issue #6.

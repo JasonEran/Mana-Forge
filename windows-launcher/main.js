@@ -2,6 +2,9 @@ const { loadManaConfig, withPath } = require("../runtime/config");
 const {
   createBackendServiceDescriptor,
 } = require("../runtime/services/backend");
+const {
+  createKokoroServiceDescriptor,
+} = require("../runtime/services/kokoro");
 const { RuntimeSupervisor } = require("../runtime/supervisor");
 
 loadManaConfig();
@@ -45,6 +48,9 @@ runtimeSupervisor.register(
     repoRoot: ROOT_DIR,
   }),
 );
+if ((process.env.TTS_PROVIDER || "kokoro") === "kokoro") {
+  runtimeSupervisor.register(createKokoroServiceDescriptor({ repoRoot: ROOT_DIR }));
+}
 
 async function isServiceRunning(url) {
   try {
@@ -82,7 +88,7 @@ async function isChatterboxRunning() {
   return isServiceRunning(CHATTERBOX_TTS_URL);
 }
 
-function startTtsService() {
+async function startTtsService() {
   if (ttsProcess) {
     return;
   }
@@ -93,7 +99,8 @@ function startTtsService() {
   }
 
   if (provider === "kokoro") {
-    ttsProcess = startKokoroService();
+    await runtimeSupervisor.start("kokoro");
+    return;
   } else if (provider === "gpt_sovits") {
     ttsProcess = startGptSovitsService();
     startFallbackKokoroIfEnabled();
@@ -525,8 +532,9 @@ app.whenReady().then(() => {
   }
 
   // Start the local Node backend before opening the UI.
+  const ttsProvider = process.env.TTS_PROVIDER || "kokoro";
   Promise.all([
-    isTtsRunning(),
+    ttsProvider === "kokoro" ? Promise.resolve(false) : isTtsRunning(),
     isChatterboxRunning(),
     isRetrieverRunning(),
     isSearxngRunning(),
@@ -539,9 +547,6 @@ app.whenReady().then(() => {
         searxngRunning,
       ]) => {
         if (runtimeShutdownStarted) return;
-        if (!ttsRunning) {
-          startTtsService();
-        }
         if (START_FALLBACK_CHATTERBOX && !chatterboxRunning) {
           startFallbackChatterboxService();
         }
@@ -551,7 +556,10 @@ app.whenReady().then(() => {
         if (!searxngRunning) {
           startSearxngService();
         }
-        await startWindowsServices();
+        await Promise.all([
+          startWindowsServices(),
+          ttsRunning ? Promise.resolve() : startTtsService(),
+        ]);
       },
     )
     .catch((e) => {
