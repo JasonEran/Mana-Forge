@@ -75,3 +75,9 @@ debugging where supervision is intentionally bypassed.
 The supported backend and default Kokoro TTS provider are supervised services.
 Alternate TTS providers, retriever, and search retain their existing lifecycle
 until their optional-capability policy is defined in issue #6.
+
+Doctor builds the same backend and Kokoro descriptors before probing health or
+ports. Its `runtime-config` check exposes only service ids, required status,
+normalized health URLs, and lifecycle timeouts; child commands and environment
+values are not included. Invalid descriptor settings fail this check with fixed,
+secret-safe messages instead of crashing Doctor or probing a different target.

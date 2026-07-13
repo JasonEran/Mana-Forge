@@ -3,14 +3,18 @@ const net = require("node:net");
 const os = require("node:os");
 const path = require("node:path");
 const { loadManaConfig } = require("../runtime/config");
+const {
+  createBackendServiceDescriptor,
+} = require("../runtime/services/backend");
+const {
+  createKokoroServiceDescriptor,
+} = require("../runtime/services/kokoro");
 const { createEditorIntegrations } = require("./zed-integration");
 const { assertLocalAiPolicy } = require("./mana-acp-agent");
 
 loadManaConfig();
 
 const DEFAULT_NODE_MAJOR = 18;
-const DEFAULT_BACKEND_PORT = 5005;
-const DEFAULT_BACKEND_URL = "http://127.0.0.1:5005";
 
 function checkPathExists(filePath) {
   return typeof filePath === "string" && filePath.trim() && fs.existsSync(filePath);
@@ -268,8 +272,64 @@ function checkZedExternalAgent(options = {}) {
   }
 }
 
-function getZedExternalAgentBackendHealthTarget(env) {
-  return withHealthPath(env.MANA_BACKEND_URL || DEFAULT_BACKEND_URL);
+function buildRuntimeDiagnosticState(env, options = {}) {
+  const state = { backend: null, kokoro: null, errors: [] };
+  try {
+    state.backend = createBackendServiceDescriptor({
+      env,
+      repoRoot: options.repoRoot,
+    });
+  } catch (error) {
+    state.errors.push({ serviceId: "backend", message: error.message });
+  }
+
+  const provider = String(env.TTS_PROVIDER || "kokoro").trim().toLowerCase();
+  if (provider === "kokoro") {
+    try {
+      state.kokoro = createKokoroServiceDescriptor({
+        env,
+        repoRoot: options.repoRoot,
+        fsImpl: options.fsImpl,
+      });
+    } catch (error) {
+      state.errors.push({ serviceId: "kokoro", message: error.message });
+    }
+  }
+  return state;
+}
+
+function checkRuntimeDiagnosticState(runtimeState) {
+  const services = [runtimeState.backend, runtimeState.kokoro]
+    .filter(Boolean)
+    .map((descriptor) => ({
+      id: descriptor.id,
+      required: descriptor.required,
+      healthUrl: descriptor.healthUrl,
+      startupTimeoutMs: descriptor.startupTimeoutMs,
+      shutdownTimeoutMs: descriptor.shutdownTimeoutMs,
+    }));
+
+  if (runtimeState.errors.length) {
+    return makeCheck(
+      "runtime-config",
+      "Runtime configuration",
+      "fail",
+      `${runtimeState.errors.length} runtime service configuration error(s).`,
+      { services, errors: runtimeState.errors },
+    );
+  }
+
+  return makeCheck(
+    "runtime-config",
+    "Runtime configuration",
+    "pass",
+    `${services.length} runtime service descriptor(s) are valid.`,
+    { services, errors: [] },
+  );
+}
+
+function getZedExternalAgentBackendHealthTarget(runtimeState) {
+  return runtimeState.backend?.healthUrl || "";
 }
 
 function withHealthPath(baseUrl) {
@@ -284,7 +344,7 @@ function withHealthPath(baseUrl) {
   }
 }
 
-function getConfiguredTtsHealthTargets(env) {
+function getConfiguredTtsHealthTargets(env, runtimeState) {
   const provider = String(env.TTS_PROVIDER || "").trim().toLowerCase();
   const targets = [];
 
@@ -295,11 +355,10 @@ function getConfiguredTtsHealthTargets(env) {
     });
   }
 
-  if ((!provider || provider === "kokoro") && env.KOKORO_TTS_URL) {
-    targets.push({
-      id: "kokoro",
-      url: withHealthPath(env.KOKORO_TTS_URL),
-    });
+  if (!provider || provider === "kokoro") {
+    if (runtimeState.kokoro) {
+      targets.push({ id: "kokoro", url: runtimeState.kokoro.healthUrl });
+    }
   }
 
   if ((!provider || provider === "fish") && env.FISH_TTS_URL) {
@@ -339,24 +398,28 @@ async function probeHttpHealth({ id, url, timeoutMs = 750 }) {
   }
 }
 
-async function probeTtsServices(env, services) {
+async function probeTtsServices(env, services, runtimeState) {
   if (Array.isArray(services)) {
     return services;
   }
 
-  const targets = getConfiguredTtsHealthTargets(env);
+  const targets = getConfiguredTtsHealthTargets(env, runtimeState);
   return Promise.all(targets.map((target) => probeHttpHealth(target)));
 }
 
-async function probeZedExternalAgentBackend(env, probe = probeHttpHealth) {
-  const url = getZedExternalAgentBackendHealthTarget(env);
+async function probeZedExternalAgentBackend(
+  env,
+  runtimeState,
+  probe = probeHttpHealth,
+) {
+  const url = getZedExternalAgentBackendHealthTarget(runtimeState);
   if (!url) {
     return makeCheck(
       "zed-external-agent-backend",
       "Zed external agent backend",
       "warn",
-      "MANA_BACKEND_URL is not a valid URL.",
-      { url: env.MANA_BACKEND_URL || "" },
+      "Backend runtime configuration is invalid; see the runtime-config check.",
+      {},
     );
   }
 
@@ -417,19 +480,14 @@ async function probeGptSovitsHealth(env, probe = probeHttpHealth) {
   );
 }
 
-function normalizePortNumber(value, fallback) {
-  const port = Number(value || fallback);
-  return Number.isInteger(port) && port > 0 && port <= 65535 ? port : fallback;
-}
-
-function getDefaultPortChecks(env) {
-  return [
-    {
-      id: "mana-backend",
-      host: "127.0.0.1",
-      port: normalizePortNumber(env.PORT, DEFAULT_BACKEND_PORT),
-    },
-  ];
+function getDefaultPortChecks(runtimeState) {
+  if (!runtimeState.backend) return [];
+  const url = new URL(runtimeState.backend.healthUrl);
+  return [{
+    id: "mana-backend",
+    host: url.hostname === "[::1]" ? "::1" : url.hostname,
+    port: Number(url.port || (url.protocol === "https:" ? 443 : 80)),
+  }];
 }
 
 function probePortAvailability({ id = "port", host = "127.0.0.1", port, timeoutMs = 500 }) {
@@ -527,9 +585,15 @@ function runDoctorChecks(options = {}) {
 
 async function runDoctorChecksAsync(options = {}) {
   const env = options.env || process.env;
-  const services = await probeTtsServices(env, options.services);
+  const runtimeState = buildRuntimeDiagnosticState(env, options.runtime);
+  const services = await probeTtsServices(
+    env,
+    options.services,
+    runtimeState,
+  );
   const zedExternalAgentBackend = await probeZedExternalAgentBackend(
     env,
+    runtimeState,
     options.zedExternalAgentBackendProbe,
   );
   const searxngHealth = await probeSearxngHealth(env, options.searxngProbe);
@@ -537,7 +601,10 @@ async function runDoctorChecksAsync(options = {}) {
     String(env.TTS_PROVIDER || "").trim().toLowerCase() === "gpt_sovits"
       ? await probeGptSovitsHealth(env, options.gptSovitsProbe)
       : null;
-  const portChecks = [...getDefaultPortChecks(env), ...(options.ports || [])];
+  const portChecks = [
+    ...getDefaultPortChecks(runtimeState),
+    ...(options.ports || []),
+  ];
   const portResults = await probePorts(portChecks);
   const checks = runDoctorChecks({
     ...options,
@@ -545,6 +612,7 @@ async function runDoctorChecksAsync(options = {}) {
     services,
   }).checks;
 
+  checks.push(checkRuntimeDiagnosticState(runtimeState));
   checks.push(zedExternalAgentBackend);
   checks.push(searxngHealth);
   if (gptSovitsHealth) {
