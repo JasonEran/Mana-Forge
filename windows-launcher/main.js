@@ -1,3 +1,7 @@
+const { loadManaConfig, withPath } = require("../runtime/config");
+
+loadManaConfig();
+
 const { app, BrowserWindow, Menu, Tray, desktopCapturer, dialog, globalShortcut, ipcMain, nativeImage, screen } = require("electron");
 const fs = require("fs");
 const path = require("path");
@@ -11,23 +15,12 @@ let fallbackTtsProcess = null;
 let retrieverProcess = null;
 let fallbackKokoroProcess = null;
 let searxngProcess = null;
-const BACKEND_URL = "http://localhost:5005/health";
-const CHATTERBOX_TTS_URL = "http://127.0.0.1:5010/health";
-const KOKORO_TTS_URL = "http://127.0.0.1:5011/health";
+const BACKEND_URL = withPath(process.env.MANA_BACKEND_URL, "health");
+const CHATTERBOX_TTS_URL = withPath(process.env.CHATTERBOX_TTS_URL, "health");
+const KOKORO_TTS_URL = withPath(process.env.KOKORO_TTS_URL, "health");
 const GPT_SOVITS_TTS_URL = "http://127.0.0.1:9880/";
 const ROOT_DIR = path.join(__dirname, "..");
 const TTS_DIR = path.join(ROOT_DIR, "tts-service");
-const WHISPER_DIR = path.join(ROOT_DIR, "tools", "whisper");
-const DEFAULT_WHISPER_BIN = path.join(
-  WHISPER_DIR,
-  "Release",
-  "whisper-cli.exe",
-);
-const DEFAULT_WHISPER_MODEL = path.join(
-  WHISPER_DIR,
-  "models",
-  "ggml-tiny.en.bin",
-);
 const START_FALLBACK_CHATTERBOX =
   process.env.START_FALLBACK_CHATTERBOX === "1";
 const HIDE_MAIN_WINDOW_AFTER_STARTUP =
@@ -361,14 +354,6 @@ function startWindowsServices() {
     cwd: path.join(ROOT_DIR, "node-bot"),
     env: {
       ...process.env,
-      // Quick note: these defaults let the launcher transcribe without a separate setup shell.
-      WHISPER_BIN: process.env.WHISPER_BIN || DEFAULT_WHISPER_BIN,
-      WHISPER_MODEL: process.env.WHISPER_MODEL || DEFAULT_WHISPER_MODEL,
-      TTS_PROVIDER: process.env.TTS_PROVIDER || "chatterbox",
-      KOKORO_TTS_URL:
-        process.env.KOKORO_TTS_URL || "http://127.0.0.1:5011",
-      CHATTERBOX_TTS_URL:
-        process.env.CHATTERBOX_TTS_URL || "http://127.0.0.1:5010",
       VTUBE_STUDIO_URL:
         process.env.VTUBE_STUDIO_URL || "ws://127.0.0.1:8001",
       VTUBE_STUDIO_ENABLED: process.env.VTUBE_STUDIO_ENABLED || "1",

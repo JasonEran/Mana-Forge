@@ -2,8 +2,11 @@ const fs = require("node:fs");
 const net = require("node:net");
 const os = require("node:os");
 const path = require("node:path");
+const { loadManaConfig } = require("../runtime/config");
 const { createEditorIntegrations } = require("./zed-integration");
 const { assertLocalAiPolicy } = require("./mana-acp-agent");
+
+loadManaConfig();
 
 const DEFAULT_NODE_MAJOR = 18;
 const DEFAULT_BACKEND_PORT = 5005;

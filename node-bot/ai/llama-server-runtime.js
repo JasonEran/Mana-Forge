@@ -53,14 +53,7 @@ function createLlamaServerRuntime(options = {}) {
       candidates.push(path.join(path.dirname(env.LLAMA_BIN), "llama-server.exe"));
     }
 
-    const bundledLlamaDir = path.join(
-      toolsDir,
-      "llama-b9436-bin-win-cuda-12.4-x64",
-    );
-    candidates.push(
-      path.join(bundledLlamaDir, "llama-server.exe"),
-      path.join(toolsDir, "llama-server.exe"),
-    );
+    candidates.push(path.join(toolsDir, "llama-server.exe"));
 
     const validPath = candidates.find(
       (candidate) => candidate && fs.existsSync(candidate),

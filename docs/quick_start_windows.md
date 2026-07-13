@@ -24,6 +24,9 @@ Project goal
    - Local model files for Whisper and Llama
 
 2) Configure backend environment variables
+   - Mana loads `.env` from the repository root. Process environment variables
+     take precedence, and local Llama/Whisper paths are auto-discovered under
+     `tools\` when explicit paths are unset. See `docs/runtime_configuration.md`.
    - Open PowerShell and set:
      - `$env:WHISPER_BIN = "C:\path\to\whisper-cli.exe"`
      - `$env:WHISPER_MODEL = "C:\path\to\ggml-model.bin"`

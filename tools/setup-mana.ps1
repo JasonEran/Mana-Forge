@@ -1,7 +1,7 @@
 ﻿<#
 Automates the safely-automatable parts of Mana's first-time setup:
   - installs npm dependencies for the supported node-bot and windows-launcher
-  - creates node-bot\.env from .env.sample (never overwrites an existing one)
+  - creates the repository-root .env from .env.sample (never overwrites it)
   - scaffolds the directories whisper.cpp/llama.cpp binaries and models go in
   - runs node-bot's doctor.js at the end to report what's configured
 
@@ -93,16 +93,20 @@ if (-not $SkipInstall) {
 }
 
 # --- .env scaffolding -------------------------------------------------
-Write-Step "Setting up node-bot\.env"
-$envSample = Join-Path $repoRoot "node-bot\.env.sample"
-$envFile = Join-Path $repoRoot "node-bot\.env"
+Write-Step "Setting up repository .env"
+$envSample = Join-Path $repoRoot ".env.sample"
+$envFile = Join-Path $repoRoot ".env"
+$legacyEnvFile = Join-Path $repoRoot "node-bot\.env"
 if (Test-Path $envFile) {
   Write-Ok ".env already exists, leaving it untouched"
+} elseif (Test-Path $legacyEnvFile) {
+  Copy-Item $legacyEnvFile $envFile
+  Write-Ok "Migrated legacy node-bot\.env to the repository root; the old file is no longer read"
 } elseif (Test-Path $envSample) {
   Copy-Item $envSample $envFile
-  Write-Ok "Created node-bot\.env from .env.sample - edit it to point at your whisper.cpp/llama.cpp binaries and models"
+  Write-Ok "Created root .env from .env.sample - process environment variables override it"
 } else {
-  Write-Warn "node-bot\.env.sample not found; cannot scaffold .env"
+  Write-Warn "Root .env.sample not found; cannot scaffold .env"
 }
 
 # --- Directory scaffolding ---------------------------------------------
@@ -148,14 +152,14 @@ rather than auto-downloaded by this script:
      - Place the executable at tools\whisper\Release\whisper-cli.exe
      - Download a ggml model (ggml-base.en.bin or ggml-small.en.bin are a
        good starting point) into tools\whisper\models\
-     - Point WHISPER_BIN / WHISPER_MODEL at them in node-bot\.env
+     - Mana auto-discovers these paths under tools\; use root .env only to override them.
 
   2. llama.cpp (local reply generation)
      - Get a Windows build (CPU or CUDA, matching your GPU) from the
        llama.cpp releases page.
      - Download a GGUF model (e.g. a Qwen3 quant) from Hugging Face into
        tools\llama\gguf-models\
-     - Point LLAMA_BIN / LLAMA_MODEL at them in node-bot\.env
+     - Mana auto-discovers these paths under tools\; use root .env only to override them.
 
   3. Local TTS voice services (from tts-service\):
        .\start.ps1          # Chatterbox
