@@ -1,4 +1,15 @@
-Building the Desktop Installer (Windows)
+Desktop Packaging Status (Historical `desktop-client` Path)
+
+> `desktop-client` is frozen and is not the supported runtime or release
+> target. Mana's supported Windows runtime is `windows-launcher -> node-bot ->
+> local Whisper / local Llama / Kokoro`. See
+> [ADR 0001](docs/adr/0001-supported-windows-runtime.md).
+>
+> The instructions below are retained only as migration reference while the
+> installer design is moved to `windows-launcher`. Do not publish a release
+> from this path or add product features to it.
+
+Building the historical desktop-client installer (Windows)
 
 This guide walks through producing a Windows installer for the Electron desktop client locally.
 

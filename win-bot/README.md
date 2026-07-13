@@ -1,4 +1,9 @@
-Native Windows bot (win-bot)
+Native Windows bot (win-bot) - Archived
+
+This directory is a historical experiment, not a supported Mana runtime. Do
+not add features or direct current setup work here. Use `windows-launcher ->
+node-bot -> local Whisper / local Llama / Kokoro`; see
+`docs/adr/0001-supported-windows-runtime.md` from the repository root.
 
 This folder contains a PowerShell start script to run the voice bridge and (optionally) text-generation-webui natively on Windows (no WSL required).
 

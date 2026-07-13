@@ -1,6 +1,6 @@
 ﻿<#
 Automates the safely-automatable parts of Mana's first-time setup:
-  - installs npm dependencies for node-bot, windows-launcher, desktop-client
+  - installs npm dependencies for the supported node-bot and windows-launcher
   - creates node-bot\.env from .env.sample (never overwrites an existing one)
   - scaffolds the directories whisper.cpp/llama.cpp binaries and models go in
   - runs node-bot's doctor.js at the end to report what's configured
@@ -68,7 +68,7 @@ if ($gitCmd) {
 # --- npm install ----------------------------------------------------------
 if (-not $SkipInstall) {
   Write-Step "Installing npm dependencies"
-  $npmProjects = @("node-bot", "windows-launcher", "desktop-client")
+  $npmProjects = @("node-bot", "windows-launcher")
   foreach ($project in $npmProjects) {
     $projectPath = Join-Path $repoRoot $project
     if (-not (Test-Path (Join-Path $projectPath "package.json"))) {

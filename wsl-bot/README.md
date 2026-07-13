@@ -1,4 +1,9 @@
-WSL bot (voice bridge) - README
+WSL bot (voice bridge) - Archived
+
+This directory is a historical experiment, not a supported Mana runtime. Do
+not add features or direct current setup work here. Use `windows-launcher ->
+node-bot -> local Whisper / local Llama / Kokoro`; see
+`docs/adr/0001-supported-windows-runtime.md` from the repository root.
 
 Overview
 --------

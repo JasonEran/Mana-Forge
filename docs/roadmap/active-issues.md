@@ -1,8 +1,12 @@
-# Active Roadmap Issues
+# Historical Roadmap Snapshot
 
-Last synced: 2026-06-29
+Last synced: 2026-06-29. This file references an earlier Issue/PR sequence
+from before the current repository Issue tracker was enabled. It is retained
+for historical implementation context and is not the active plan.
 
-These items are open on the GitHub Project board and should be treated as the current active roadmap.
+The active engineering plan is the **Mana - One Runtime Modernization** GitHub
+Project and its `v0.3 - One Runtime Foundation` milestone. Start with issue #2
+and [ADR 0001](../adr/0001-supported-windows-runtime.md).
 
 ## In Progress
 

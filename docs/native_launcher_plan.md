@@ -1,6 +1,8 @@
-# Native Windows Launcher
+# Native Windows Launcher (Experimental)
 
-This is the planned low-memory replacement for the Electron launcher.
+This is an experimental low-memory replacement for the Electron launcher. It
+is not a supported runtime or release target. See
+[ADR 0001](adr/0001-supported-windows-runtime.md).
 
 ## Goal
 
