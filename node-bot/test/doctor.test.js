@@ -336,7 +336,7 @@ test("async doctor checks GPT-SoVITS only when it is the selected provider", asy
   });
 });
 
-test("async doctor reports backend port availability", async () => {
+test("async doctor derives backend port availability from the runtime descriptor", async () => {
   await withRawServer((req, res) => {
     res.writeHead(200);
     res.end("ok");
@@ -351,7 +351,8 @@ test("async doctor reports backend port availability", async () => {
         WHISPER_MODEL: "",
         MOBILE_PASSCODE_HASH: "",
         MOBILE_SESSION_SECRET: "",
-        PORT: String(freePort),
+        PORT: "5999",
+        MANA_BACKEND_URL: `http://127.0.0.1:${freePort}`,
       },
       paths: {
         dataDir: fs.mkdtempSync(path.join(os.tmpdir(), "mana-doctor-port-")),
@@ -367,6 +368,7 @@ test("async doctor reports backend port availability", async () => {
     assert.equal(ports.status, "warn");
     assert.equal(ports.details.ports.length, 2);
     assert.equal(ports.details.ports[0].id, "mana-backend");
+    assert.equal(ports.details.ports[0].port, freePort);
     assert.equal(ports.details.ports[0].ok, true);
     assert.equal(ports.details.ports[1].id, "occupied-test");
     assert.equal(ports.details.ports[1].ok, false);
@@ -376,6 +378,116 @@ test("async doctor reports backend port availability", async () => {
       force: true,
     });
   });
+});
+
+test("async doctor uses the Kokoro runtime descriptor health endpoint", async () => {
+  await withRawServer((req, res) => {
+    if (req.url === "/health") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true }));
+      return;
+    }
+    res.writeHead(404);
+    res.end();
+  }, async ({ url }) => {
+    const result = await runDoctorChecksAsync({
+      env: {
+        MANA_ALLOW_REMOTE_AI: "0",
+        TTS_PROVIDER: "kokoro",
+        KOKORO_TTS_URL: `${url}/health?ignored=secret-value`,
+      },
+      paths: {
+        dataDir: fs.mkdtempSync(path.join(os.tmpdir(), "mana-doctor-kokoro-")),
+      },
+      ports: [],
+      versions: { node: "v22.19.0" },
+    });
+
+    try {
+      const tts = result.checks.find((check) => check.id === "tts-services");
+      assert.equal(tts.status, "pass");
+      assert.equal(tts.details.services[0].url, `${url}/health`);
+      assert.equal(JSON.stringify(result).includes("secret-value"), false);
+    } finally {
+      fs.rmSync(
+        result.checks.find((check) => check.id === "storage").details.dataDir,
+        { recursive: true, force: true },
+      );
+    }
+  });
+});
+
+test("async doctor reports invalid runtime descriptors without leaking secrets", async () => {
+  const secret = "doctor-password-value";
+  const result = await runDoctorChecksAsync({
+    env: {
+      MANA_ALLOW_REMOTE_AI: "0",
+      MANA_BACKEND_URL: `http://user:${secret}@127.0.0.1:5005`,
+      TTS_PROVIDER: "kokoro",
+      KOKORO_TTS_URL: "https://127.0.0.1:5011",
+    },
+    paths: {
+      dataDir: fs.mkdtempSync(path.join(os.tmpdir(), "mana-doctor-runtime-")),
+    },
+    ports: [],
+    services: [],
+    versions: { node: "v22.19.0" },
+  });
+
+  try {
+    const runtime = result.checks.find((check) => check.id === "runtime-config");
+    const backend = result.checks.find(
+      (check) => check.id === "zed-external-agent-backend",
+    );
+    assert.equal(runtime.status, "fail");
+    assert.equal(runtime.details.errors.length, 2);
+    assert.equal(backend.status, "warn");
+    assert.equal(JSON.stringify(result).includes(secret), false);
+  } finally {
+    fs.rmSync(
+      result.checks.find((check) => check.id === "storage").details.dataDir,
+      { recursive: true, force: true },
+    );
+  }
+});
+
+test("async doctor exposes safe shared runtime descriptor state", async () => {
+  const result = await runDoctorChecksAsync({
+    env: {
+      MANA_ALLOW_REMOTE_AI: "0",
+      MANA_BACKEND_URL: "http://127.0.0.1:5505",
+      MANA_BACKEND_STARTUP_TIMEOUT_MS: "1234",
+      TTS_PROVIDER: "kokoro",
+      KOKORO_TTS_URL: "http://127.0.0.1:5511",
+      MANA_KOKORO_SHUTDOWN_TIMEOUT_MS: "4321",
+    },
+    paths: {
+      dataDir: fs.mkdtempSync(path.join(os.tmpdir(), "mana-doctor-state-")),
+    },
+    ports: [],
+    services: [],
+    versions: { node: "v22.19.0" },
+  });
+
+  try {
+    const runtime = result.checks.find((check) => check.id === "runtime-config");
+    assert.equal(runtime.status, "pass");
+    assert.deepEqual(
+      runtime.details.services.map((service) => service.id),
+      ["backend", "kokoro"],
+    );
+    assert.equal(runtime.details.services[0].healthUrl, "http://127.0.0.1:5505/health");
+    assert.equal(runtime.details.services[0].startupTimeoutMs, 1234);
+    assert.equal(runtime.details.services[1].healthUrl, "http://127.0.0.1:5511/health");
+    assert.equal(runtime.details.services[1].shutdownTimeoutMs, 4321);
+    assert.equal(JSON.stringify(runtime).includes("command"), false);
+    assert.equal(JSON.stringify(runtime).includes("env"), false);
+  } finally {
+    fs.rmSync(
+      result.checks.find((check) => check.id === "storage").details.dataDir,
+      { recursive: true, force: true },
+    );
+  }
 });
 
 test("async doctor reports Zed external agent backend health", async () => {
