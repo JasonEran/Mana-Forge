@@ -47,5 +47,5 @@ New-Shortcut -path $desktopShortcut -target $powerShellExe -argString $arguments
 $repoShortcut = Join-Path $scriptDir 'Start Mana.lnk'
 New-Shortcut -path $repoShortcut -target $powerShellExe -argString $arguments -workingDir $scriptDir
 
-Write-Host "Shortcuts created. You can now double-click the .lnk to start Mana (retriever + node)."
+Write-Host "Shortcuts created. Double-click the .lnk to start the supervised Mana backend."
 Pop-Location
