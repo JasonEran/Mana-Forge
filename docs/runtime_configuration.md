@@ -52,9 +52,19 @@ Configuration diagnostics must use the shared redaction behavior. Names that
 look like API keys, tokens, secrets, passcodes, passwords, or private keys are
 never emitted with their values.
 
-## Scope
+## Runtime Supervision
 
-This is the first delivery slice of issue #3. Process readiness, restart,
-backoff, log ownership, and Windows process-tree cleanup remain runtime
-supervisor work; they should consume this configuration module rather than
-introducing another source.
+The Windows launcher starts the required backend through the shared runtime
+supervisor. `MANA_BACKEND_URL` controls both its readiness endpoint and local
+listening port. `MANA_BACKEND_STARTUP_TIMEOUT_MS` controls how long the launcher
+waits for `/health` before reporting an actionable startup failure.
+
+The supervisor owns backend state and bounded logs, treats repeated starts as
+one operation, reports unhealthy port conflicts, restarts unexpected exits with
+bounded exponential backoff, and uses Windows process-tree termination on
+shutdown. A backend that was already healthy before the launcher started is
+left running because the launcher does not own that process.
+
+This is the first supervised-service migration. Optional TTS, retriever, and
+search processes retain their existing lifecycle until their descriptors are
+migrated in later reviewable slices.

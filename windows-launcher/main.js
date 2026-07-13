@@ -1,4 +1,5 @@
 const { loadManaConfig, withPath } = require("../runtime/config");
+const { RuntimeSupervisor } = require("../runtime/supervisor");
 
 loadManaConfig();
 
@@ -9,7 +10,6 @@ const { spawn } = require("child_process");
 
 let mainWindow;
 let avatarWindow;
-let backendProcess = null;
 let ttsProcess = null;
 let fallbackTtsProcess = null;
 let retrieverProcess = null;
@@ -36,6 +36,35 @@ const AVATAR_TOP_LEVEL = process.env.MANA_AVATAR_TOP_LEVEL || "screen-saver";
 const VISION_HOTKEY = process.env.MANA_VISION_HOTKEY || "Control+Alt+M";
 // Global hotkey that toggles the Mana chat window; set to off to disable.
 const WINDOW_HOTKEY = process.env.MANA_WINDOW_HOTKEY || "Control+Alt+Space";
+const runtimeSupervisor = new RuntimeSupervisor();
+
+runtimeSupervisor.register({
+  id: "backend",
+  required: true,
+  command: "node",
+  args: [path.join(ROOT_DIR, "node-bot", "server.js")],
+  cwd: path.join(ROOT_DIR, "node-bot"),
+  env: {
+    PORT: String(
+      Number(
+        new URL(BACKEND_URL).port ||
+          (BACKEND_URL.startsWith("https:") ? 443 : 80),
+      ),
+    ),
+    VTUBE_STUDIO_URL:
+      process.env.VTUBE_STUDIO_URL || "ws://127.0.0.1:8001",
+    VTUBE_STUDIO_ENABLED: process.env.VTUBE_STUDIO_ENABLED || "1",
+  },
+  healthUrl: BACKEND_URL,
+  allowExisting: true,
+  startupTimeoutMs: Number(process.env.MANA_BACKEND_STARTUP_TIMEOUT_MS || 30_000),
+  restart: {
+    enabled: true,
+    maxAttempts: 3,
+    baseDelayMs: 500,
+    maxDelayMs: 5_000,
+  },
+});
 
 async function isServiceRunning(url) {
   try {
@@ -44,10 +73,6 @@ async function isServiceRunning(url) {
   } catch (error) {
     return false;
   }
-}
-
-async function isBackendRunning() {
-  return isServiceRunning(BACKEND_URL);
 }
 
 async function isTtsRunning() {
@@ -342,43 +367,14 @@ function startSearxngService() {
   });
 }
 
-function startWindowsServices() {
-  // Only start one backend process.
-  if (backendProcess) {
-    return;
-  }
-
-  const nodeServer = path.join(ROOT_DIR, "node-bot", "server.js");
-  console.log("Starting Node bot:", nodeServer);
-  backendProcess = spawn("node", [nodeServer], {
-    cwd: path.join(ROOT_DIR, "node-bot"),
-    env: {
-      ...process.env,
-      VTUBE_STUDIO_URL:
-        process.env.VTUBE_STUDIO_URL || "ws://127.0.0.1:8001",
-      VTUBE_STUDIO_ENABLED: process.env.VTUBE_STUDIO_ENABLED || "1",
-    },
-  });
-
-  // Startup failures show up here.
-  backendProcess.on("error", (error) => {
+async function startWindowsServices() {
+  if (runtimeShutdownStarted) return;
+  try {
+    await runtimeSupervisor.start("backend");
+  } catch (error) {
     console.error("Failed to start Node bot:", error);
-    dialog.showErrorBox(
-      "Backend start error",
-      `Failed to start node-bot: ${error.message}`,
-    );
-  });
-
-  backendProcess.stdout.on("data", (data) => {
-    console.log(`Node: ${data}`);
-  });
-  backendProcess.stderr.on("data", (data) => {
-    console.error(`Node ERR: ${data}`);
-  });
-  backendProcess.on("close", (code) => {
-    console.log(`Node server exited with code ${code}`);
-    backendProcess = null;
-  });
+    throw error;
+  }
 }
 
 function createWindow() {
@@ -550,20 +546,19 @@ app.whenReady().then(() => {
 
   // Start the local Node backend before opening the UI.
   Promise.all([
-    isBackendRunning(),
     isTtsRunning(),
     isChatterboxRunning(),
     isRetrieverRunning(),
     isSearxngRunning(),
   ])
     .then(
-      ([
-        backendRunning,
+      async ([
         ttsRunning,
         chatterboxRunning,
         retrieverRunning,
         searxngRunning,
       ]) => {
+        if (runtimeShutdownStarted) return;
         if (!ttsRunning) {
           startTtsService();
         }
@@ -576,13 +571,11 @@ app.whenReady().then(() => {
         if (!searxngRunning) {
           startSearxngService();
         }
-        if (!backendRunning) {
-          startWindowsServices();
-        }
+        await startWindowsServices();
       },
     )
     .catch((e) => {
-      dialog.showErrorBox("Start error", String(e));
+      dialog.showErrorBox("Start error", e?.message || String(e));
     });
 
   createWindow();
@@ -731,13 +724,25 @@ app.on("will-quit", () => {
   globalShortcut.unregisterAll();
 });
 
+let runtimeShutdownStarted = false;
+app.on("before-quit", (event) => {
+  if (runtimeShutdownStarted) return;
+  event.preventDefault();
+  runtimeShutdownStarted = true;
+  runtimeSupervisor
+    .stopAll()
+    .then(() => app.quit())
+    .catch((error) => {
+      runtimeShutdownStarted = false;
+      console.error("Runtime shutdown failed:", error);
+      dialog.showErrorBox(
+        "Shutdown error",
+        `${error.message}\n\nMana is still running so it does not leave an unmanaged backend process. Resolve the reported process or port conflict, then quit again.`,
+      );
+    });
+});
+
 app.on("quit", () => {
-  if (backendProcess) {
-    try {
-      // Stop the local backend when the app closes.
-      backendProcess.kill();
-    } catch (e) {}
-  }
   if (ttsProcess) {
     try {
       ttsProcess.kill();
