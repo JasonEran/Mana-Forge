@@ -781,7 +781,6 @@ function delay(ms) {
 function withTimeout(promise, timeoutMs) {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => resolve(false), Math.max(1, timeoutMs));
-    timer.unref?.();
     Promise.resolve(promise).then(
       (value) => {
         clearTimeout(timer);
