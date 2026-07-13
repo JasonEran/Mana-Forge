@@ -72,9 +72,10 @@ The command stays in the foreground so Ctrl+C can verify process and port
 cleanup before it returns. Use `npm run start:raw` only for low-level backend
 debugging where supervision is intentionally bypassed.
 
-The supported backend and default Kokoro TTS provider are supervised services.
-Alternate TTS providers, retriever, and search retain their existing lifecycle
-until their optional-capability policy is defined in issue #6.
+Every process started by the Windows launcher is described and owned by the
+runtime supervisor. Backend and default Kokoro are required; alternate TTS,
+retriever, and search descriptors are optional and preserve their existing
+enablement conditions until issue #6 changes capability policy.
 
 Doctor builds the same backend and Kokoro descriptors before probing health or
 ports. Its `runtime-config` check exposes only service ids, required status,

@@ -38,8 +38,8 @@ function createKokoroServiceDescriptor(options = {}) {
   const installed = [python, model, voices].every((file) => fsImpl.existsSync(file));
 
   return {
-    id: "kokoro",
-    required: true,
+    id: options.id || "kokoro",
+    required: options.required !== false,
     command: installed ? python : "powershell",
     args: installed
       ? [

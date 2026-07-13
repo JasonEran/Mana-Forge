@@ -38,4 +38,6 @@ $venvPython = Join-Path $venv "Scripts\python.exe"
 & $venvPython -m pip install --upgrade pip
 & $venvPython -m pip install -r (Join-Path $here "requirements.txt")
 
-& $venvPython -m uvicorn service:app --host 127.0.0.1 --port 5010
+$hostAddress = if ($env:CHATTERBOX_HOST) { $env:CHATTERBOX_HOST } else { '127.0.0.1' }
+$port = if ($env:CHATTERBOX_PORT) { [int]$env:CHATTERBOX_PORT } else { 5010 }
+& $venvPython -m uvicorn service:app --host $hostAddress --port $port

@@ -327,6 +327,43 @@ test("startAll tolerates optional failures but rejects required failures", async
   );
 });
 
+test("startAll begins registered services concurrently", async () => {
+  const children = [];
+  let backendReady = false;
+  let optionalReady = false;
+  const supervisor = new RuntimeSupervisor({
+    logger: silentLogger(),
+    probeService: async (service) =>
+      service.id === "backend" ? backendReady : optionalReady,
+    isPortInUse: async () => false,
+    spawnProcess: (_command, args) => {
+      const child = createChild(850 + children.length);
+      children.push({ child, args });
+      if (args[0] === "backend.js") backendReady = true;
+      if (args[0] === "optional.js") optionalReady = true;
+      return child;
+    },
+  });
+  supervisor.register(
+    descriptor({ args: ["backend.js"], restart: { enabled: false } }),
+  );
+  supervisor.register(
+    descriptor({
+      id: "optional",
+      required: false,
+      args: ["optional.js"],
+      healthUrl: "http://127.0.0.1:5006/health",
+      restart: { enabled: false },
+    }),
+  );
+
+  const states = await supervisor.startAll();
+
+  assert.equal(children.length, 2);
+  assert.equal(states.backend.status, "ready");
+  assert.equal(states.optional.status, "ready");
+});
+
 test("repeated crash loops stop after the configured restart budget", async () => {
   const children = [];
   let alive = false;
