@@ -10,9 +10,21 @@ Mana is a local-first AI assistant for Windows. It listens from the desktop laun
 
 The project is built for a personal Windows setup: one user, local models by default, clear setup checks, and optional companion features when you want phone access or avatar control.
 
-## Quick Start
+## Supported Runtime
 
-The current supported path is the Windows launcher plus the local Node backend.
+Mana has one supported Windows runtime for v0.3:
+
+```text
+windows-launcher -> node-bot -> local Whisper / local Llama / Kokoro
+```
+
+`windows-launcher` is the only supported desktop shell and development entry
+point. `desktop-client` is a frozen installer migration source,
+`windows-native-launcher` is experimental, and `wsl-bot` / `win-bot` are
+archived historical paths. See [ADR 0001](docs/adr/0001-supported-windows-runtime.md)
+for lifecycle and migration policy.
+
+## Quick Start
 
 ```powershell
 cd C:\ManaAI\Mana\node-bot
@@ -43,16 +55,18 @@ For the full setup flow, including model paths, Whisper, TTS services, gaming mo
 
 ## Architecture
 
-Mana is intentionally split into small runtime pieces:
+Mana is intentionally split into small runtime pieces. Only the components in
+the supported-runtime chain above are current product paths; the remaining
+directories have the lifecycle states defined in ADR 0001.
 
 - `windows-launcher`: Electron desktop launcher, microphone capture, avatar overlay control, screen capture, performance panel, and Doctor panel.
-- `desktop-client`: Electron chat client packaged with a real Windows installer (electron-builder/NSIS), including a built-in Live2D avatar — currently loaded with a temporary testing placeholder model, see `desktop-client/AVATAR_NOTICE.md`.
+- `desktop-client`: frozen installer migration source, retained while its NSIS and bundled-Node design is moved to `windows-launcher`; it is not a supported runtime or release target.
 - `node-bot`: local backend API for transcription, replies, TTS calls, screen OCR, mobile routes, market helpers, and setup checks.
 - `tts-service`: local Python services for Chatterbox and Kokoro TTS.
 - `tools/whisper`: expected location for local `whisper.cpp` binaries and models.
 - `tools/llama`: expected location for local `llama.cpp` binaries and GGUF models.
-- `windows-native-launcher`: planned lower-memory native Windows launcher.
-- `wsl-bot` and `win-bot`: older experimental paths, not the primary launcher flow.
+- `windows-native-launcher`: experimental lower-memory native Windows launcher.
+- `wsl-bot` and `win-bot`: archived Python experiments retained as historical references.
 
 ## Local AI And Privacy
 
@@ -152,7 +166,7 @@ Common troubleshooting:
 - [PNG avatar setup](docs/png_avatar_setup.md): desktop avatar overlay.
 - [Live2D avatar setup](docs/live2d_avatar_setup.md): built-in VTuber avatar with lip sync.
 - [VTube Studio setup](docs/vtube_studio_setup.md): avatar hotkeys and reactions.
-- [Native launcher plan](docs/native_launcher_plan.md): lower-memory launcher direction.
+- [Native launcher plan](docs/native_launcher_plan.md): experimental lower-memory launcher direction.
 - [Chatterbox voice tuning](docs/chatterbox_voice_tuning.md): Chatterbox voice settings.
 - [GPT-SoVITS setup](docs/gpt_sovits_setup.md): trial anime-style voice-cloning provider.
 - [Fish Speech TTS](docs/fish_speech_tts.md): optional Fish Speech provider.
@@ -256,10 +270,12 @@ Do not push if required checks fail. Fix the failure first, or clearly document 
 
 ## Status
 
-Mana is under active development. The current stable path is:
+Mana is under active development. The supported path is:
 
 ```text
-windows-launcher -> node-bot -> local Whisper / local Llama / local TTS
+windows-launcher -> node-bot -> local Whisper / local Llama / Kokoro
 ```
 
-The next major engineering priorities are backend modularization, richer component health status, explicit local model management, and stronger mobile device controls.
+The v0.3 engineering priority is one supported runtime: unified configuration
+and lifecycle ownership, backend modularization, security hardening, optional
+capability isolation, and release-quality verification.

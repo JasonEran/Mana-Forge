@@ -110,7 +110,7 @@ Troubleshooting
 - If text replies work but no audio plays, verify `TTS_PROVIDER`, `CHATTERBOX_TTS_URL`, and that the TTS service is healthy on port `5010`.
 - If the `Open Model Web UI` button is not relevant to your local setup, ignore it. It is only useful if you separately run a model UI on `http://localhost:7860`.
 
-Legacy paths
+Archived paths
 - `wsl-bot` and `win-bot` contain older Python-based experiments using FastAPI, `faster-whisper`, and Coqui TTS.
-- Those paths are not the primary launcher integration described in this document.
+- They are historical references, not supported setup paths. Do not add features or direct users to them; see `docs/adr/0001-supported-windows-runtime.md`.
 

@@ -146,7 +146,8 @@ try{
     } catch {}
 
     Write-Host "\nDone. node-bin prepared at: $nodeBinDir"
-    Write-Host "You can now run: cd desktop-client; npm ci; npm run dist"
+    Write-Host "Bundled Node is ready for migration into the supported windows-launcher packaging flow."
+    Write-Host "Do not publish the frozen desktop-client path; see docs/adr/0001-supported-windows-runtime.md."
 
 } catch {
     Write-Error "Error: $($_.Exception.Message)"

@@ -1,8 +1,11 @@
-# Mana Project Roadmap
+# Historical Mana Project Roadmap
 
-Last synced: 2026-06-29
+Last synced: 2026-06-29. This snapshot predates the current repository Issue
+tracker and is not the active delivery plan.
 
-This roadmap reflects the current GitHub Project board, merged PRs, open issues, and repository docs on `main`.
+Use the **Mana - One Runtime Modernization** GitHub Project, the
+`v0.3 - One Runtime Foundation` milestone, and
+[ADR 0001](../adr/0001-supported-windows-runtime.md) for current work.
 
 ## Completed
 

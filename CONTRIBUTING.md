@@ -7,6 +7,17 @@ Short version
 
 Policy details
 
+Supported runtime policy
+
+- Contributions and proposals must target the supported runtime unless a
+  maintainer explicitly approves an exception: `windows-launcher -> node-bot ->
+  local Whisper / local Llama / Kokoro`.
+- `desktop-client` is frozen while its installer work is migrated;
+  `windows-native-launcher` is experimental; `wsl-bot` and `win-bot` are
+  archived. Do not add features or parity work to those paths.
+- Read `docs/adr/0001-supported-windows-runtime.md` before proposing runtime,
+  launcher, packaging, or lifecycle changes.
+
 1. No unsolicited contributions
    - This repository is maintained by ManaAI. External pull requests will be closed unless they are part of an agreed contribution workflow.
 

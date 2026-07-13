@@ -20,7 +20,11 @@ Describe the scope of work (small bugfix / feature / docs) and your high-level a
 
 
 ## Files / Areas Affected
-List the files or areas you expect to change (e.g., `node-bot/`, `desktop-client/renderer/`):
+List the files or areas you expect to change (e.g., `node-bot/`, `windows-launcher/renderer/`):
+
+Runtime work must target the supported path. Changes to frozen, experimental,
+or archived launchers require explicit maintainer approval and a new or updated
+architecture decision record.
 
 
 ## Contribution agreement
