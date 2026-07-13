@@ -1,6 +1,6 @@
 # ADR 0001: One Supported Windows Runtime
 
-- Status: Proposed (accepted when the linked review PR merges)
+- Status: Accepted
 - Date: 2026-07-13
 - Decision owner: Mana maintainers
 - Related: GitHub issue #2, `v0.3 - One Runtime Foundation`
