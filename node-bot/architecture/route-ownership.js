@@ -21,15 +21,23 @@ const ROUTE_OWNERS = Object.freeze([
     status: "transitional",
     patterns: [
       "/admin/restart",
-      "/transcribe-only",
       "/screen/read",
       "/market/stock/*",
       "/market/watchlist",
       "/vision/describe",
-      "/reply",
-      "/transcribe",
-      "/synthesize",
     ],
+  },
+  {
+    id: "conversation",
+    source: "conversation-routes.js",
+    status: "owned",
+    patterns: ["/reply"],
+  },
+  {
+    id: "speech",
+    source: "speech-routes.js",
+    status: "owned",
+    patterns: ["/transcribe-only", "/transcribe", "/synthesize"],
   },
   {
     id: "mobile",
