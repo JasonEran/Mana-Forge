@@ -3,8 +3,7 @@
 ## Boundary
 
 The supported backend is one Node process. `server.js` is the process entry
-point and temporary composition root; it must not become the permanent owner of
-domain behavior. Route ownership is defined in
+point and composition root; it does not own HTTP domain behavior. Route ownership is defined in
 `architecture/route-ownership.js` and enforced by
 `test/backend-architecture.test.js`.
 
@@ -14,9 +13,13 @@ domain behavior. Route ownership is defined in
 RuntimeSupervisor
   -> startServer()
        -> createApp()
-            -> transitional registerRoutes()
+            -> registerRoutes()
                  -> capability registry
-                 -> transitional core routes
+                 -> editor routes
+                 -> debug routes
+                 -> admin and retriever routes
+                 -> runtime status routes
+                 -> core routes
                       -> conversation routes
                       -> speech routes
                  -> model routes
@@ -25,12 +28,18 @@ RuntimeSupervisor
                  -> mobile routes
             -> admin static files
        -> caption and tray WebSocket adapters
+       -> explicit background-memory lifecycle
        -> one HTTP listen call
 ```
 
 | Owner | Public surface | State |
 | --- | --- | --- |
-| `server.js` | editor status, admin memory/retriever, debug, gaming/perf | Transitional |
+| `server.js` | application composition and admin static mount | Composition root |
+| `editor-routes.js` | `/zed`, `/editors` | Owned domain module |
+| `debug-routes.js` | `/debug` | Owned domain module |
+| `admin-routes.js` | admin memory, retriever, token cache and tray APIs | Owned domain module |
+| `admin-ui-routes.js` | local admin HTML pages | Owned adapter |
+| `runtime-status-routes.js` | `/gaming/status`, `/perf/status` | Owned domain module |
 | `server-routes.js` | screen/vision, stock market, restart | Transitional |
 | `conversation-routes.js` | `/reply` | Owned domain module |
 | `speech-routes.js` | `/transcribe-only`, `/transcribe`, `/synthesize` | Owned domain module |
@@ -46,7 +55,7 @@ RuntimeSupervisor
 extraction into its target domain. It does not mean that `server.js` is the
 desired long-term owner.
 
-## Target composition
+## Lifecycle
 
 ```text
 server.js
@@ -63,7 +72,7 @@ server.js
        -> stop jobs and close server
 ```
 
-Extraction order is conversation and speech, models, memory/admin, then
-background-job lifecycle. Each extraction must preserve public paths and
-response schemas, inject its dependencies, update the ownership map, and land
-as a separately reversible PR.
+`background-lifecycle.js` owns scheduler state through idempotent `start()` and
+`stop()` methods. `startServer()` starts it explicitly and server close/error
+stops it, clearing timers and settling active jobs. Importing `server.js` and
+calling `createApp()` do not start scheduled work.

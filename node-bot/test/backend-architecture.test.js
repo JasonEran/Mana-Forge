@@ -7,7 +7,7 @@ const { ROUTE_OWNERS } = require("../architecture/route-ownership");
 
 const nodeBotRoot = path.join(__dirname, "..");
 const routeCallPattern =
-  /\b(app|router)\.(get|post|put|patch|delete|use)\s*\(\s*(["'])([^"']+)\3/g;
+  /\b(app|router)\.(?:(get|post|put|patch|delete|use)\s*\(\s*(["'])([^"']+)\3|route\s*\(\s*(["'])([^"']+)\5\s*\)\s*\.\s*(get|post|put|patch|delete)\s*\()/g;
 
 function joinRoutePaths(mountPath, routePath) {
   if (routePath === "/") return mountPath;
@@ -20,14 +20,16 @@ function extractRoutes(owner) {
   let match;
   while ((match = routeCallPattern.exec(source))) {
     const target = match[1];
+    const method = match[2] || match[7];
+    const literalPath = match[4] || match[6];
     const routePath =
       target === "router"
-        ? joinRoutePaths(owner.mountPath || "", match[4])
-        : match[4];
+        ? joinRoutePaths(owner.mountPath || "", literalPath)
+        : literalPath;
     routes.push({
       owner: owner.id,
       source: owner.source,
-      method: match[2].toUpperCase(),
+      method: method.toUpperCase(),
       path: routePath,
     });
   }
@@ -118,10 +120,14 @@ test("each composition layer registers its route modules exactly once", () => {
     {
       source: "server.js",
       registrars: [
+        "registerAdminRoutes",
+        "registerDebugRoutes",
+        "registerEditorRoutes",
         "registerCapabilities",
         "registerCoreRoutes",
         "registerDiagnosticRoutes",
         "registerModelRoutes",
+        "registerRuntimeStatusRoutes",
         "registerVTubeRoutes",
         "registerMobileRoutes",
       ],
@@ -151,4 +157,11 @@ test("the backend entry point has one reachable listen call", () => {
   const source = fs.readFileSync(path.join(nodeBotRoot, "server.js"), "utf8");
   const listenCalls = source.match(/\bserver\.listen\s*\(/g) || [];
   assert.equal(listenCalls.length, 1);
+});
+
+test("server.js does not declare direct HTTP business routes", () => {
+  const source = fs.readFileSync(path.join(nodeBotRoot, "server.js"), "utf8");
+  const declarations = source.match(/\bapp\.(get|post|put|patch|delete)\s*\(/g) || [];
+  assert.deepEqual(declarations, []);
+  assert.doesNotMatch(source, /\bapp\.route\s*\(/);
 });
