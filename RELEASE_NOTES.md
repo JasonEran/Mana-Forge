@@ -71,10 +71,10 @@ Known issues & caveats
   those separately as documented in THIRD_PARTY.md and BUILD_DESKTOP.md.
 - Antivirus / SmartScreen: some AV/SmartScreen products may flag unsigned
   installers or executables — expected for preview builds.
-- Artwork: sprites/images in `sprites/` and any Live2D avatar model files
-  are proprietary and are NOT licensed under Apache-2.0; see
-  LICENSE-ARTWORK. The bundled testing avatar model is additionally a
-  third-party placeholder — see the avatar notice above.
+- Artwork: the repository does not grant rights to third-party artwork or
+  avatar models. Only add local assets you have permission to use; see
+  LICENSE-ARTWORK. The historical testing avatar model is a third-party
+  placeholder — see the avatar notice above.
 - FAISS/native bindings: if FAISS or other native bindings are not present
   on the target, the server falls back to JS/JSON adapters (functional but
   slower).

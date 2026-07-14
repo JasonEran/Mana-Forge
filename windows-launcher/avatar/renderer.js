@@ -61,6 +61,6 @@ createLive2dAvatar({
     }
   })
   .catch((error) => {
-    console.warn("Live2D avatar failed to load; using sprite avatar:", error);
-    document.body.dataset.renderer = "sprite";
+    console.warn("Live2D avatar failed to load; using local static avatar:", error);
+    document.body.dataset.renderer = "static";
   });

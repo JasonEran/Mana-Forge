@@ -233,9 +233,7 @@ let tray = null;
 
 function createTray() {
   try {
-    const icon = nativeImage
-      .createFromPath(path.join(ROOT_DIR, "sprites", "sprite-idle.png"))
-      .resize({ width: 16, height: 16 });
+    const icon = createTrayIcon();
     tray = new Tray(icon);
     tray.setToolTip("Mana");
     tray.setContextMenu(
@@ -257,6 +255,23 @@ function createTray() {
   } catch (error) {
     console.warn(`Tray icon unavailable: ${error.message}`);
   }
+}
+
+function createTrayIcon() {
+  const size = 16;
+  const buffer = Buffer.alloc(size * size * 4);
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const edge = x < 2 || x > 13 || y < 2 || y > 13;
+      const diagonal = x === y || x + y === size - 1;
+      const offset = (y * size + x) * 4;
+      buffer[offset] = edge ? 64 : 124;
+      buffer[offset + 1] = edge ? 48 : 92;
+      buffer[offset + 2] = edge ? 112 : 220;
+      buffer[offset + 3] = edge || diagonal ? 255 : 220;
+    }
+  }
+  return nativeImage.createFromBitmap(buffer, { width: size, height: size });
 }
 
 function registerWindowHotkey() {

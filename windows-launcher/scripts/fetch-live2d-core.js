@@ -2,7 +2,7 @@
 //
 // Cubism Core is proprietary (Live2D Proprietary Software License) and must
 // not be committed to the repository, so every checkout fetches it once from
-// the official Live2D CDN. The avatar falls back to PNG sprites without it.
+// the official Live2D CDN. The avatar falls back to local static art without it.
 const fs = require("fs");
 const https = require("https");
 const path = require("path");

@@ -64,20 +64,20 @@ function loadAvatarConfig(modelJson) {
 }
 
 // Creates a Live2D avatar bound to `canvas`. Returns null when the runtime
-// or model is unavailable (callers fall back to sprites), otherwise:
+// or model is unavailable (callers fall back to local static art), otherwise:
 //   { setState(state), setMouthTarget(rms), setZoom(level), cycleZoom(),
 //     getZoom(), stop() }
 // Zoom levels are "full" | "waist" | "bust" (see live2d-logic's ZOOM_LEVELS).
 async function createLive2dAvatar({ canvas, width, height, env = process.env }) {
   if (!live2dRuntimeAvailable()) {
-    console.log("Live2D runtime not available; using sprite avatar");
+    console.log("Live2D runtime not available; using local static avatar");
     return null;
   }
 
   const modelJson = findConfiguredModelJson(env);
   if (!modelJson) {
     console.log(
-      `No Live2D model found (looked in ${MODEL_DIR} and MANA_LIVE2D_MODEL); using sprite avatar`,
+      `No Live2D model found (looked in ${MODEL_DIR} and MANA_LIVE2D_MODEL); using local static avatar`,
     );
     return null;
   }

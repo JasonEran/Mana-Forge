@@ -59,7 +59,6 @@ until a later ADR explicitly changes this decision.
 | `wsl-bot` | Archived | Historical | No feature work. Retain as historical reference until the v0.3 archive review. |
 | `win-bot` | Archived | Historical | No feature work. Retain as historical reference until the v0.3 archive review. |
 | `zed-agent` | Optional integration | Assistant runtime | Not part of the default desktop runtime; enabled only through its explicit setup. |
-| `sprites/` | Supported asset | Desktop runtime | Shared proprietary artwork; not an executable runtime path. |
 
 ## Consequences
 

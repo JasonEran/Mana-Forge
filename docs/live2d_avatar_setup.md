@@ -38,7 +38,7 @@ Everything below applies to the supported launcher.
 
 3. Start the launcher. The log prints `Live2D avatar loaded: ...` on success.
    If the runtime or model is missing, the avatar quietly falls back to the
-   PNG sprites.
+   local static avatar art.
 
 ## How Mana drives the model
 

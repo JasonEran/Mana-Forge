@@ -1,19 +1,15 @@
-Copyright (c) 2026 ManaAI
-All rights reserved.
+Artwork and avatar asset notice
 
-The artwork and images included in or used with this repository (for
-example, the files under the `sprites/` directory and any Live2D avatar
-model files under `windows-launcher/avatar/model/` or
-`desktop-client/avatar/model/`) are proprietary and are NOT covered by the
-repository's code license (Apache License, Version 2.0). Note: the model
-currently used for testing in `desktop-client` is itself a third-party
-placeholder (see `desktop-client/AVATAR_NOTICE.md`) — this file's
-proprietary/all-rights-reserved terms apply to ManaAI's own artwork, not
-to that placeholder's underlying character design, which remains the
-property of its original rights holder.
-They are provided for use with this project only and may NOT be copied,
-redistributed, or reused in whole or in part without express written
-permission from ManaAI.
+The Apache License, Version 2.0 applies to source code, not to artwork or
+avatar models that users add to a local installation. This repository does
+not grant rights to third-party artwork.
 
-If you wish to request permission to reuse any artwork, please contact
-ManaAI and provide details about the intended use.
+Do not add, copy, redistribute, or package artwork unless you own it or have
+explicit permission covering this repository's use and distribution. Local
+avatar model files under `windows-launcher/avatar/model/` and
+`desktop-client/avatar/model/` remain untracked. The historical testing model
+described by `desktop-client/AVATAR_NOTICE.md` is a third-party placeholder;
+its character-design rights remain with the original rights holder.
+
+Users are responsible for obtaining permission from the relevant rights
+holder before using external artwork with Mana.
