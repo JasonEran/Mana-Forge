@@ -36,8 +36,7 @@ const { detectReplyEmotion } = require('./reply-emotion');
   }
 
   // Live2D speaks a richer state vocabulary (idle/talking/excited/angry/
-  // sad/disgusted) than the small header/input-bar PNG sprites do
-  // (idle/listening/speaking/excited); this maps the sprite's states onto
+  // sad/disgusted) than the header CSS indicator does; this maps its states onto
   // the closest Live2D one for the generic (non-reply) cases. A reply's
   // actual detected emotion (see onRecordingStop) overrides this afterward.
   function live2dStateFor(spriteState){
@@ -57,7 +56,7 @@ const { detectReplyEmotion } = require('./reply-emotion');
         live2dAvatar.setState(live2dStateFor(_prevSpriteState));
       }
     } catch (e) {
-      console.warn('Live2D avatar failed to load; using sprite avatar:', e);
+      console.warn('Live2D avatar failed to load; using CSS status indicator:', e);
     }
   }
 
@@ -94,27 +93,18 @@ const { detectReplyEmotion } = require('./reply-emotion');
     if (live2dAvatar) live2dAvatar.setState(live2dStateFor(_prevSpriteState));
   }
 
-  // Loading animation (cycles the three loading sprites)
-  let _loadingInterval = null;
-  let _loadingIndex = 0;
+  // Loading state uses CSS so the frozen client carries no third-party art.
+  let _loading = false;
   function startLoadingAnimation(){
-    if (_loadingInterval) return;
-    _loadingIndex = 0;
-    // set initial loading sprite
-    try { spriteEl.style.backgroundImage = `url('../../sprites/sprite-loading-${_loadingIndex+1}.png')`; } catch(e){}
-    _loadingInterval = setInterval(()=>{
-      _loadingIndex = (_loadingIndex + 1) % 3;
-      try { spriteEl.style.backgroundImage = `url('../../sprites/sprite-loading-${_loadingIndex+1}.png')`; } catch(e){}
-    }, 300);
+    if (_loading) return;
+    _loading = true;
+    spriteEl.classList.add('loading');
     statusEl.textContent = 'Backend starting...';
   }
   function stopLoadingAnimation(){
-    if (!_loadingInterval) return;
-    clearInterval(_loadingInterval);
-    _loadingInterval = null;
-    _loadingIndex = 0;
-    // restore to current base sprite
-    try { spriteEl.style.backgroundImage = ''; } catch(e){}
+    if (!_loading) return;
+    _loading = false;
+    spriteEl.classList.remove('loading');
     statusEl.textContent = 'Backend running';
   }
 

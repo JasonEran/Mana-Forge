@@ -2,7 +2,7 @@
 
 **License (code): Apache License 2.0 — © 2026 ManaAI.** See LICENSE and NOTICE.
 
-**Artwork (images/sprites/avatar models): All rights reserved.** The images in `sprites/` and any avatar model files are proprietary and may not be reused without permission; see LICENSE-ARTWORK.
+**Avatar assets are not covered by the code license.** Bring only artwork you have permission to use; see LICENSE-ARTWORK and THIRD_PARTY.md.
 
 **Live2D Cubism Core** is proprietary to Live2D Inc., is not part of this repository, and is fetched at setup time under Live2D's own terms; see THIRD_PARTY.md.
 

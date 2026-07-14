@@ -30,7 +30,7 @@ Supported runtime policy
    - DCO: A lighter-weight attestment you sign by adding a `Signed-off-by: Your Name <you@example.com>` line to your commit message (see the Developer Certificate of Origin). Maintainers will specify which option they require for a given contribution request.
 
 4. Artwork and images
-   - Note: Artwork and images in `sprites/` are proprietary and not licensed under the project code license. Contributions that include artwork are subject to separate permissions and will generally not be accepted without explicit written agreement.
+   - Do not contribute third-party artwork without explicit permission covering repository use and redistribution. Keep personal avatar assets local and untracked.
 
 5. Third-party code and models
    - Do not submit third-party binary files, model weights, or other assets that are not explicitly allowed. Follow the instructions in THIRD_PARTY.md for obtaining and referencing external assets.

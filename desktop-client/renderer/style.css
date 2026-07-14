@@ -23,7 +23,7 @@ body{
 .chat-area{flex:1; display:flex; flex-direction:column;}
 .chat-header{display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid var(--border);}
 .header-left{display:flex;align-items:center;gap:12px}
-.sprite{width:48px;height:48px;background-image: url('../../sprites/sprite-idle.png'); background-size:contain; background-repeat:no-repeat; border-radius:8px;}
+.sprite{width:48px;height:48px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#d7ceff,#7c5cff 62%,#46369c);box-shadow:0 3px 10px rgba(70,54,156,.3);}
 .title{font-weight:700}
 .subtitle{font-size:12px;color:var(--muted)}
 .header-right .icon-btn{border:1px solid var(--border); background:transparent;padding:8px;border-radius:8px}
@@ -43,7 +43,7 @@ body{
 
 /* Input bar */
 .input-bar{display:flex;align-items:flex-end;padding:12px 20px;border-top:1px solid var(--border);gap:12px;background:linear-gradient(180deg,#fff,#fff)}
-.avatar-wrap img{width:40px;height:40px;border-radius:8px}
+.avatar-wrap .avatar-placeholder{display:block;width:40px;height:40px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#d7ceff,#7c5cff 62%,#46369c)}
 .input-wrap{flex:1;display:flex;flex-direction:column}
 #messageInput{width:100%;min-height:42px;max-height:140px;padding:10px;border-radius:16px;border:1px solid var(--border);resize:none;font-size:14px}
 .input-actions{display:flex;gap:8px;margin-top:8px}
@@ -53,9 +53,10 @@ body{
 .logs-footer{padding:8px 20px;border-top:1px solid var(--border);background:#fafafa}
 .logs{height:80px;overflow:auto;background:#fff;padding:8px;border-radius:8px;border:1px solid var(--border);}
 
-/* small sprite state classes */
-.sprite.listening{background-image: url('../../sprites/sprite-speak.png')}
-.sprite.speaking{background-image: url('../../sprites/sprite-speak.png')}
+/* State is shown without bundled artwork. */
+.sprite.listening,.sprite.speaking{box-shadow:0 0 0 4px rgba(124,92,255,.2),0 3px 10px rgba(70,54,156,.3)}
+.sprite.loading{animation:pulse 900ms ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.55;transform:scale(.92)}50%{opacity:1;transform:scale(1)}}
 
 /* tiny hop */
 @keyframes hop{0%{transform:translateY(0)}25%{transform:translateY(-6px)}50%{transform:translateY(0)}75%{transform:translateY(-3px)}100%{transform:translateY(0)}}

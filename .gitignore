@@ -67,6 +67,9 @@ tts-service/*.wav
 tts-service/*.mp3
 tts-service/*-transcript*.txt
 
+# Artwork removed at the rights holder's request; do not re-add local copies.
+/sprites/
+
 # Python bytecode cache (build artifact, not source)
 __pycache__/
 *.pyc

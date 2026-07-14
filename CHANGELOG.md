@@ -11,7 +11,13 @@ accounting.
 
 ## [Unreleased]
 
-Nothing yet.
+### Removed
+
+- Removed five PNG avatar files at the rights holder's request, along with
+  their crop scripts and all runtime, packaging, and
+  documentation references. Tray and status UI fallbacks now use generated or
+  CSS-only indicators, and a boundary test prevents the removed assets from
+  being added again.
 
 ## [0.2.0] - 2026-07-12
 
@@ -63,9 +69,8 @@ Nothing yet.
 - **Relicensed from PolyForm Noncommercial 1.0.0 to Apache License 2.0**
   for the code, so GitHub's license picker/badge recognizes it. This
   permits commercial use of the code by others, a deliberate tradeoff for
-  recognizability. Artwork (`sprites/`, `windows-launcher/avatar/model/`)
-  is unaffected — still fully proprietary/all-rights-reserved under
-  `LICENSE-ARTWORK`, independent of the code license either way.
+  recognizability. Third-party artwork and local avatar models are not
+  covered by the code license; see `LICENSE-ARTWORK`.
 
 ### Fixed
 - Closed two real gitignore gaps: personal voice-audition/reference audio

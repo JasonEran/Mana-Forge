@@ -60,7 +60,7 @@
     <body>
 
                 <h1>Mana Background Memory Admin</h1>
-                <img id="adminAvatar" src="../../sprites/sprite-idle.png" alt="Mana avatar" style="width:72px;height:72px;display:block;margin-bottom:12px;">
+                <div id="adminAvatar" aria-hidden="true"></div>
                 <style>
                     /* Admin avatar hop animation */
                     @keyframes admin-hop {
@@ -72,6 +72,21 @@
                     }
                     #adminAvatar.excited {
                         animation: admin-hop 320ms ease-in-out infinite;
+                    }
+                    #adminAvatar {
+                        width: 72px;
+                        height: 72px;
+                        display: block;
+                        margin-bottom: 12px;
+                        border-radius: 50%;
+                        background: radial-gradient(circle at 35% 30%, #d7ceff, #7c5cff 62%, #46369c);
+                    }
+                    #adminAvatar.loading {
+                        animation: admin-pulse 900ms ease-in-out infinite;
+                    }
+                    @keyframes admin-pulse {
+                        0%, 100% { opacity: .55; transform: scale(.92); }
+                        50% { opacity: 1; transform: scale(1); }
                     }
                 </style>
 
@@ -245,26 +260,15 @@ select>                                <button id="vAuditPrev">Prev</button>
                 a.classList.remove('excited');
             }
 
-            // Admin loading animation (cycles three loading sprites)
-            let _adminLoadingInterval = null;
-            let _adminLoadingIndex = 0;
+            // Loading state uses CSS so this page carries no bundled artwork.
             function startAdminLoadingAnimation(){
                 const a = document.getElementById('adminAvatar');
                 if (!a) return;
-                if (_adminLoadingInterval) return;
-                _adminLoadingIndex = 0;
-                a.src = '../../sprites/sprite-loading-1.png';
-                _adminLoadingInterval = setInterval(()=>{
-                    _adminLoadingIndex = (_adminLoadingIndex + 1) % 3;
-                    a.src = `../../sprites/sprite-loading-${_adminLoadingIndex+1}.png`;
-                }, 300);
+                a.classList.add('loading');
             }
             function stopAdminLoadingAnimation(){
                 const a = document.getElementById('adminAvatar');
-                try{ if (_adminLoadingInterval) clearInterval(_adminLoadingInterval); }catch(e){}
-                _adminLoadingInterval = null;
-                _adminLoadingIndex = 0;
-                if (a) a.src = '../../sprites/sprite-idle.png';
+                if (a) a.classList.remove('loading');
             }
 
             let lastProcessedFiles = [];

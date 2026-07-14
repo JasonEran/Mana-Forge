@@ -61,7 +61,7 @@
       </div>
 
       <div class="input-bar">
-        <div class="avatar-wrap"><img id="adminSpriteSmall" src="../../sprites/sprite-idle.png" alt="avatar"/></div>
+        <div class="avatar-wrap"><span id="adminSpriteSmall" class="avatar-placeholder" aria-hidden="true"></span></div>
         <div class="input-wrap">
           <textarea id="messageInput" placeholder="Write a message..." rows="1"></textarea>
           <div class="input-actions">
@@ -78,7 +78,7 @@
   </div>
 
   <!-- Live2D Cubism Core is proprietary and fetched at setup time
-       (npm run fetch-live2d-core); the avatar falls back to sprites
+       (npm run fetch-live2d-core); the avatar falls back to a CSS placeholder
        when it is absent. See ../AVATAR_NOTICE.md. -->
   <script src="../assets/live2d/live2dcubismcore.min.js"></script>
   <script src="../node_modules/pixi.js/dist/browser/pixi.min.js"></script>

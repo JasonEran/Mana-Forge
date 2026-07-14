@@ -89,14 +89,14 @@ function loadAvatarConfig(modelJson) {
 // Zoom levels are "full" | "waist" | "bust" (see live2d-logic's ZOOM_LEVELS).
 async function createLive2dAvatar({ canvas, width, height, env = process.env }) {
   if (!live2dRuntimeAvailable()) {
-    console.log("Live2D runtime not available; using sprite avatar");
+    console.log("Live2D runtime not available; using CSS status indicator");
     return null;
   }
 
   const modelJson = findConfiguredModelJson(env);
   if (!modelJson) {
     console.log(
-      `No Live2D model found (looked in ${MODEL_DIR}, ${FALLBACK_MODEL_DIR}, and MANA_LIVE2D_MODEL); using sprite avatar`,
+      `No Live2D model found (looked in ${MODEL_DIR}, ${FALLBACK_MODEL_DIR}, and MANA_LIVE2D_MODEL); using CSS status indicator`,
     );
     return null;
   }
