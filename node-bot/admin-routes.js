@@ -1491,9 +1491,6 @@ function registerAdminRoutes(app, deps) {
       return res.status(400).json({ ok: false, error: String(e) });
     }
   });
-
-
 }
 
 module.exports = { registerAdminRoutes };
-
