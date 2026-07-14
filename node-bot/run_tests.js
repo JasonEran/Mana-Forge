@@ -28,6 +28,7 @@ if (skipHeavy){
     ['node', ['--test', path.join(testDir, 'backend-architecture.test.js')]],
     ['node', ['--test', path.join(testDir, 'server-routes.test.js')]],
     ['node', ['--test', path.join(testDir, 'speech-routes.test.js')]],
+    ['node', ['--test', path.join(testDir, 'health-components.test.js')]],
     ['node', ['--test', path.join(testDir, 'e2e-pairing-smoke.test.js')]],
     ['node', ['--test', path.join(testDir, 'kokoro-service-descriptor.test.js')]],
     ['node', ['--test', path.join(testDir, 'launcher-service-plan.test.js')]],

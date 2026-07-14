@@ -120,6 +120,8 @@ test("each composition layer registers its route modules exactly once", () => {
       registrars: [
         "registerCapabilities",
         "registerCoreRoutes",
+        "registerDiagnosticRoutes",
+        "registerModelRoutes",
         "registerVTubeRoutes",
         "registerMobileRoutes",
       ],

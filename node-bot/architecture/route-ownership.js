@@ -4,16 +4,25 @@ const ROUTE_OWNERS = Object.freeze([
     source: "server.js",
     status: "transitional",
     patterns: [
-      "/doctor",
-      "/health",
       "/zed/*",
       "/editors/*",
-      "/models/*",
       "/debug/*",
       "/admin/*",
       "/gaming/*",
       "/perf/*",
     ],
+  },
+  {
+    id: "diagnostics",
+    source: "diagnostic-routes.js",
+    status: "owned",
+    patterns: ["/doctor", "/health"],
+  },
+  {
+    id: "models",
+    source: "model-routes.js",
+    status: "owned",
+    patterns: ["/models/*"],
   },
   {
     id: "core-routes",

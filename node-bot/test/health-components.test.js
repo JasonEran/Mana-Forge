@@ -38,6 +38,7 @@ test("health includes component readiness while preserving top-level fields", as
       "mobileAuth",
       "tts",
       "vtubeStudio",
+      "webAccess",
       "whisper",
     ]);
     assert.equal(body.components.backend.status, "available");
@@ -51,6 +52,32 @@ test("health includes component readiness while preserving top-level fields", as
     });
     assert.equal(typeof body.components.localLlama.message, "string");
   });
+});
+
+test("health never installs routes during a request", async () => {
+  const app = createApp({ env: { MANA_ADMIN_SECRET: "test-secret" } });
+  const initialStackLength = app._router.stack.length;
+
+  await withServer(app, async (baseUrl) => {
+    const debugBeforeHealth = await fetch(`${baseUrl}/debug/intent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    assert.equal(debugBeforeHealth.status, 400);
+
+    const adminBeforeHealth = await fetch(
+      `${baseUrl}/admin/pending-writes`,
+    );
+    assert.equal(adminBeforeHealth.status, 401);
+
+    for (let index = 0; index < 3; index += 1) {
+      const response = await fetch(`${baseUrl}/health`);
+      assert.equal(response.status, 200);
+    }
+  });
+
+  assert.equal(app._router.stack.length, initialStackLength);
 });
 
 test("health component details do not expose secret values", async () => {
