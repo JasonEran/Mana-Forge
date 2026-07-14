@@ -19,6 +19,8 @@ RuntimeSupervisor
                  -> transitional core routes
                       -> conversation routes
                       -> speech routes
+                 -> model routes
+                 -> diagnostic routes
                  -> VTube Studio routes
                  -> mobile routes
             -> admin static files
@@ -28,10 +30,12 @@ RuntimeSupervisor
 
 | Owner | Public surface | State |
 | --- | --- | --- |
-| `server.js` | health, Doctor, editor/model status, admin memory/retriever, gaming/perf | Transitional |
+| `server.js` | editor status, admin memory/retriever, debug, gaming/perf | Transitional |
 | `server-routes.js` | screen/vision, stock market, restart | Transitional |
 | `conversation-routes.js` | `/reply` | Owned domain module |
 | `speech-routes.js` | `/transcribe-only`, `/transcribe`, `/synthesize` | Owned domain module |
+| `model-routes.js` | `/models` | Owned domain module |
+| `diagnostic-routes.js` | `/health`, `/doctor` | Owned domain module |
 | `mobile-routes.js` | `/mobile` | Owned module |
 | `vtube-routes.js` | `/vtube` | Owned module |
 | FFXIV capability | `/ffxiv` | Owned capability |
