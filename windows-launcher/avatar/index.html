@@ -2,6 +2,10 @@
 <html>
   <head>
     <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' mana-avatar:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'"
+    />
     <title>Mana Avatar</title>
     <style>
       html,
@@ -82,9 +86,8 @@
     <!-- Live2D Cubism Core is proprietary and fetched at setup time
          (npm run fetch-live2d-core); the avatar falls back to local static art
          when it is absent. -->
-    <script src="../assets/live2d/live2dcubismcore.min.js"></script>
-    <script src="../node_modules/pixi.js/dist/browser/pixi.min.js"></script>
-    <script src="../node_modules/pixi-live2d-display/dist/cubism4.min.js"></script>
+    <script src="live2d-logic.js"></script>
+    <script src="live2d-avatar.js"></script>
     <script src="renderer.js"></script>
   </body>
 </html>

@@ -10,13 +10,25 @@
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
     "fetch-live2d-core": "node scripts/fetch-live2d-core.js",
-    "check-live2d-model": "node scripts/check-live2d-model.js"
+    "check-live2d-model": "node scripts/check-live2d-model.js",
+    "test:electron-security": "node scripts/run-electron-security-smoke.js"
   },
   "author": "",
   "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "build": {
+    "files": [
+      "**/*",
+      "!test{,/**}",
+      "!scripts{,/**}",
+      "!nodemon.json"
+    ]
+  },
   "devDependencies": {
-    "electron": "^26.6.10",
-    "electron-builder": "^24.7.0",
+    "electron": "^43.1.1",
+    "electron-builder": "^26.15.3",
     "nodemon": "^3.1.14"
   },
   "dependencies": {

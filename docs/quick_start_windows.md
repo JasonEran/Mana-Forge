@@ -9,13 +9,19 @@ Architecture
 - `node-bot` can call local Kokoro ONNX, Chatterbox Turbo, or Fish Speech TTS services to synthesize reply audio.
 - The renderer records short audio chunks in the browser, converts them to WAV, and uses the local backend for transcription and replies.
 
+Development prerequisites
+- Use Node.js 22.12 or newer to install and run `windows-launcher` development
+  and packaging commands. Electron includes its own runtime in packaged builds.
+- The separately supervised `node-bot` backend remains compatible with Node 18
+  or newer.
+
 Project goal
 - This repository is for a local AI assistant running on your own machine.
 - The current implementation focuses on the core voice loop: listen, transcribe, generate a reply, and speak it back.
 
 1) Install prerequisites on Windows
    - Windows 11
-   - Node.js LTS from https://nodejs.org
+   - Node.js 22.12 or newer from https://nodejs.org
    - Git for Windows
    - `ffmpeg` on `PATH` if you want server-side audio conversion fallback
    - A Windows build of `whisper.cpp`

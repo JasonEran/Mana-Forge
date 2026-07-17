@@ -1,29 +1,19 @@
-const { ipcRenderer } = require("electron");
-const fs = require("fs");
-const path = require("path");
-const { createLive2dAvatar } = require("./live2d-avatar");
+const avatarBridge = window.manaAvatar;
+const { createLive2dAvatar } = window.ManaLive2dAvatar;
 
 const avatar = document.getElementById("avatar");
 const live2dCanvas = document.getElementById("live2d");
-const assetRoot = path.join(__dirname, "..", "assets", "avatar");
 const states = {
-  idle: resolveAvatarAsset("idle"),
-  talking: resolveAvatarAsset("talking"),
-  excited: resolveAvatarAsset("talking"),
-  angry: resolveAvatarAsset("talking"),
+  idle: "../assets/avatar/idle.png",
+  talking: "../assets/avatar/talking.png",
+  excited: "../assets/avatar/talking.png",
+  angry: "../assets/avatar/talking.png",
+  sad: "../assets/avatar/talking.png",
+  disgusted: "../assets/avatar/talking.png",
 };
 
 let live2dAvatar = null;
 let currentState = "idle";
-
-function resolveAvatarAsset(name) {
-  const pngPath = path.join(assetRoot, `${name}.png`);
-  if (fs.existsSync(pngPath)) {
-    return `../assets/avatar/${name}.png`;
-  }
-
-  return `../assets/avatar/${name}.svg`;
-}
 
 function setAvatarState(state) {
   const nextState = states[state] ? state : "idle";
@@ -35,12 +25,12 @@ function setAvatarState(state) {
   }
 }
 
-ipcRenderer.on("avatar:state", (event, state) => {
+avatarBridge.onState((state) => {
   setAvatarState(state);
 });
 
 // Speech amplitude from the main window (0..1-ish RMS) drives the mouth.
-ipcRenderer.on("avatar:mouth", (event, rms) => {
+avatarBridge.onMouth((rms) => {
   if (live2dAvatar) {
     live2dAvatar.setMouthTarget(rms);
   }
@@ -48,11 +38,16 @@ ipcRenderer.on("avatar:mouth", (event, rms) => {
 
 setAvatarState("idle");
 
-createLive2dAvatar({
-  canvas: live2dCanvas,
-  width: window.innerWidth,
-  height: window.innerHeight,
-})
+avatarBridge
+  .getBootstrap()
+  .then((bootstrap) =>
+    createLive2dAvatar({
+      canvas: live2dCanvas,
+      width: window.innerWidth,
+      height: window.innerHeight,
+      bootstrap,
+    }),
+  )
   .then((instance) => {
     if (instance) {
       live2dAvatar = instance;

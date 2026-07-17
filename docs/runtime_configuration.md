@@ -87,9 +87,10 @@ passcode-derived signed session.
 
 `MANA_CORS_ALLOWED_ORIGINS` is a comma-separated list of exact HTTP or HTTPS
 origins. Wildcards, paths, credentials, queries, and fragments are rejected.
-The supported Electron file renderer origins (`file://` and `null`) are included
-for the current launcher migration. Same-origin `/mobile/app/` deployments do
-not need an additional CORS origin.
+The supported Electron renderer origin (`mana-app://app`) is included by
+default. Arbitrary `file://` documents and opaque `null` origins are not
+trusted. Same-origin `/mobile/app/` deployments do not need an additional CORS
+origin.
 
 Direct LAN mode uses plain HTTP and does not protect bearer tokens from network
 observers. Prefer an authenticated TLS tunnel and keep host firewall rules

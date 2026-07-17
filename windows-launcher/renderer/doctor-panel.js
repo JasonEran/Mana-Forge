@@ -1,3 +1,4 @@
+(() => {
 function normalizeDoctorStatus(status) {
   return ["pass", "warn", "fail"].includes(status) ? status : "warn";
 }
@@ -27,7 +28,15 @@ function formatDoctorPanel(result = {}) {
   };
 }
 
-module.exports = {
+const doctorPanelApi = {
   formatDoctorPanel,
   statusClassForDoctorCheck,
 };
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = doctorPanelApi;
+}
+if (typeof window !== "undefined") {
+  window.ManaDoctorPanel = Object.freeze(doctorPanelApi);
+}
+})();

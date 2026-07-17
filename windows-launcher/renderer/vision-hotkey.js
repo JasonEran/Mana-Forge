@@ -1,3 +1,4 @@
+(() => {
 // Shared logic for the global "look at my screen" hotkey. Kept DOM-free so
 // the launcher tests can cover it directly.
 
@@ -27,8 +28,16 @@ async function extractReplyErrorDetail(response) {
   }
 }
 
-module.exports = {
+const visionHotkeyApi = {
   DEFAULT_VISION_HOTKEY_PROMPT,
   describeVisionHotkeyError,
   extractReplyErrorDetail,
 };
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = visionHotkeyApi;
+}
+if (typeof window !== "undefined") {
+  window.ManaVisionHotkey = Object.freeze(visionHotkeyApi);
+}
+})();
