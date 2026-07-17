@@ -29,13 +29,21 @@ function assertLocalAiPolicy(env = process.env, options = {}) {
 function buildZedAgentServerConfig(options = {}) {
   const repoRoot = options.repoRoot || path.resolve(__dirname, "..");
   const nodeCommand = options.nodeCommand || "node";
+  const pathApi = /^[a-z]:[\\/]|^\\\\/i.test(repoRoot)
+    ? path.win32
+    : repoRoot.startsWith("/")
+      ? path.posix
+      : path;
 
   return {
     agent_servers: {
       mana: {
         type: "custom",
         command: nodeCommand,
-        args: [path.join(repoRoot, "node-bot", "mana-acp-agent.js"), "--acp"],
+        args: [
+          pathApi.join(repoRoot, "node-bot", "mana-acp-agent.js"),
+          "--acp",
+        ],
         env: {
           MANA_ALLOW_REMOTE_AI: "0",
           MANA_DEFAULT_EDITOR: "zed",
