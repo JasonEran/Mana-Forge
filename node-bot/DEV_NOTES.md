@@ -11,7 +11,10 @@ Development helper notes
 - Use the helper to set conservative defaults and avoid heavy model runs during development:
   pwsh .\node-bot\scripts\setup-dev.ps1 -Passcode 2468 -AdminToken "your-admin-token"
 
-- This sets SKIP_HEAVY_MODEL_TESTS=1 and disables advanced llama flags in the current shell. It does not persist across sessions; to persist, use the printed `setx` commands from the generator.
+- This disables advanced llama flags in the current shell. It does not persist
+  across sessions; to persist, use the printed `setx` commands from the
+  generator. Run `npm run test:core` for the representative developer loop or
+  `npm run test:full` before opening a pull request.
 
 3) Check retriever health
 - If the Doctor reports the retriever is unreachable, run:

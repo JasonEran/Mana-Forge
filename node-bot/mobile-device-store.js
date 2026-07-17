@@ -2,11 +2,11 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const DATA_DIR = path.join(__dirname, 'data');
-const FILE_PATH = path.join(DATA_DIR, 'mobile-devices.json');
+const DEFAULT_DATA_DIR = path.join(__dirname, 'data');
 
-function ensureDataDir() {
-  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+function defaultFilePath() {
+  const dataDir = process.env.MOBILE_MEMORY_DIR || DEFAULT_DATA_DIR;
+  return path.join(dataDir, 'mobile-devices.json');
 }
 
 function sha256Hex(text) {
@@ -14,9 +14,9 @@ function sha256Hex(text) {
 }
 
 class MobileDeviceStore {
-  constructor(filePath = FILE_PATH) {
+  constructor(filePath = defaultFilePath()) {
     this.filePath = filePath;
-    ensureDataDir();
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
     this._load();
     // in-memory pairing codes: code -> { expiresAt, used }
     this._codes = new Map();
@@ -128,5 +128,6 @@ class MobileDeviceStore {
 
 module.exports = {
   MobileDeviceStore,
+  defaultFilePath,
   sha256Hex,
 };

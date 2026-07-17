@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "profiles": {
+    "ciLifecycle": {
+      "description": "Model-free Windows PR smoke using one supervisor-owned backend.",
+      "limits": {
+        "ownedProcessCount": 1,
+        "backendRssMb": 512,
+        "coldStartMs": 30000,
+        "healthLatencyMs": 2000,
+        "localRequestLatencyMs": 5000,
+        "packageAsarMiB": 150
+      }
+    },
+    "coreRelease": {
+      "description": "Clean Windows Core profile with Electron, backend, Whisper, llama.cpp, and Kokoro.",
+      "limits": {
+        "processCount": 12,
+        "idleRamMb": 4096,
+        "idleVramMb": 6144,
+        "coldStartMs": 180000,
+        "warmTextLatencyMs": 30000,
+        "sttLatencyMs": 15000,
+        "ttsLatencyMs": 15000
+      }
+    }
+  }
+}

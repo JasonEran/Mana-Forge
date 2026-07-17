@@ -1,37 +1,146 @@
-name: CI
+name: Quality gates
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  fast-node-tests:
-    name: Fast Node tests (unit + pairing smoke)
+  pull-request-contract:
+    name: Pull request contract
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        uses: actions/checkout@v5
+
+      - name: Require issue, validation, security, and rollback evidence
+        run: node scripts/check-pr-contract.js
+
+  backend-full:
+    name: Backend full suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v5
         with:
-          node-version: 18.18.0
+          node-version: 22.12.0
+          cache: npm
+          cache-dependency-path: node-bot/package-lock.json
 
-      - name: Install dependencies for node-bot
-        working-directory: ./node-bot
-        run: |
-          npm ci --prefer-offline --no-audit --progress=false
+      - name: Install backend dependencies
+        working-directory: node-bot
+        run: npm ci --no-audit --progress=false
 
-      - name: Run fast tests
-        working-directory: ./node-bot
+      - name: Run complete backend suite
+        working-directory: node-bot
+        run: npm run test:full
+
+      - name: Audit backend runtime dependencies
+        working-directory: node-bot
+        run: npm audit --omit=dev --audit-level=high
+
+  launcher:
+    name: Launcher suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22.12.0
+          cache: npm
+          cache-dependency-path: windows-launcher/package-lock.json
+
+      - name: Install launcher dependencies
+        working-directory: windows-launcher
+        run: npm ci --no-audit --progress=false
+
+      - name: Run launcher suite
+        working-directory: windows-launcher
+        run: npm test
+
+      - name: Audit complete launcher dependency tree
+        working-directory: windows-launcher
+        run: npm audit --audit-level=high
+
+  windows-release:
+    name: Windows lifecycle and package
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      MANA_EVIDENCE_DIR: ${{ github.workspace }}/quality-evidence
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22.12.0
+          cache: npm
+          cache-dependency-path: |
+            node-bot/package-lock.json
+            windows-launcher/package-lock.json
+
+      - name: Create evidence directory
+        shell: pwsh
+        run: New-Item -ItemType Directory -Force -Path $env:MANA_EVIDENCE_DIR | Out-Null
+
+      - name: Install backend dependencies
+        working-directory: node-bot
+        run: npm ci --no-audit --progress=false
+
+      - name: Install launcher dependencies
+        working-directory: windows-launcher
+        run: npm ci --no-audit --progress=false
+
+      - name: Run real Windows backend lifecycle smoke
+        shell: pwsh
         env:
-          SKIP_HEAVY_MODEL_TESTS: 1
-        run: |
-          echo "Running fast node tests (skipping heavy model tests)"
-          npm test
+          MANA_EVIDENCE_FILE: ${{ env.MANA_EVIDENCE_DIR }}/lifecycle.json
+        run: node scripts/windows-lifecycle-smoke.js
 
-  # Packaging is handled in Heavy CI (opt-in). Keep this CI minimal to provide fast feedback.
+      - name: Verify real Electron renderer isolation
+        working-directory: windows-launcher
+        run: npm run test:electron-security
+
+      - name: Build unpacked canonical launcher
+        working-directory: windows-launcher
+        run: npm run pack
+
+      - name: Verify packaged boundary and model exclusion
+        working-directory: windows-launcher
+        env:
+          MANA_EVIDENCE_FILE: ${{ env.MANA_EVIDENCE_DIR }}/package.json
+        run: npm run verify:package
+
+      - name: Enforce resource budgets
+        shell: pwsh
+        run: node scripts/check-quality-budgets.js --lifecycle "$env:MANA_EVIDENCE_DIR\lifecycle.json" --package "$env:MANA_EVIDENCE_DIR\package.json"
+
+      - name: Upload quality evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-quality-evidence
+          path: quality-evidence
+          if-no-files-found: error
+          retention-days: 30
