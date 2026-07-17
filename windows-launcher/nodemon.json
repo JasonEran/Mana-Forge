@@ -2,6 +2,8 @@
   "watch": [
     "main.js",
     "preload.js",
+    "avatar-preload.js",
+    "electron-security.js",
     "renderer",
     "avatar",
     "assets/avatar",

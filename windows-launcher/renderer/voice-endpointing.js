@@ -1,3 +1,4 @@
+(() => {
 // Decides when a voice recording should stop, based on live RMS readings
 // rather than a fixed duration — so a long sentence isn't cut off mid-way,
 // and Mana only treats speech as "done" once the user has actually paused.
@@ -30,10 +31,18 @@ function shouldStopRecording({
   return null;
 }
 
-module.exports = {
+const voiceEndpointingApi = {
   DEFAULT_GAMING_MAX_WAIT_FOR_SPEECH_MS,
   DEFAULT_MAX_UTTERANCE_MS,
   DEFAULT_MAX_WAIT_FOR_SPEECH_MS,
   DEFAULT_SILENCE_BUFFER_MS,
   shouldStopRecording,
 };
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = voiceEndpointingApi;
+}
+if (typeof window !== "undefined") {
+  window.ManaVoiceEndpointing = Object.freeze(voiceEndpointingApi);
+}
+})();

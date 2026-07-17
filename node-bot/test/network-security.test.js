@@ -50,7 +50,7 @@ test("network security defaults to a loopback-only backend", () => {
   assert.equal(config.host, "127.0.0.1");
   assert.equal(config.remoteAccessEnabled, false);
   assert.equal(config.lanBindingEnabled, false);
-  assert.deepEqual(config.allowedOrigins, ["file://", "null"]);
+  assert.deepEqual(config.allowedOrigins, ["mana-app://app"]);
 });
 
 test("remote binding requires an explicit flag and configured mobile auth", () => {
@@ -90,8 +90,7 @@ test("remote binding requires an explicit flag and configured mobile auth", () =
 
   assert.equal(config.remoteAccessEnabled, true);
   assert.deepEqual(config.allowedOrigins, [
-    "file://",
-    "null",
+    "mana-app://app",
     "https://phone.example.test",
     "http://127.0.0.1:4173",
   ]);
@@ -266,7 +265,7 @@ test("CORS returns headers only for trusted exact origins", async () => {
       headers: { Origin: "https://evil.example.test" },
     });
     const electron = await fetch(`${baseUrl}/health`, {
-      headers: { Origin: "file://" },
+      headers: { Origin: "mana-app://app" },
     });
 
     assert.equal(
@@ -279,7 +278,10 @@ test("CORS returns headers only for trusted exact origins", async () => {
       error: "origin_not_allowed",
     });
     assert.equal(untrusted.headers.get("access-control-allow-origin"), null);
-    assert.equal(electron.headers.get("access-control-allow-origin"), "file://");
+    assert.equal(
+      electron.headers.get("access-control-allow-origin"),
+      "mana-app://app",
+    );
     assert.match(trusted.headers.get("vary") || "", /Origin/);
   });
 });

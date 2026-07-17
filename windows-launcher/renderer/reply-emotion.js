@@ -1,3 +1,4 @@
+(() => {
 // Decides which avatar state a reply should trigger. Mana places kaomojis
 // and emoji in nearly every reply and picks them deliberately, so they're
 // the clearest emotional signal she gives — check those before falling back
@@ -141,8 +142,16 @@ function detectReplyEmotion(text) {
   return "talking";
 }
 
-module.exports = {
+const replyEmotionApi = {
   detectReplyEmotion,
   detectTextMood,
   moodToState,
 };
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = replyEmotionApi;
+}
+if (typeof window !== "undefined") {
+  window.ManaReplyEmotion = Object.freeze(replyEmotionApi);
+}
+})();

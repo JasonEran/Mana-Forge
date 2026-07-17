@@ -1,3 +1,4 @@
+(() => {
 // Pure helpers for the Live2D avatar window. Kept DOM- and PIXI-free so the
 // launcher tests can cover them directly.
 
@@ -412,7 +413,7 @@ function nextZoomLevel(current) {
   return ZOOM_LEVELS[(index + 1 + ZOOM_LEVELS.length) % ZOOM_LEVELS.length];
 }
 
-module.exports = {
+const live2dLogicApi = {
   DEFAULT_BROW_PARAM_IDS,
   DEFAULT_EYE_BLINK_PARAM_IDS,
   DEFAULT_EYE_OPEN_SCALE,
@@ -442,3 +443,11 @@ module.exports = {
   rmsToMouth,
   smoothMouthValue,
 };
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = live2dLogicApi;
+}
+if (typeof window !== "undefined") {
+  window.ManaLive2dLogic = Object.freeze(live2dLogicApi);
+}
+})();

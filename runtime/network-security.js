@@ -1,7 +1,7 @@
 const net = require("node:net");
 
 const DEFAULT_BACKEND_HOST = "127.0.0.1";
-const DEFAULT_ALLOWED_ORIGINS = Object.freeze(["file://", "null"]);
+const DEFAULT_ALLOWED_ORIGINS = Object.freeze(["mana-app://app"]);
 
 function parseBooleanFlag(value, name) {
   const normalized = String(value || "").trim().toLowerCase();

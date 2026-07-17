@@ -1,16 +1,13 @@
+(() => {
 // Shared Live2D avatar driver used by both the overlay window and the main
 // Mana chat window. Expects the page to have loaded (in order):
 //   assets/live2d/live2dcubismcore.min.js
 //   node_modules/pixi.js/dist/browser/pixi.min.js
 //   node_modules/pixi-live2d-display/dist/cubism4.min.js
-const fs = require("fs");
-const path = require("path");
-const { pathToFileURL } = require("url");
 const {
   augmentModelSettings,
   computeZoomFraming,
   expressionForState,
-  findModelJson,
   fitModelToView,
   mergeStateMappings,
   motionGroupForState,
@@ -21,9 +18,7 @@ const {
   parseStateMappingOverrides,
   rmsToMouth,
   smoothMouthValue,
-} = require("./live2d-logic");
-
-const MODEL_DIR = path.join(__dirname, "model");
+} = window.ManaLive2dLogic;
 
 function live2dRuntimeAvailable() {
   return (
@@ -34,33 +29,41 @@ function live2dRuntimeAvailable() {
   );
 }
 
-function findConfiguredModelJson(env = process.env) {
-  const explicit = env.MANA_LIVE2D_MODEL || "";
-  if (explicit) {
-    return fs.existsSync(explicit) ? explicit : null;
-  }
-  return findModelJson(MODEL_DIR, fs);
+function loadScript(source) {
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[data-mana-runtime="${source}"]`);
+    if (existing) {
+      if (existing.dataset.loaded === "1") resolve();
+      else existing.addEventListener("load", resolve, { once: true });
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = source;
+    script.dataset.manaRuntime = source;
+    script.addEventListener(
+      "load",
+      () => {
+        script.dataset.loaded = "1";
+        resolve();
+      },
+      { once: true },
+    );
+    script.addEventListener(
+      "error",
+      () => reject(new Error(`Failed to load ${source}`)),
+      { once: true },
+    );
+    document.head.appendChild(script);
+  });
 }
 
-function loadAvatarConfig(modelJson) {
-  const candidates = [
-    path.join(path.dirname(modelJson), "mana-avatar.json"),
-    path.join(MODEL_DIR, "mana-avatar.json"),
-  ];
-  for (const candidate of candidates) {
-    try {
-      if (fs.existsSync(candidate)) {
-        const config = normalizeAvatarConfig(
-          JSON.parse(fs.readFileSync(candidate, "utf8")),
-        );
-        console.log(`Loaded avatar config: ${candidate}`);
-        return config;
-      }
-    } catch (error) {
-      console.warn(`Ignoring invalid avatar config ${candidate}:`, error);
-    }
-  }
-  return normalizeAvatarConfig(null);
+async function ensureLive2dRuntime(bootstrap) {
+  if (!bootstrap?.runtimeAvailable) return false;
+  if (live2dRuntimeAvailable()) return true;
+  await loadScript("../assets/live2d/live2dcubismcore.min.js");
+  await loadScript("../node_modules/pixi.js/dist/browser/pixi.min.js");
+  await loadScript("../node_modules/pixi-live2d-display/dist/cubism4.min.js");
+  return live2dRuntimeAvailable();
 }
 
 // Creates a Live2D avatar bound to `canvas`. Returns null when the runtime
@@ -68,24 +71,18 @@ function loadAvatarConfig(modelJson) {
 //   { setState(state), setMouthTarget(rms), setZoom(level), cycleZoom(),
 //     getZoom(), stop() }
 // Zoom levels are "full" | "waist" | "bust" (see live2d-logic's ZOOM_LEVELS).
-async function createLive2dAvatar({ canvas, width, height, env = process.env }) {
-  if (!live2dRuntimeAvailable()) {
+async function createLive2dAvatar({ canvas, width, height, bootstrap }) {
+  if (!bootstrap?.available) {
+    console.log("No configured Live2D model is available; using local static avatar");
+    return null;
+  }
+  if (!(await ensureLive2dRuntime(bootstrap))) {
     console.log("Live2D runtime not available; using local static avatar");
     return null;
   }
 
-  const modelJson = findConfiguredModelJson(env);
-  if (!modelJson) {
-    console.log(
-      `No Live2D model found (looked in ${MODEL_DIR} and MANA_LIVE2D_MODEL); using local static avatar`,
-    );
-    return null;
-  }
-
-  // Loaded first (needs only the model path) so every tuning knob below can
-  // fall back to it: env var (quick experiments) > mana-avatar.json (travels
-  // with the model, so a swap carries its own tuning) > hardcoded default.
-  const config = loadAvatarConfig(modelJson);
+  const env = bootstrap.tuning || {};
+  const config = normalizeAvatarConfig(bootstrap.avatarConfig);
 
   const mouthParam = env.MANA_LIVE2D_MOUTH_PARAM || config.mouthParam;
   // Lip-sync sensitivity. rmsToMouth's baseline gain is 9, which kept the
@@ -142,16 +139,14 @@ async function createLive2dAvatar({ canvas, width, height, env = process.env }) 
     env.MANA_LIVE2D_BROW_PARAMS,
     config.browParams,
   );
-  const modelDir = path.dirname(modelJson);
-  const rawSettings = JSON.parse(fs.readFileSync(modelJson, "utf8"));
-  const dirFiles = fs.readdirSync(modelDir);
+  const rawSettings = JSON.parse(JSON.stringify(bootstrap.settings));
   const settings = augmentModelSettings(
     rawSettings,
-    dirFiles.filter((name) => name.toLowerCase().endsWith(".motion3.json")),
-    dirFiles.filter((name) => name.toLowerCase().endsWith(".exp3.json")),
+    bootstrap.motionFiles || [],
+    bootstrap.expressionFiles || [],
     eyeBlinkParamIds,
   );
-  settings.url = pathToFileURL(modelJson).href;
+  settings.url = bootstrap.modelUrl;
 
   const model = await PIXI.live2d.Live2DModel.from(settings, {
     autoInteract: false,
@@ -395,7 +390,7 @@ async function createLive2dAvatar({ canvas, width, height, env = process.env }) 
     scheduleNext();
   });
 
-  console.log(`Live2D avatar loaded: ${modelJson}`);
+  console.log(`Live2D avatar loaded: ${bootstrap.modelUrl}`);
   playStateMotion("idle");
   applyStateExpression("idle");
 
@@ -456,4 +451,9 @@ async function createLive2dAvatar({ canvas, width, height, env = process.env }) 
   };
 }
 
-module.exports = { createLive2dAvatar, live2dRuntimeAvailable };
+window.ManaLive2dAvatar = Object.freeze({
+  createLive2dAvatar,
+  ensureLive2dRuntime,
+  live2dRuntimeAvailable,
+});
+})();

@@ -12,22 +12,22 @@ const doctorSummaryEl = document.getElementById("doctorSummary");
 const doctorChecksEl = document.getElementById("doctorChecks");
 const modelModeControlsEl = document.getElementById("modelModeControls");
 const modelStatusEl = document.getElementById("modelStatus");
-const { ipcRenderer } = require("electron");
-const { formatDoctorPanel } = require("./doctor-panel");
+const desktop = window.manaDesktop;
+const { formatDoctorPanel } = window.ManaDoctorPanel;
 const {
   DEFAULT_VISION_HOTKEY_PROMPT,
   describeVisionHotkeyError,
   extractReplyErrorDetail,
-} = require("./vision-hotkey");
-const { createLive2dAvatar } = require("../avatar/live2d-avatar");
+} = window.ManaVisionHotkey;
+const { createLive2dAvatar } = window.ManaLive2dAvatar;
 const {
   DEFAULT_GAMING_MAX_WAIT_FOR_SPEECH_MS,
   DEFAULT_MAX_UTTERANCE_MS,
   DEFAULT_MAX_WAIT_FOR_SPEECH_MS,
   DEFAULT_SILENCE_BUFFER_MS,
   shouldStopRecording,
-} = require("./voice-endpointing");
-const { detectReplyEmotion } = require("./reply-emotion");
+} = window.ManaVoiceEndpointing;
+const { detectReplyEmotion } = window.ManaReplyEmotion;
 
 const chatLogEl = document.getElementById("chatLog");
 const chatInputEl = document.getElementById("chatInput");
@@ -54,9 +54,7 @@ const GAMING_DEEP_IDLE_PAUSE_MS = 3200;
 // treating the sentence as finished, rather than cutting speech off at a
 // fixed duration. Override via MANA_SILENCE_BUFFER_MS if 2.2s feels too
 // short/long for how you talk.
-const SILENCE_BUFFER_MS = Number(
-  process.env.MANA_SILENCE_BUFFER_MS || DEFAULT_SILENCE_BUFFER_MS,
-);
+let silenceBufferMs = DEFAULT_SILENCE_BUFFER_MS;
 const MAX_WAIT_FOR_SPEECH_MS = DEFAULT_MAX_WAIT_FOR_SPEECH_MS;
 const GAMING_MAX_WAIT_FOR_SPEECH_MS = DEFAULT_GAMING_MAX_WAIT_FOR_SPEECH_MS;
 const MAX_UTTERANCE_MS = DEFAULT_MAX_UTTERANCE_MS;
@@ -147,14 +145,16 @@ function updateZoomButtonLabel(level) {
   avatarZoomBtnEl.title = ZOOM_BUTTON_TITLES[level] || ZOOM_BUTTON_TITLES.full;
 }
 
-function initWindowAvatar() {
+async function initWindowAvatar() {
   if (!manaCanvasEl) {
     return;
   }
+  const bootstrap = await desktop.getAvatarBootstrap();
   createLive2dAvatar({
     canvas: manaCanvasEl,
     width: manaCanvasEl.clientWidth || 320,
     height: manaCanvasEl.clientHeight || 480,
+    bootstrap,
   })
     .then((instance) => {
       windowAvatar = instance;
@@ -189,7 +189,7 @@ function appendChatMessage(role, text) {
 }
 
 function setAvatarState(state) {
-  ipcRenderer.send("avatar:set-state", state);
+  desktop.setAvatarState(state);
   if (windowAvatar) {
     windowAvatar.setState(state);
   }
@@ -205,7 +205,7 @@ function stopLipSync() {
     cancelAnimationFrame(lipSyncRafId);
     lipSyncRafId = null;
   }
-  ipcRenderer.send("avatar:set-mouth", 0);
+  desktop.setAvatarMouth(0);
   if (windowAvatar) {
     windowAvatar.setMouthTarget(0);
   }
@@ -250,7 +250,7 @@ function startLipSync(audioElement) {
           sum += samples[i] * samples[i];
         }
         const rms = Math.sqrt(sum / samples.length);
-        ipcRenderer.send("avatar:set-mouth", rms);
+        desktop.setAvatarMouth(rms);
         if (windowAvatar) {
           windowAvatar.setMouthTarget(rms);
         }
@@ -265,8 +265,9 @@ function startLipSync(audioElement) {
 }
 
 openWebUIButton.addEventListener("click", () => {
-  const { shell } = require("electron");
-  shell.openExternal("http://localhost:7860");
+  desktop.openLocalWebUi().catch((error) => {
+    console.warn("Failed to open the local web UI:", error);
+  });
 });
 
 async function checkServices() {
@@ -642,7 +643,7 @@ async function ensureMediaStream() {
 // consistent whether it's judged live or after the fact.
 async function recordUntilSilence({
   maxWaitForSpeechMs = MAX_WAIT_FOR_SPEECH_MS,
-  silenceBufferMs = SILENCE_BUFFER_MS,
+  silenceBufferMs: requestedSilenceBufferMs = silenceBufferMs,
   maxDurationMs = MAX_UTTERANCE_MS,
 } = {}) {
   await ensureMediaStream();
@@ -715,7 +716,7 @@ async function recordUntilSilence({
         elapsedMs: now - startedAt,
         msSinceLastSpeech: hasHeardSpeech ? now - lastSpeechAt : 0,
         maxWaitForSpeechMs,
-        silenceBufferMs,
+        silenceBufferMs: requestedSilenceBufferMs,
         maxDurationMs,
       });
       if (stopReason && recorder.state !== "inactive") {
@@ -1013,7 +1014,7 @@ async function readScreenContext(text, gamingModeActive) {
 
   try {
     statusEl.textContent = "Mana is reading the screen...";
-    const image = await ipcRenderer.invoke("screen:capture-primary");
+    const image = await desktop.capturePrimaryScreen();
     const response = await fetch("http://127.0.0.1:5005/screen/read", {
       method: "POST",
       headers: {
@@ -1073,7 +1074,7 @@ async function handleVisionHotkey() {
     transcriptEl.textContent = "You: (vision hotkey)";
     appendChatMessage("user", "(asked Mana to look at the screen)");
 
-    const image = await ipcRenderer.invoke("screen:capture-primary");
+    const image = await desktop.capturePrimaryScreen();
     const response = await fetch("http://127.0.0.1:5005/reply", {
       method: "POST",
       headers: {
@@ -1147,7 +1148,7 @@ chatInputEl?.addEventListener("keydown", (event) => {
   }
 });
 
-ipcRenderer.on("vision:hotkey", () => {
+desktop.onVisionHotkey(() => {
   handleVisionHotkey();
 });
 
@@ -1308,11 +1309,23 @@ async function startListeningOnLaunch() {
   }
 }
 
-startListeningOnLaunch();
-refreshGamingStatus(true);
-initWindowAvatar();
-refreshPerfStatus();
-runDoctorChecksFromLauncher();
+async function initializeRenderer() {
+  try {
+    const config = await desktop.getRendererConfig();
+    silenceBufferMs = Number(config.silenceBufferMs) || DEFAULT_SILENCE_BUFFER_MS;
+  } catch (error) {
+    console.warn("Failed to load renderer configuration; using defaults:", error);
+  }
+  await initWindowAvatar();
+  startListeningOnLaunch();
+  refreshGamingStatus(true);
+  refreshPerfStatus();
+  runDoctorChecksFromLauncher();
+}
+
+initializeRenderer().catch((error) => {
+  console.error("Renderer initialization failed:", error);
+});
 
 // helper: convert AudioBuffer to WAV bytes (16-bit PCM)
 function audioBufferToWav(buffer, opt) {

@@ -3,11 +3,48 @@ const {
   createLauncherServicePlan,
 } = require("../runtime/services/launcher");
 const { RuntimeSupervisor } = require("../runtime/supervisor");
+const {
+  IPC_CHANNELS,
+  LOCAL_WEB_UI_URL,
+  isAllowedExternalUrl,
+  isAllowedMediaPermission,
+  isExpectedDocumentUrl,
+  isTrustedSender,
+  normalizeAvatarState,
+  normalizeMouthRms,
+  normalizeSilenceBufferMs,
+} = require("./electron-security");
+const {
+  loadAvatarBootstrap,
+  resolveAvatarModel,
+} = require("./avatar/model-loader");
+const {
+  APP_ORIGIN,
+  installLocalProtocols,
+  registerPrivilegedSchemes,
+} = require("./local-protocol");
 
 loadManaConfig();
 
-const { app, BrowserWindow, Menu, Tray, desktopCapturer, dialog, globalShortcut, ipcMain, nativeImage, screen } = require("electron");
+const {
+  app,
+  BrowserWindow,
+  Menu,
+  Tray,
+  desktopCapturer,
+  dialog,
+  globalShortcut,
+  ipcMain,
+  net,
+  nativeImage,
+  protocol,
+  screen,
+  session,
+  shell,
+} = require("electron");
 const path = require("path");
+
+registerPrivilegedSchemes(protocol);
 
 let mainWindow;
 let avatarWindow;
@@ -26,6 +63,8 @@ const VISION_HOTKEY = process.env.MANA_VISION_HOTKEY || "Control+Alt+M";
 // Global hotkey that toggles the Mana chat window; set to off to disable.
 const WINDOW_HOTKEY = process.env.MANA_WINDOW_HOTKEY || "Control+Alt+Space";
 const runtimeSupervisor = new RuntimeSupervisor();
+const MAIN_DOCUMENT_URL = `${APP_ORIGIN}/renderer/index.html`;
+const AVATAR_DOCUMENT_URL = `${APP_ORIGIN}/avatar/index.html`;
 
 const launcherServicePlan = createLauncherServicePlan({ repoRoot: ROOT_DIR });
 for (const descriptor of launcherServicePlan.descriptors) {
@@ -43,6 +82,16 @@ async function startWindowsServices() {
   }
 }
 
+function applyWindowSecurity(window, expectedUrl) {
+  window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+  window.webContents.on("will-navigate", (event, targetUrl) => {
+    if (!isExpectedDocumentUrl(targetUrl, expectedUrl)) event.preventDefault();
+  });
+  window.webContents.on("will-redirect", (event, targetUrl) => {
+    if (!isExpectedDocumentUrl(targetUrl, expectedUrl)) event.preventDefault();
+  });
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1020,
@@ -53,12 +102,14 @@ function createWindow() {
     show: !HIDE_MAIN_WINDOW_AFTER_STARTUP,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
-      nodeIntegration: true,
-      contextIsolation: false,
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true,
     },
   });
 
-  mainWindow.loadFile(path.join(__dirname, "renderer", "index.html"));
+  applyWindowSecurity(mainWindow, MAIN_DOCUMENT_URL);
+  mainWindow.loadURL(MAIN_DOCUMENT_URL);
   mainWindow.once("ready-to-show", () => {
     if (HIDE_MAIN_WINDOW_AFTER_STARTUP) {
       // Quick rundown: keep the mic/listening page alive, just hide the chat
@@ -177,14 +228,17 @@ function createAvatarWindow() {
     alwaysOnTop: true,
     backgroundColor: "#00000000",
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
+      preload: path.join(__dirname, "avatar-preload.js"),
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true,
     },
   });
 
+  applyWindowSecurity(avatarWindow, AVATAR_DOCUMENT_URL);
   avatarWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   avatarWindow.setAlwaysOnTop(true, AVATAR_TOP_LEVEL);
-  avatarWindow.loadFile(path.join(__dirname, "avatar", "index.html"));
+  avatarWindow.loadURL(AVATAR_DOCUMENT_URL);
   avatarWindow.once("ready-to-show", showAvatarWindow);
   avatarWindow.webContents.once("did-finish-load", showAvatarWindow);
   setTimeout(() => {
@@ -209,6 +263,39 @@ app.whenReady().then(() => {
     app.quit();
     return;
   }
+
+  installLocalProtocols({
+    protocol,
+    net,
+    appRoot: __dirname,
+    avatarRoot: () => resolveAvatarModel({ env: process.env }).modelDir,
+  });
+  session.defaultSession.setPermissionCheckHandler(
+    (webContents, permission, _requestingOrigin, details) =>
+      isAllowedMediaPermission(
+        webContents,
+        mainWindow?.webContents,
+        permission,
+        details,
+        MAIN_DOCUMENT_URL,
+      ),
+  );
+  session.defaultSession.setPermissionRequestHandler(
+    (webContents, permission, callback, details) => {
+      callback(
+        isAllowedMediaPermission(
+          webContents,
+          mainWindow?.webContents,
+          permission,
+          details,
+          MAIN_DOCUMENT_URL,
+        ),
+      );
+    },
+  );
+  app.on("web-contents-created", (_event, contents) => {
+    contents.setWindowOpenHandler(() => ({ action: "deny" }));
+  });
 
   startWindowsServices()
     .catch((e) => {
@@ -312,7 +399,7 @@ function registerVisionHotkey() {
     const registered = globalShortcut.register(VISION_HOTKEY, () => {
       // The renderer owns the capture/reply/TTS flow; just poke it.
       if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send("vision:hotkey");
+        mainWindow.webContents.send(IPC_CHANNELS.VISION_HOTKEY);
       }
     });
     if (registered) {
@@ -327,22 +414,70 @@ function registerVisionHotkey() {
   }
 }
 
-ipcMain.on("avatar:set-state", (event, state) => {
+ipcMain.on(IPC_CHANNELS.AVATAR_STATE, (event, state) => {
+  if (!isTrustedSender(event, mainWindow?.webContents, MAIN_DOCUMENT_URL)) return;
   if (!avatarWindow) {
     return;
   }
 
-  avatarWindow.webContents.send("avatar:state", state);
+  try {
+    avatarWindow.webContents.send(
+      IPC_CHANNELS.AVATAR_STATE_CHANGED,
+      normalizeAvatarState(state),
+    );
+  } catch (error) {
+    console.warn(`Rejected invalid avatar state: ${error.message}`);
+  }
 });
 // Relays speech amplitude from the control window to the avatar for lip sync.
-ipcMain.on("avatar:set-mouth", (event, rms) => {
+ipcMain.on(IPC_CHANNELS.AVATAR_MOUTH, (event, rms) => {
+  if (!isTrustedSender(event, mainWindow?.webContents, MAIN_DOCUMENT_URL)) return;
   if (!avatarWindow) {
     return;
   }
-
-  avatarWindow.webContents.send("avatar:mouth", rms);
+  try {
+    avatarWindow.webContents.send(
+      IPC_CHANNELS.AVATAR_MOUTH_CHANGED,
+      normalizeMouthRms(rms),
+    );
+  } catch (error) {
+    console.warn(`Rejected invalid mouth RMS: ${error.message}`);
+  }
 });
-ipcMain.handle("screen:capture-primary", async () => {
+ipcMain.handle(IPC_CHANNELS.RENDERER_CONFIG, async (event) => {
+  if (!isTrustedSender(event, mainWindow?.webContents, MAIN_DOCUMENT_URL)) {
+    throw new Error("Untrusted renderer configuration request.");
+  }
+  return {
+    silenceBufferMs: normalizeSilenceBufferMs(process.env.MANA_SILENCE_BUFFER_MS),
+  };
+});
+ipcMain.handle(IPC_CHANNELS.AVATAR_BOOTSTRAP, async (event) => {
+  const trustedMain = isTrustedSender(event, mainWindow?.webContents, MAIN_DOCUMENT_URL);
+  const trustedAvatar = isTrustedSender(
+    event,
+    avatarWindow?.webContents,
+    AVATAR_DOCUMENT_URL,
+  );
+  if (!trustedMain && !trustedAvatar) {
+    throw new Error("Untrusted avatar bootstrap request.");
+  }
+  return loadAvatarBootstrap({ env: process.env });
+});
+ipcMain.handle(IPC_CHANNELS.OPEN_LOCAL_WEB_UI, async (event) => {
+  if (!isTrustedSender(event, mainWindow?.webContents, MAIN_DOCUMENT_URL)) {
+    throw new Error("Untrusted external-link request.");
+  }
+  if (!isAllowedExternalUrl(LOCAL_WEB_UI_URL)) {
+    throw new Error("External URL is not allowed.");
+  }
+  await shell.openExternal(LOCAL_WEB_UI_URL);
+  return true;
+});
+ipcMain.handle(IPC_CHANNELS.SCREEN_CAPTURE_PRIMARY, async (event) => {
+  if (!isTrustedSender(event, mainWindow?.webContents, MAIN_DOCUMENT_URL)) {
+    throw new Error("Untrusted screen capture request.");
+  }
   const primaryDisplay = screen.getPrimaryDisplay();
   const sources = await desktopCapturer.getSources({
     types: ["screen"],
