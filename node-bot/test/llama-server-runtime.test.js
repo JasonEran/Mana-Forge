@@ -71,6 +71,18 @@ test("finds llama-server next to LLAMA_BIN when LLAMA_SERVER_BIN is unset", () =
   assert.equal(runtime.isEnabled(), true);
 });
 
+test("finds an extensionless llama-server next to a POSIX LLAMA_BIN", () => {
+  const runtime = createLlamaServerRuntime({
+    env: { LLAMA_BIN: "/opt/llama/llama-cli" },
+    fs: {
+      existsSync: (target) => target === "/opt/llama/llama-server",
+    },
+    registerExitHandlers: false,
+  });
+  assert.equal(runtime.findLlamaServerBin(), "/opt/llama/llama-server");
+  assert.equal(runtime.isEnabled(), true);
+});
+
 test("spawns llama-server once and reuses it for subsequent replies", async () => {
   const spawnCalls = [];
   let serverUp = false;

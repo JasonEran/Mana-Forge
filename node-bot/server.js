@@ -374,10 +374,9 @@ const acpMemoryStore = createAcpMemoryStore({
 let BACKGROUND_MEMORY_BLOCK = "";
 let BACKGROUND_MEMORY_LOCK = false;
 let BACKGROUND_MEMORY_META = { files: {} };
+const BACKGROUND_MEMORY_ROOT = acpMemoryStore.dataDir;
 const BACKGROUND_META_PATH = path.join(
-  __dirname,
-  "data",
-  "acp-memory",
+  BACKGROUND_MEMORY_ROOT,
   "background_meta.json",
 );
 
@@ -431,15 +430,11 @@ async function persistBackgroundMeta() {
 
 // Append an audit entry for background memory changes
 const BACKGROUND_AUDIT_PATH = path.join(
-  __dirname,
-  "data",
-  "acp-memory",
+  BACKGROUND_MEMORY_ROOT,
   "background_audit.jsonl",
 );
 const BACKGROUND_AUDIT_INDEX_PATH = path.join(
-  __dirname,
-  "data",
-  "acp-memory",
+  BACKGROUND_MEMORY_ROOT,
   "background_audit_index.json",
 );
 let BACKGROUND_AUDIT_INDEX = { entries: [], lastSize: 0 };
@@ -657,7 +652,7 @@ async function asyncLoadBackgroundMemory() {
   try {
     const sessionsDir =
       (acpMemoryStore && acpMemoryStore.sessionsDir) ||
-      path.join(__dirname, "data", "acp-memory", "sessions");
+      path.join(BACKGROUND_MEMORY_ROOT, "sessions");
     if (!fs.existsSync(sessionsDir)) {
       BACKGROUND_MEMORY_BLOCK = "";
       BACKGROUND_MEMORY_META = { files: {} };

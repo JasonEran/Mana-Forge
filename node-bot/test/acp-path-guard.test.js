@@ -7,6 +7,10 @@ const {
   parseAllowedPathList,
 } = require("../acp-path-guard");
 
+const fixtureRoot = path.resolve("acp-path-guard-fixtures");
+const workspace = path.join(fixtureRoot, "workspace");
+const externalRoot = path.join(fixtureRoot, "external");
+
 test("parseAllowedPathList splits Windows semicolon separated roots", () => {
   assert.deepEqual(
     parseAllowedPathList("C:\\ManaAI\\Mana;D:\\Shared", "win32"),
@@ -15,11 +19,9 @@ test("parseAllowedPathList splits Windows semicolon separated roots", () => {
 });
 
 test("path guard allows active workspace files", () => {
-  const workspace = path.join("C:", "ManaAI", "Mana");
   const guard = createAcpPathGuard({
     workspacePath: workspace,
     allowedPaths: "",
-    platform: "win32",
   });
 
   const checked = guard.resolveAllowedPath("node-bot/server.js");
@@ -34,23 +36,20 @@ test("path guard allows active workspace files", () => {
 
 test("path guard rejects outside paths by default", () => {
   const guard = createAcpPathGuard({
-    workspacePath: path.join("C:", "ManaAI", "Mana"),
+    workspacePath: workspace,
     allowedPaths: "",
-    platform: "win32",
   });
 
   assert.throws(
-    () => guard.resolveAllowedPath(path.join("D:", "Shared", "note.txt")),
+    () => guard.resolveAllowedPath(path.join(externalRoot, "note.txt")),
     /path is outside the active workspace and allowed roots/i,
   );
 });
 
 test("path guard allows outside paths under configured roots", () => {
-  const externalRoot = path.join("D:", "Shared");
   const guard = createAcpPathGuard({
-    workspacePath: path.join("C:", "ManaAI", "Mana"),
+    workspacePath: workspace,
     allowedPaths: externalRoot,
-    platform: "win32",
   });
 
   const checked = guard.resolveAllowedPath(path.join(externalRoot, "note.txt"));
@@ -61,14 +60,14 @@ test("path guard allows outside paths under configured roots", () => {
 });
 
 test("path guard rejects sibling paths with a shared prefix", () => {
+  const allowedRoot = path.join(fixtureRoot, "tools");
   const guard = createAcpPathGuard({
-    workspacePath: path.join("C:", "ManaAI", "Mana"),
-    allowedPaths: path.join("C:", "ManaAI", "ManaTools"),
-    platform: "win32",
+    workspacePath: workspace,
+    allowedPaths: allowedRoot,
   });
 
   assert.throws(
-    () => guard.resolveAllowedPath(path.join("C:", "ManaAI", "ManaTools2", "x.js")),
+    () => guard.resolveAllowedPath(path.join(fixtureRoot, "tools2", "x.js")),
     /path is outside the active workspace and allowed roots/i,
   );
 });

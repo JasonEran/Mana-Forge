@@ -1,5 +1,6 @@
 const assert = require("node:assert/strict");
 const { EventEmitter } = require("node:events");
+const path = require("node:path");
 const test = require("node:test");
 
 const {
@@ -11,6 +12,8 @@ const {
   getAgentLimits,
   isAutonomousEnabled,
 } = require("../mana-acp-agent");
+
+const allowedRoot = path.resolve("mana-acp-agent-fixtures", "shared");
 
 test("buildZedAgentServerConfig creates a local-only Zed agent server snippet", () => {
   const config = buildZedAgentServerConfig({
@@ -31,6 +34,18 @@ test("buildZedAgentServerConfig creates a local-only Zed agent server snippet", 
       },
     },
   });
+});
+
+test("buildZedAgentServerConfig preserves POSIX repository paths", () => {
+  const config = buildZedAgentServerConfig({
+    repoRoot: "/opt/mana",
+    nodeCommand: "node",
+  });
+
+  assert.equal(
+    config.agent_servers.mana.args[0],
+    "/opt/mana/node-bot/mana-acp-agent.js",
+  );
 });
 
 test("assertLocalAiPolicy blocks remote AI unless explicitly allowed", () => {
@@ -95,7 +110,7 @@ test("agent limit helpers parse autonomous mode and outside path settings", () =
     MANA_AGENT_AUTONOMOUS: "1",
     MANA_AGENT_MAX_ITERATIONS: "4",
     MANA_AGENT_MAX_FILES_CHANGED: "7",
-    MANA_AGENT_ALLOWED_PATHS: "C:\\Shared",
+    MANA_AGENT_ALLOWED_PATHS: allowedRoot,
   });
 
   assert.equal(limits.autonomousEnabled, true);
@@ -109,7 +124,7 @@ test("createManaAcpAgent reports manual and autonomous agent capabilities", asyn
   const autonomous = createManaAcpAgent({
     env: {
       MANA_AGENT_AUTONOMOUS: "1",
-      MANA_AGENT_ALLOWED_PATHS: "C:\\Shared",
+      MANA_AGENT_ALLOWED_PATHS: allowedRoot,
     },
   });
 

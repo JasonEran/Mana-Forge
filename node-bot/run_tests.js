@@ -1,59 +1,104 @@
-const { spawnSync } = require('child_process');
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
+const { spawnSync } = require("node:child_process");
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
 
-// Make sure every test child process knows it runs in a test environment,
-// so server.js never boots background jobs or spawns real model processes.
-process.env.NODE_ENV = 'test';
+const testDir = path.join(__dirname, "test");
 
-// Run below-normal priority so tests do not starve whatever else the user is
-// doing. On Windows, child processes inherit the below-normal priority class.
-try {
-  os.setPriority(0, 10);
-} catch (e) {}
+const CORE_TESTS = Object.freeze([
+  "backend-architecture.test.js",
+  "background-lifecycle.test.js",
+  "doctor.test.js",
+  "e2e-pairing-smoke.test.js",
+  "health-components.test.js",
+  "kokoro-service-descriptor.test.js",
+  "launcher-service-plan.test.js",
+  "mobile-auth.test.js",
+  "mobile-device-store.test.js",
+  "network-security.test.js",
+  "quality-gates.test.js",
+  "request-validation.test.js",
+  "runtime-config.test.js",
+  "runtime-entrypoints.test.js",
+  "runtime-supervisor.test.js",
+  "server-routes.test.js",
+  "speech-routes.test.js",
+]);
 
-const testDir = path.join(process.cwd(), 'test');
+const OPTIONAL_TESTS = Object.freeze([
+  "capabilities-registry.test.js",
+  "capability-boundaries.test.js",
+  "dir-scanner.test.js",
+  "ffxiv-market-capability.test.js",
+  "retriever-admin.test.js",
+  "tts-runtime.test.js",
+  "vtube-runtime.test.js",
+  "web-access.test.js",
+  "zed-agent-package.test.js",
+  "zed-integration.test.js",
+]);
 
-function run(cmd, args, opts={}){
-  const r = spawnSync(cmd, args, { stdio: 'inherit', shell: true, ...opts });
-  if (r.status !== 0) process.exit(r.status);
+function parseTier(args) {
+  const value = args.find((arg) => arg.startsWith("--tier="))?.slice(7) || "full";
+  if (!["core", "full", "optional"].includes(value)) {
+    throw new TypeError(`Unknown test tier "${value}". Use core, full, or optional.`);
+  }
+  return value;
 }
 
-const skipHeavy = process.env.SKIP_HEAVY_MODEL_TESTS === '1' || process.env.SKIP_HEAVY_MODEL_TESTS === 'true' || process.env.GITHUB_EVENT_NAME === 'pull_request' || (process.env.GITHUB_REF && process.env.GITHUB_REF.startsWith('refs/pull/'));
-if (skipHeavy){
-  // Run only fast, focused tests (paths resolved from current working directory)
-  const tests = [
-    ['node', ['--test', path.join(testDir, 'mobile-device-store.test.js')]],
-    ['node', ['--test', path.join(testDir, 'backend-architecture.test.js')]],
-    ['node', ['--test', path.join(testDir, 'server-routes.test.js')]],
-    ['node', ['--test', path.join(testDir, 'speech-routes.test.js')]],
-    ['node', ['--test', path.join(testDir, 'health-components.test.js')]],
-    ['node', ['--test', path.join(testDir, 'e2e-pairing-smoke.test.js')]],
-    ['node', ['--test', path.join(testDir, 'kokoro-service-descriptor.test.js')]],
-    ['node', ['--test', path.join(testDir, 'launcher-service-plan.test.js')]],
-    ['node', ['--test', path.join(testDir, 'runtime-entrypoints.test.js')]],
-    ['node', ['--test', path.join(testDir, 'runtime-supervisor.test.js')]],
-    ['node', ['--test', path.join(testDir, 'network-security.test.js')]],
-  ];
-  for (const [cmd, args] of tests){
-    console.log('Running fast test:', cmd, args.join(' '));
-    run(cmd, args);
-  }
-} else {
-  // Run test files one at a time instead of one-per-CPU-core. Peak RAM stays
-  // at a single node process and the machine stays responsive; total wall
-  // time is longer, but the suite is meant to run in the background.
-  const files = fs
+function filesForTier(tier) {
+  if (tier === "core") return [...CORE_TESTS];
+  if (tier === "optional") return [...OPTIONAL_TESTS];
+  return fs
     .readdirSync(testDir)
-    .filter((f) => f.endsWith('.test.js'))
+    .filter((file) => file.endsWith(".test.js"))
     .sort();
-  console.log(`Running ${files.length} test files sequentially`);
-  const startedAt = Date.now();
-  for (const f of files) {
-    const fileStartedAt = Date.now();
-    run('node', ['--test', path.join(testDir, f)]);
-    console.log(`--- ${f} finished in ${Date.now() - fileStartedAt}ms`);
-  }
-  console.log(`All test files passed in ${Date.now() - startedAt}ms`);
 }
+
+function run(cmd, args, opts = {}) {
+  const r = spawnSync(cmd, args, { stdio: "inherit", shell: false, ...opts });
+  if (r.error) throw r.error;
+  if (r.status !== 0) {
+    if (r.signal) console.error(`Test process terminated by ${r.signal}.`);
+    process.exit(r.status ?? 1);
+  }
+}
+
+function main(args = process.argv.slice(2)) {
+  // Test children must never boot background jobs or real model processes.
+  process.env.NODE_ENV = "test";
+  try {
+    os.setPriority(0, 10);
+  } catch (_error) {
+    // Priority adjustment is best effort outside Windows developer machines.
+  }
+  const tier = parseTier(args);
+  const files = filesForTier(tier);
+  for (const file of files) {
+    if (!fs.existsSync(path.join(testDir, file))) {
+      throw new Error(`Test tier "${tier}" references missing file ${file}.`);
+    }
+  }
+
+  // Sequential execution keeps peak memory bounded on developer machines and CI.
+  console.log(`Running ${files.length} ${tier} test files sequentially`);
+  const startedAt = Date.now();
+  for (const file of files) {
+    const fileStartedAt = Date.now();
+    run(process.execPath, ["--test", path.join(testDir, file)], {
+      env: { ...process.env, NODE_ENV: "test" },
+    });
+    console.log(`--- ${file} finished in ${Date.now() - fileStartedAt}ms`);
+  }
+  console.log(`All ${tier} test files passed in ${Date.now() - startedAt}ms`);
+}
+
+if (require.main === module) main();
+
+module.exports = {
+  CORE_TESTS,
+  OPTIONAL_TESTS,
+  filesForTier,
+  main,
+  parseTier,
+};

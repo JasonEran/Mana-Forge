@@ -4,6 +4,11 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, edited]
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
 jobs:
   dco:
     runs-on: ubuntu-latest
@@ -11,7 +16,7 @@ jobs:
       MAINTAINERS: "Yuuzulight"
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -40,7 +45,7 @@ jobs:
           echo "Listing recent commits between origin/$BASE_REF and $PR_SHA"
           git --no-pager log --oneline origin/$BASE_REF..$PR_SHA || true
 
-      - name: Check commits for Signed-off-by or signed CLA in PR (non-blocking)
+      - name: Check commits for Signed-off-by or signed CLA in PR
         if: ${{ env.PR_SHA != '' }}
         run: |
           set -euo pipefail
@@ -100,16 +105,15 @@ jobs:
               echo "No signed CLA file found in PR."
               echo "DCO_MISSING=1" >> $GITHUB_ENV
               echo "DCO_MISSING_LIST=$missing_list" >> $GITHUB_ENV
-              # do not fail CI; we will notify via comment
             fi
           else
             echo "All commits have DCO sign-offs."
             echo "DCO_MISSING=0" >> $GITHUB_ENV
           fi
 
-      - name: Notify contributors about missing DCO (non-blocking)
+      - name: Notify contributors about missing DCO
         if: env.DCO_MISSING == '1' && github.event_name == 'pull_request'
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         with:
           script: |
             const missing = process.env.DCO_MISSING_LIST || '';
@@ -117,3 +121,9 @@ jobs:
             const pr_number = context.payload.pull_request.number;
             await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: pr_number, body });
             console.log('Posted DCO guidance comment on PR #' + pr_number);
+
+      - name: Enforce contribution attestation
+        if: env.DCO_MISSING == '1'
+        run: |
+          echo "Missing DCO sign-off and no signed CLA file was found:$DCO_MISSING_LIST" >&2
+          exit 1

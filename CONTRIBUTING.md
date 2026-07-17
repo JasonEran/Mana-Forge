@@ -17,6 +17,9 @@ Supported runtime policy
   archived. Do not add features or parity work to those paths.
 - Read `docs/adr/0001-supported-windows-runtime.md` before proposing runtime,
   launcher, packaging, or lifecycle changes.
+- Read `docs/quality-gates.md` before opening a code PR. Every PR must link its
+  owning issue and include validation evidence, security impact, and a rollback
+  plan; the supported runtime's required checks must pass before merge.
 
 1. No unsolicited contributions
    - This repository is maintained by ManaAI. External pull requests will be closed unless they are part of an agreed contribution workflow.

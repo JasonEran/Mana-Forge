@@ -8,6 +8,7 @@
     "start": "electron .",
     "dev": "nodemon --config nodemon.json",
     "pack": "electron-builder --dir",
+    "verify:package": "node scripts/verify-launcher-package.js",
     "dist": "electron-builder",
     "fetch-live2d-core": "node scripts/fetch-live2d-core.js",
     "check-live2d-model": "node scripts/check-live2d-model.js",
@@ -27,6 +28,7 @@
     ]
   },
   "devDependencies": {
+    "@electron/asar": "^3.4.1",
     "electron": "^43.1.1",
     "electron-builder": "^26.15.3",
     "nodemon": "^3.1.14"

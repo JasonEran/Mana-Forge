@@ -1,46 +1,51 @@
-const assert = require('assert');
-const fs = require('fs');
-const path = require('path');
-const { MobileDeviceStore } = require('../mobile-device-store');
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
+const test = require("node:test");
 
-const TMP = path.join(__dirname, 'tmp-test-devices.json');
+const {
+  MobileDeviceStore,
+  defaultFilePath,
+} = require("../mobile-device-store");
 
-function cleanup(){ if (fs.existsSync(TMP)) fs.unlinkSync(TMP); }
+test("mobile device store supports pairing, rotation, and revocation", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "mana-devices-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const store = new MobileDeviceStore(path.join(root, "devices.json"));
 
-cleanup();
-const s = new MobileDeviceStore(TMP);
+  const { code } = store.generatePairingCode(1);
+  assert.equal(typeof code, "string");
+  assert.equal(store.consumePairingCode(code), true);
+  assert.equal(store.consumePairingCode(code), false);
 
-// pairing code
-const { code } = s.generatePairingCode(1);
-assert.equal(typeof code, 'string');
-assert.ok(s.consumePairingCode(code), 'should consume code');
-assert.equal(s.consumePairingCode(code), false, 'code is single-use');
+  const token = `tok-${Math.random()}`;
+  const device = store.addDevice({ name: "test-phone", token });
+  assert.equal(store.findDeviceByToken(token)?.id, device.id);
+  store.updateLastSeen(device.id);
+  assert.ok(store.listDevices()[0].lastSeenAt);
 
-// add device
-const token = 'tok-' + Math.random();
-const dev = s.addDevice({ name: 'test-phone', token });
-assert.ok(dev.id, 'device has id');
-assert.equal(dev.name, 'test-phone');
+  const nextToken = `tok2-${Math.random()}`;
+  assert.equal(store.rotateToken(device.id, nextToken), true);
+  assert.equal(store.findDeviceByToken(token), null);
+  assert.ok(store.findDeviceByToken(nextToken));
+  store.revokeDevice(device.id);
+  assert.equal(store.findDeviceByToken(nextToken), null);
+});
 
-// find by token
-const found = s.findDeviceByToken(token);
-assert.ok(found && found.id === dev.id, 'found by token');
+test("MOBILE_MEMORY_DIR isolates the default device store", (t) => {
+  const previous = process.env.MOBILE_MEMORY_DIR;
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "mana-device-config-"));
+  t.after(() => {
+    if (previous === undefined) delete process.env.MOBILE_MEMORY_DIR;
+    else process.env.MOBILE_MEMORY_DIR = previous;
+    fs.rmSync(root, { recursive: true, force: true });
+  });
+  process.env.MOBILE_MEMORY_DIR = root;
 
-// last seen
-s.updateLastSeen(dev.id);
-const list = s.listDevices();
-assert.ok(list[0].lastSeenAt, 'lastSeen set');
-
-// rotate token
-const newTok = 'tok2-' + Math.random();
-const okRot = s.rotateToken(dev.id, newTok);
-assert.ok(okRot, 'rotate ok');
-assert.equal(s.findDeviceByToken(token), null, 'old token invalid');
-assert.ok(s.findDeviceByToken(newTok), 'new token valid');
-
-// revoke
-s.revokeDevice(dev.id);
-assert.equal(s.findDeviceByToken(newTok), null, 'revoked token invalid');
-
-cleanup();
-console.log('mobile-device-store test passed');
+  const expected = path.join(root, "mobile-devices.json");
+  assert.equal(defaultFilePath(), expected);
+  const store = new MobileDeviceStore();
+  assert.equal(store.filePath, expected);
+  assert.equal(fs.existsSync(expected), true);
+});

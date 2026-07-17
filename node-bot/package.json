@@ -8,7 +8,10 @@
     "doctor": "node doctor.js",
     "start": "node ../runtime/start-backend.js",
     "start:raw": "node server.js",
-    "test": "node run_tests.js"
+    "test": "node run_tests.js --tier=full",
+    "test:core": "node run_tests.js --tier=core",
+    "test:full": "node run_tests.js --tier=full",
+    "test:optional": "node run_tests.js --tier=optional"
   },
   "dependencies": {
     "axios": "^1.4.0",
