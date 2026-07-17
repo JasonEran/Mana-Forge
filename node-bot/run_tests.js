@@ -34,6 +34,7 @@ if (skipHeavy){
     ['node', ['--test', path.join(testDir, 'launcher-service-plan.test.js')]],
     ['node', ['--test', path.join(testDir, 'runtime-entrypoints.test.js')]],
     ['node', ['--test', path.join(testDir, 'runtime-supervisor.test.js')]],
+    ['node', ['--test', path.join(testDir, 'network-security.test.js')]],
   ];
   for (const [cmd, args] of tests){
     console.log('Running fast test:', cmd, args.join(' '));

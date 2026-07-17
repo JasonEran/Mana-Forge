@@ -85,7 +85,10 @@ test("admin restart rejects non-loopback forwarded clients without scheduling re
     await new Promise((resolve) => setImmediate(resolve));
 
     assert.equal(response.status, 403);
-    assert.deepEqual(payload, { error: "restart is only available from this PC" });
+    assert.deepEqual(payload, {
+      ok: false,
+      error: "remote_access_disabled",
+    });
     assert.equal(buildPayloadCalls, 0);
     assert.equal(scheduleCalls, 0);
   });

@@ -82,6 +82,7 @@ Default behavior:
 - Audio transcription uses local Whisper binaries.
 - Screen awareness uses local OCR through `tesseract.js`.
 - Chat summaries and mobile memory are stored locally unless you intentionally sync or expose them.
+- The backend binds to `127.0.0.1`; explicit remote mode exposes only the authenticated mobile gateway.
 - Web search runs through a local SearXNG instance (no third-party search API, no key); wiki lookups and page reads Mana is pointed at do reach the public internet, since that's inherent to what they do. See [docs/web_access_setup.md](docs/web_access_setup.md). Set `MANA_WEB_ACCESS_ENABLED=0` to turn all of it off.
 
 Remote AI is an explicit escape hatch, not the default path.
@@ -166,6 +167,7 @@ Common troubleshooting:
 
 - [Windows quick start](docs/quick_start_windows.md): full setup and daily run flow.
 - [Mobile PWA and Cloudflare Tunnel](docs/mobile_pwa_cloudflare.md): phone companion setup.
+- [Runtime boundary threat model](docs/security/runtime-boundary-threat-model.md): API, tunnel, renderer, screen-data, and child-process security boundaries.
 - [PNG avatar setup](docs/png_avatar_setup.md): desktop avatar overlay.
 - [Live2D avatar setup](docs/live2d_avatar_setup.md): built-in VTuber avatar with lip sync.
 - [VTube Studio setup](docs/vtube_studio_setup.md): avatar hotkeys and reactions.
@@ -180,7 +182,7 @@ Common troubleshooting:
 
 ## Backend API
 
-The main backend listens on `http://localhost:5005` by default.
+The main backend listens on `http://127.0.0.1:5005` by default.
 
 Useful endpoints:
 

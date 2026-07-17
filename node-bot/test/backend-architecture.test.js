@@ -157,6 +157,11 @@ test("the backend entry point has one reachable listen call", () => {
   const source = fs.readFileSync(path.join(nodeBotRoot, "server.js"), "utf8");
   const listenCalls = source.match(/\bserver\.listen\s*\(/g) || [];
   assert.equal(listenCalls.length, 1);
+  assert.match(
+    source,
+    /server\.listen\s*\(\s*port\s*,\s*networkSecurity\.host\s*,/,
+    "the backend must pass its validated host to server.listen",
+  );
 });
 
 test("server.js does not declare direct HTTP business routes", () => {

@@ -6,7 +6,11 @@ let trayClients = new Set();
 function registerTrayServer(httpServer, options = {}) {
   const path = options.path || '/ws/tray';
   if (wss_tray) return;
-  wss_tray = new WebSocket.Server({ server: httpServer, path });
+  wss_tray = new WebSocket.Server({
+    server: httpServer,
+    path,
+    verifyClient: options.verifyClient,
+  });
   wss_tray.on('connection', (socket, req) => {
     try {
       trayClients.add(socket);

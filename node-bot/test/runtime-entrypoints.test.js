@@ -60,6 +60,8 @@ test("backend descriptor derives one command, port, cwd, and health contract", (
   assert.equal(descriptor.cwd, path.join(repoRoot, "node-bot"));
   assert.equal(descriptor.healthUrl, "http://127.0.0.1:5505/api/health");
   assert.equal(descriptor.env.PORT, "5505");
+  assert.equal(descriptor.env.MANA_BACKEND_HOST, "127.0.0.1");
+  assert.equal(descriptor.env.MANA_ALLOW_REMOTE_ACCESS, "0");
   assert.equal(descriptor.env.VTUBE_STUDIO_ENABLED, "0");
   assert.equal(descriptor.startupTimeoutMs, 1234);
   assert.equal(descriptor.shutdownTimeoutMs, 4321);
@@ -73,6 +75,16 @@ test("backend descriptor rejects invalid lifecycle environment values", () => {
         env: { MANA_BACKEND_STARTUP_TIMEOUT_MS: "later" },
       }),
     /MANA_BACKEND_STARTUP_TIMEOUT_MS must be a positive integer/,
+  );
+});
+
+test("backend descriptor rejects unsafe remote binding before spawn", () => {
+  assert.throws(
+    () =>
+      createBackendServiceDescriptor({
+        env: { MANA_BACKEND_HOST: "0.0.0.0" },
+      }),
+    /MANA_ALLOW_REMOTE_ACCESS=1/,
   );
 });
 

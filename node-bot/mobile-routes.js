@@ -3,6 +3,7 @@ const multer = require("multer");
 const path = require("path");
 const crypto = require('crypto');
 
+const { isRemoteRequest } = require("../runtime/network-security");
 const { createMobileAuth } = require("./mobile-auth");
 const { createMobileMemoryStore } = require("./mobile-memory-store");
 const {
@@ -13,12 +14,12 @@ const {
   sendValidationError,
 } = require("./request-validation");
 
-function createDefaultMobileAuth() {
+function createDefaultMobileAuth(env = process.env) {
   return createMobileAuth({
-    passcodeHash: process.env.MOBILE_PASSCODE_HASH || "",
-    sessionSecret: process.env.MOBILE_SESSION_SECRET || "",
+    passcodeHash: env.MOBILE_PASSCODE_HASH || "",
+    sessionSecret: env.MOBILE_SESSION_SECRET || "",
     sessionTtlMs: Number(
-      process.env.MOBILE_SESSION_TTL_MS || 12 * 60 * 60 * 1000,
+      env.MOBILE_SESSION_TTL_MS || 12 * 60 * 60 * 1000,
     ),
   });
 }
@@ -98,8 +99,7 @@ function randomToken() {
 }
 
 function isLocalRequest(req) {
-  const ip = (req.ip || '').replace('::ffff:', '');
-  return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
+  return !isRemoteRequest(req);
 }
 
 // Admin auth helper: if ADMIN_TOKEN is configured in env, require that token
@@ -149,7 +149,7 @@ class RateLimiter {
 
 function getRequiredDeps(deps) {
   return {
-    mobileAuth: deps.mobileAuth || createDefaultMobileAuth(),
+    mobileAuth: deps.mobileAuth || createDefaultMobileAuth(deps.env),
     mobileMemoryStore: deps.mobileMemoryStore || createMobileMemoryStore(),
     buildAssistantReply: deps.buildAssistantReply,
     synthesizeReply: deps.synthesizeReply,
@@ -163,6 +163,7 @@ function getRequiredDeps(deps) {
 }
 
 function registerMobileRoutes(app, deps = {}) {
+  app.locals.MOBILE_APP_ENV = deps.env || process.env;
   const router = express.Router();
   const upload = multer({ dest: path.join(__dirname, "tmp") });
   const {
