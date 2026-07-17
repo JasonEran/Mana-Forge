@@ -50,10 +50,20 @@ function createLlamaServerRuntime(options = {}) {
       candidates.push(env.LLAMA_SERVER_BIN);
     }
     if (env.LLAMA_BIN) {
-      candidates.push(path.join(path.dirname(env.LLAMA_BIN), "llama-server.exe"));
+      const pathApi = /^[a-z]:[\\/]|^\\\\/i.test(env.LLAMA_BIN)
+        ? path.win32
+        : env.LLAMA_BIN.startsWith("/")
+          ? path.posix
+          : path;
+      const serverName = pathApi.extname(env.LLAMA_BIN).toLowerCase() === ".exe"
+        ? "llama-server.exe"
+        : "llama-server";
+      candidates.push(pathApi.join(pathApi.dirname(env.LLAMA_BIN), serverName));
     }
 
-    candidates.push(path.join(toolsDir, "llama-server.exe"));
+    candidates.push(
+      path.join(toolsDir, process.platform === "win32" ? "llama-server.exe" : "llama-server"),
+    );
 
     const validPath = candidates.find(
       (candidate) => candidate && fs.existsSync(candidate),
@@ -64,7 +74,7 @@ function createLlamaServerRuntime(options = {}) {
 
     const checked = candidates.filter(Boolean).join(", ");
     throw new Error(
-      `llama-server executable not found. Checked: ${checked}. Set LLAMA_SERVER_BIN to a valid llama-server.exe path.`,
+      `llama-server executable not found. Checked: ${checked}. Set LLAMA_SERVER_BIN to a valid llama-server path.`,
     );
   }
 
