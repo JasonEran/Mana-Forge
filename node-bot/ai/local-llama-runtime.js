@@ -23,6 +23,16 @@ function isLocalModelSpec(modelSpec, fs = defaultFs) {
   );
 }
 
+function dirnameForExecutable(executable) {
+  if (/^[a-z]:[\\/]|^\\\\/i.test(executable)) {
+    return path.win32.dirname(executable);
+  }
+  if (String(executable).startsWith("/")) {
+    return path.posix.dirname(executable);
+  }
+  return path.dirname(executable);
+}
+
 function createLocalLlamaRuntime(options = {}) {
   const env = options.env || process.env;
   const fs = options.fs || defaultFs;
@@ -188,7 +198,7 @@ function createLocalLlamaRuntime(options = {}) {
     const result = spawnSync(llamaBin, args, {
       encoding: "utf8",
       maxBuffer: 50 * 1024 * 1024,
-      cwd: path.dirname(llamaBin),
+      cwd: dirnameForExecutable(llamaBin),
     });
     if (result.error) throw result.error;
     console.log(
@@ -261,6 +271,7 @@ function createLocalLlamaRuntime(options = {}) {
 module.exports = {
   DEFAULT_SYSTEM_PROMPT,
   createLocalLlamaRuntime,
+  dirnameForExecutable,
   isLocalModelSpec,
   // export cleaner for other modules
   cleanLlamaOutput: (text) => {

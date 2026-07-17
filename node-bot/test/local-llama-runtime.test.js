@@ -3,6 +3,7 @@ const test = require("node:test");
 
 const {
   createLocalLlamaRuntime,
+  dirnameForExecutable,
   isLocalModelSpec,
 } = require("../ai/local-llama-runtime");
 
@@ -11,6 +12,11 @@ test("isLocalModelSpec detects local GGUF paths and rejects HF repo shorthands",
   assert.equal(isLocalModelSpec("models/mana.gguf"), true);
   assert.equal(isLocalModelSpec("Qwen/Qwen2.5-0.5B-Instruct-GGUF:Q4_K_M"), false);
   assert.equal(isLocalModelSpec(""), false);
+});
+
+test("executable working directories follow path syntax instead of the host OS", () => {
+  assert.equal(dirnameForExecutable("C:\\llama\\llama-cli.exe"), "C:\\llama");
+  assert.equal(dirnameForExecutable("/opt/llama/llama-cli"), "/opt/llama");
 });
 
 test("local llama runtime builds llama.cpp args for local GGUF replies", () => {
