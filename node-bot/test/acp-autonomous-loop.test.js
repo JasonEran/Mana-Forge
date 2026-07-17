@@ -2,6 +2,8 @@ const test = require("node:test");
 const assert = require("node:assert");
 const axios = require("axios");
 const fs = require("fs");
+const os = require("node:os");
+const path = require("node:path");
 
 const { executeAutonomousStep } = require("../acp-autonomous-loop");
 
@@ -147,8 +149,10 @@ test("acp-autonomous-loop: file_read blocks paths outside repo", async (t) => {
     fs.promises.stat = async (p) => ({ isFile: () => true, size: 10 });
     fs.promises.readFile = async (p, opts) => "should not read";
 
-    const mockModelReply =
-      'Fetch file:\n[{"tool":"file_read","args":{"path":"C:\\Windows\\system.ini"}}]';
+    const outsidePath = path.join(os.tmpdir(), "mana-outside-workspace.txt");
+    const mockModelReply = `Fetch file:\n${JSON.stringify([
+      { tool: "file_read", args: { path: outsidePath } },
+    ])}`;
     const res = await executeAutonomousStep(mockModelReply, "test-session");
 
     // Should return idle or results with error for file_read
