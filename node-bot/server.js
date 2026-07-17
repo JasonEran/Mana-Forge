@@ -34,6 +34,13 @@ This server aims to avoid Python. You must download and place the whisper.cpp an
 */
 
 const { loadManaConfig } = require("../runtime/config");
+const {
+  createCorsOptions,
+  createNetworkSecurityConfig,
+  createOriginGuard,
+  createRemoteAccessGuard,
+  createWebSocketVerifier,
+} = require("../runtime/network-security");
 
 loadManaConfig();
 
@@ -137,7 +144,12 @@ const {
 function createApp(deps = {}) {
   const app = express();
   const appEnv = deps.env || process.env;
-  app.use(cors());
+  const networkSecurity =
+    deps.networkSecurity || createNetworkSecurityConfig(appEnv);
+  app.locals.networkSecurity = networkSecurity;
+  app.use(createRemoteAccessGuard(networkSecurity));
+  app.use(createOriginGuard(networkSecurity));
+  app.use(cors(createCorsOptions(networkSecurity)));
   app.use(express.json({ limit: "15mb" }));
   	const upload = multer({ dest: path.join(__dirname, "tmp") });
 
@@ -1237,6 +1249,7 @@ function ensureDirectory(dirPath) {
 ensureDirectory(path.join(__dirname, "tmp"));
 
 function registerRoutes(app, upload, deps = {}) {
+  const env = deps.env || process.env;
   const mobileMemoryStore = deps.mobileMemoryStore || createMobileMemoryStore();
   const modelManagement =
     deps.modelManagement ||
@@ -2390,10 +2403,10 @@ function registerRoutes(app, upload, deps = {}) {
     mobileAuth:
       deps.mobileAuth ||
       createMobileAuth({
-        passcodeHash: process.env.MOBILE_PASSCODE_HASH || "",
-        sessionSecret: process.env.MOBILE_SESSION_SECRET || "",
+        passcodeHash: env.MOBILE_PASSCODE_HASH || "",
+        sessionSecret: env.MOBILE_SESSION_SECRET || "",
         sessionTtlMs: Number(
-          process.env.MOBILE_SESSION_TTL_MS || 12 * 60 * 60 * 1000,
+          env.MOBILE_SESSION_TTL_MS || 12 * 60 * 60 * 1000,
         ),
       }),
     mobileMemoryStore,
@@ -2406,6 +2419,7 @@ function registerRoutes(app, upload, deps = {}) {
     cleanupUploadedAudio: deps.cleanupUploadedAudio || cleanupUploadedAudio,
     mobileUnlockRateLimiter: deps.mobileUnlockRateLimiter,
     mobileUnlockRateLimit: deps.mobileUnlockRateLimit,
+    env,
   });
 }
 
@@ -2474,8 +2488,10 @@ async function waitForPythonService(
   return false;
 }
 
-async function startServer() {
-  const port = process.env.PORT || 5005;
+async function startServer(options = {}) {
+  const env = options.env || process.env;
+  const port = env.PORT || 5005;
+  const networkSecurity = createNetworkSecurityConfig(env);
   const backgroundLifecycle = createBackgroundMemoryLifecycle();
 
   // The retriever only enriches replies (retrieval context, token counts) and
@@ -2515,14 +2531,17 @@ async function startServer() {
   }
 
   await backgroundLifecycle.start();
-  const app = createApp();
+  const app = createApp({ env, networkSecurity });
   const http = require("http");
   const server = http.createServer(app);
 
   // attach caption websocket server
   try {
     const captionServer = require("./caption-server");
-    captionServer.registerCaptionServer(server, { path: "/ws/captions" });
+    captionServer.registerCaptionServer(server, {
+      path: "/ws/captions",
+      verifyClient: createWebSocketVerifier(networkSecurity),
+    });
   } catch (e) {
     console.warn("Failed to register caption server:", e?.message || e);
   }
@@ -2530,7 +2549,10 @@ async function startServer() {
   // attach tray websocket server for live tray notifications
   try {
     const trayServer = require("./tray-server");
-    trayServer.registerTrayServer(server, { path: "/ws/tray" });
+    trayServer.registerTrayServer(server, {
+      path: "/ws/tray",
+      verifyClient: createWebSocketVerifier(networkSecurity),
+    });
     // make broadcast available via app locals for other modules
     app.locals.broadcastTrayNotification = trayServer.broadcastTrayNotification;
     try {
@@ -2545,9 +2567,21 @@ async function startServer() {
 
   registerAdminUiRoutes(app);
 
-  const listener = server.listen(port, () =>
-    console.log("Node local bot listening on", port),
-  );
+  const listener = server.listen(port, networkSecurity.host, () => {
+    const address = listener.address();
+    const activePort = address && typeof address === "object" ? address.port : port;
+    console.log(
+      `Node local bot listening on http://${networkSecurity.host}:${activePort}`,
+    );
+    if (networkSecurity.remoteAccessEnabled) {
+      console.warn(
+        "[Mana Security] REMOTE GATEWAY MODE ENABLED. LAN and detected proxy/tunnel clients are limited to the authenticated /mobile gateway; core, admin, caption, and tray surfaces remain local-only.",
+      );
+      console.warn(
+        `[Mana Security] Allowed cross-origin clients: ${networkSecurity.allowedOrigins.join(", ")}`,
+      );
+    }
+  });
   listener.once("close", () => {
     backgroundLifecycle.stop().catch((error) =>
       console.warn("Background lifecycle stop failed:", error?.message || error),

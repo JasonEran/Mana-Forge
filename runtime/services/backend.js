@@ -1,6 +1,7 @@
 const path = require("node:path");
 
 const { withPath } = require("../config");
+const { createNetworkSecurityConfig } = require("../network-security");
 
 function createBackendServiceDescriptor(options = {}) {
   const env = options.env || process.env;
@@ -28,6 +29,7 @@ function createBackendServiceDescriptor(options = {}) {
   const port = Number(
     parsedUrl.port || (parsedUrl.protocol === "https:" ? 443 : 80),
   );
+  const networkSecurity = createNetworkSecurityConfig(env);
 
   return {
     id: "backend",
@@ -36,6 +38,12 @@ function createBackendServiceDescriptor(options = {}) {
     args: [path.join(repoRoot, "node-bot", "server.js")],
     cwd: path.join(repoRoot, "node-bot"),
     env: {
+      MANA_ALLOW_REMOTE_ACCESS: networkSecurity.remoteAccessRequested ? "1" : "0",
+      MANA_BACKEND_HOST: networkSecurity.host,
+      MANA_CORS_ALLOWED_ORIGINS: env.MANA_CORS_ALLOWED_ORIGINS || "",
+      MOBILE_PASSCODE_HASH: env.MOBILE_PASSCODE_HASH || "",
+      MOBILE_SESSION_SECRET: env.MOBILE_SESSION_SECRET || "",
+      MOBILE_SESSION_TTL_MS: env.MOBILE_SESSION_TTL_MS || "43200000",
       PORT: String(port),
       VTUBE_STUDIO_URL:
         env.VTUBE_STUDIO_URL || "ws://127.0.0.1:8001",

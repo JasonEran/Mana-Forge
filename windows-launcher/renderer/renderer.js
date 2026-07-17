@@ -275,7 +275,7 @@ async function checkServices() {
   }
 
   try {
-    const response = await fetch("http://localhost:5005/health", {
+    const response = await fetch("http://127.0.0.1:5005/health", {
       method: "GET",
     });
     if (!response.ok) {
@@ -333,7 +333,7 @@ function applyModelStatus(status) {
 
 async function refreshModelStatus() {
   try {
-    const response = await fetch("http://localhost:5005/models/status");
+    const response = await fetch("http://127.0.0.1:5005/models/status");
     if (!response.ok) {
       throw new Error(`Model status returned ${response.status}`);
     }
@@ -348,7 +348,7 @@ async function refreshModelStatus() {
 
 async function setActiveModelProfile(profile) {
   try {
-    const response = await fetch("http://localhost:5005/models/active-profile", {
+    const response = await fetch("http://127.0.0.1:5005/models/active-profile", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ profile }),
@@ -371,7 +371,7 @@ setInterval(refreshModelStatus, MODEL_STATUS_POLL_MS);
 async function waitForBackend() {
   for (let attempt = 0; attempt < AUTO_LISTEN_MAX_ATTEMPTS; attempt += 1) {
     try {
-      const response = await fetch("http://localhost:5005/health", {
+      const response = await fetch("http://127.0.0.1:5005/health", {
         method: "GET",
       });
       if (response.ok) {
@@ -443,7 +443,7 @@ async function synthesizeSpeechChunk(index, chunks, playbackToken) {
       ? `Synthesizing reply ${index + 1}/${total}...`
       : "Synthesizing reply...";
 
-  const response = await fetch("http://localhost:5005/synthesize", {
+  const response = await fetch("http://127.0.0.1:5005/synthesize", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -599,7 +599,7 @@ async function refreshGamingStatus(force = false) {
     return gamingStatusCheckPromise;
   }
 
-  gamingStatusCheckPromise = fetch("http://localhost:5005/gaming/status", {
+  gamingStatusCheckPromise = fetch("http://127.0.0.1:5005/gaming/status", {
     method: "GET",
   })
     .then(async (response) => {
@@ -816,7 +816,7 @@ async function transcribeBlob(blob) {
     formData.append("debug", "1");
   }
 
-  const response = await fetch("http://localhost:5005/transcribe-only", {
+  const response = await fetch("http://127.0.0.1:5005/transcribe-only", {
     method: "POST",
     body: formData,
   });
@@ -919,7 +919,7 @@ async function refreshPerfStatus() {
   }
 
   try {
-    const response = await fetch("http://localhost:5005/perf/status", {
+    const response = await fetch("http://127.0.0.1:5005/perf/status", {
       method: "GET",
     });
     if (!response.ok) {
@@ -971,7 +971,7 @@ async function runDoctorChecksFromLauncher() {
   }
 
   try {
-    const response = await fetch("http://localhost:5005/doctor", {
+    const response = await fetch("http://127.0.0.1:5005/doctor", {
       method: "GET",
     });
     const result = await response.json();
@@ -1014,7 +1014,7 @@ async function readScreenContext(text, gamingModeActive) {
   try {
     statusEl.textContent = "Mana is reading the screen...";
     const image = await ipcRenderer.invoke("screen:capture-primary");
-    const response = await fetch("http://localhost:5005/screen/read", {
+    const response = await fetch("http://127.0.0.1:5005/screen/read", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1039,7 +1039,7 @@ async function readScreenContext(text, gamingModeActive) {
 async function requestScreenAwareReply(text, gamingModeActive) {
   const screenText = await readScreenContext(text, gamingModeActive);
   const startedAt = performance.now();
-  const response = await fetch("http://localhost:5005/reply", {
+  const response = await fetch("http://127.0.0.1:5005/reply", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -1074,7 +1074,7 @@ async function handleVisionHotkey() {
     appendChatMessage("user", "(asked Mana to look at the screen)");
 
     const image = await ipcRenderer.invoke("screen:capture-primary");
-    const response = await fetch("http://localhost:5005/reply", {
+    const response = await fetch("http://127.0.0.1:5005/reply", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

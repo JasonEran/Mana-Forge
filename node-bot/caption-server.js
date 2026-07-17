@@ -6,7 +6,11 @@ let clients = new Set();
 function registerCaptionServer(httpServer, options = {}) {
   const path = options.path || '/ws/captions';
   if (wss) return;
-  wss = new WebSocket.Server({ server: httpServer, path });
+  wss = new WebSocket.Server({
+    server: httpServer,
+    path,
+    verifyClient: options.verifyClient,
+  });
   wss.on('connection', (socket, req) => {
     try {
       clients.add(socket);

@@ -45,12 +45,56 @@ you intentionally need to override discovery.
 ## Safe Defaults
 
 - Remote AI is disabled.
+- The backend listens on `127.0.0.1` only.
+- Remote/mobile gateway mode is disabled.
+- CORS does not accept wildcard origins.
 - Kokoro is the default TTS provider.
 - Local service URLs use loopback addresses.
 
 Configuration diagnostics must use the shared redaction behavior. Names that
 look like API keys, tokens, secrets, passcodes, passwords, or private keys are
 never emitted with their values.
+
+## Remote And Mobile Boundary
+
+`MANA_BACKEND_URL` remains the loopback URL used by the launcher, Doctor, and
+supervisor for health checks. `MANA_BACKEND_HOST` controls the Node listener and
+defaults to `127.0.0.1`; do not change `MANA_BACKEND_URL` to a LAN or public URL.
+
+Remote access has two deliberate modes:
+
+1. A local reverse tunnel keeps `MANA_BACKEND_HOST=127.0.0.1` and sets
+   `MANA_ALLOW_REMOTE_ACCESS=1`.
+2. Direct LAN listening sets `MANA_BACKEND_HOST=0.0.0.0` (or another explicit
+   non-loopback IP) and `MANA_ALLOW_REMOTE_ACCESS=1`.
+
+Both modes require a valid `MOBILE_PASSCODE_HASH` using at least 120,000 PBKDF2
+iterations and a `MOBILE_SESSION_SECRET` containing at least 32 bytes. Startup
+fails before listening if these requirements are not met. Generate them from
+`node-bot`:
+
+```powershell
+node -e "const { hashPasscode } = require('./mobile-auth'); console.log(hashPasscode('replace-this-passcode'))"
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+LAN clients and detected proxy/tunnel requests can reach only `/mobile`. Core,
+admin, caption WebSocket, and tray WebSocket surfaces remain local-only.
+Forwarding headers and a non-loopback `Host` value are treated as remote even
+when the proxy connects from `127.0.0.1`. Remote mobile pairing and device
+administration also require `ADMIN_TOKEN`; ordinary mobile chat uses the
+passcode-derived signed session.
+
+`MANA_CORS_ALLOWED_ORIGINS` is a comma-separated list of exact HTTP or HTTPS
+origins. Wildcards, paths, credentials, queries, and fragments are rejected.
+The supported Electron file renderer origins (`file://` and `null`) are included
+for the current launcher migration. Same-origin `/mobile/app/` deployments do
+not need an additional CORS origin.
+
+Direct LAN mode uses plain HTTP and does not protect bearer tokens from network
+observers. Prefer an authenticated TLS tunnel and keep host firewall rules
+enabled. See [the runtime boundary threat model](security/runtime-boundary-threat-model.md)
+and [the mobile tunnel guide](mobile_pwa_cloudflare.md).
 
 ## Runtime Supervision
 

@@ -1,12 +1,17 @@
 # Mana Mobile PWA Cloudflare Setup
 
-This guide exposes the Mana backend through a dedicated Cloudflare-protected hostname for mobile PWA use. With the tunnel target below, Cloudflare Access protects the hostname, but all routes on `http://127.0.0.1:5005` are reachable behind Access; keep the hostname dedicated to Mana and rely on Mana's own passcode for the mobile app.
+This guide exposes only Mana's mobile gateway through a dedicated
+Cloudflare-protected hostname. Mana detects the public host and Cloudflare
+forwarding headers, permits `/mobile`, and rejects core, admin, caption, and
+tray surfaces even though `cloudflared` connects over loopback.
 
 ## Local prerequisites
 
 - Mana backend starts successfully on `http://127.0.0.1:5005`.
+- `MANA_BACKEND_HOST=127.0.0.1` remains unchanged.
+- `MANA_ALLOW_REMOTE_ACCESS=1` is set deliberately.
 - `MOBILE_PASSCODE_HASH` is set.
-- `MOBILE_SESSION_SECRET` is set.
+- `MOBILE_SESSION_SECRET` contains at least 32 bytes.
 - `node-bot/data/` is ignored by Git.
 - A Cloudflare account and domain are available for the tunnel hostname.
 
@@ -29,6 +34,10 @@ Generate a session secret:
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
+Set `ADMIN_TOKEN` to a separate random value when pairing or device-management
+routes must be used through the tunnel. Without it, those administrative mobile
+routes remain local-only.
+
 ## Local test
 
 Start Mana, then open:
@@ -49,9 +58,11 @@ http://127.0.0.1:5005
 
 In Cloudflare Zero Trust, add an Access application for the hostname and allow only your email or identity provider account.
 
-Because this tunnel routes the hostname to the full Mana backend, every backend route is reachable after Cloudflare Access login. Do not route other local services through this hostname, and keep Mana's mobile passcode enabled.
-
-Optional hardening: in the Cloudflare Access application, restrict the application path to the mobile URL paths you intend to use, such as `/mobile/*`, if that fits your deployment. This is an Access policy boundary, not something enforced by the tunnel target itself.
+Keep the original public `Host` and Cloudflare forwarding headers intact. Do not
+set `originRequest.httpHostHeader` to `127.0.0.1` or strip `Forwarded`,
+`X-Forwarded-For`, `X-Forwarded-Host`, and `CF-Connecting-IP`; those signals let Mana distinguish a
+tunnel request from a trusted local client. Restricting the Access application
+to `/mobile/*` is still recommended as defense in depth.
 
 Use a dedicated hostname such as:
 
@@ -75,6 +86,8 @@ On iPhone Safari:
 - Open the app on cellular data, not Wi-Fi.
 - Confirm Cloudflare Access blocks an unauthorized browser.
 - Confirm Mana passcode is still required after Cloudflare login.
+- Confirm `https://mana.example.com/health` returns `403` while
+  `https://mana.example.com/mobile/health` succeeds.
 - Send a text chat.
 - Record a push-to-talk message.
 - Close and reopen the PWA and confirm chats remain.
