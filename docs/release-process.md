@@ -36,6 +36,7 @@ npm test
 npm run dist
 npm run verify:package
 npm run verify:installer
+npm run verify:branding
 node ..\scripts\write-installer-checksum.js
 ```
 
@@ -67,6 +68,7 @@ Before promotion, confirm all of the following:
 - Core target evidence passes every budget in `quality/budgets.json`;
 - clean install, launch, Doctor, shutdown, and uninstall evidence passed;
 - the installer filename and SHA-256 match version `0.3.0`;
+- application and installer PE icon resources match the generated Mana ICO;
 - the signing decision is recorded and independently verified.
 
 ## Public Release Authorization

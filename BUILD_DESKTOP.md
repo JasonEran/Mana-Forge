@@ -31,6 +31,7 @@ npm ci
 npm run dist
 npm run verify:package
 npm run verify:installer
+npm run verify:branding
 node ..\scripts\write-installer-checksum.js
 ```
 
@@ -38,6 +39,12 @@ The NSIS artifact is written to `windows-launcher/dist/Mana-Setup-<version>-x64.
 with an ASCII `<installer>.sha256` companion.
 The installer is per-user, supports a custom installation directory, and
 removes its autostart registry value during uninstall.
+
+`prepack`/`predist` generate `windows-launcher/build/icon.ico` from the
+repository-owned 32-bar Mana ring. The build applies it to the application and
+NSIS resources while `signExecutable: false` keeps the candidate unsigned.
+`npm run verify:branding` compares every embedded PE icon payload with the
+generated source before the checksum is written.
 
 ## Bundled Node
 

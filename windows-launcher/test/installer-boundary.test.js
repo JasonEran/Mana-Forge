@@ -15,7 +15,13 @@ test("the supported launcher owns the NSIS installer target", () => {
   assert.deepEqual(manifest.build.win.target[0].arch, ["x64"]);
   assert.equal(manifest.build.nsis.oneClick, false);
   assert.equal(manifest.build.nsis.include, "build/installer.nsh");
+  assert.equal(manifest.build.win.icon, "build/icon.ico");
+  assert.equal(manifest.build.win.signExecutable, false);
+  assert.equal(manifest.build.win.signAndEditExecutable, undefined);
+  assert.equal(manifest.scripts.prepack, "node scripts/check-release-inputs.js");
   assert.equal(manifest.scripts.predist, "node scripts/check-release-inputs.js");
+  assert.equal(manifest.scripts["verify:branding"], "node scripts/verify-windows-branding.js");
+  assert.equal(manifest.devDependencies.resedit, "^1.7.2");
 });
 
 test("packaged runtime resources have one canonical owner", () => {

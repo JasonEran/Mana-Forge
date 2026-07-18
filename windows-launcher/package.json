@@ -8,10 +8,12 @@
     "start": "electron .",
     "dev": "nodemon --config nodemon.json",
     "pack": "electron-builder --dir",
+    "prepack": "node scripts/check-release-inputs.js",
     "predist": "node scripts/check-release-inputs.js",
     "dist": "electron-builder --win nsis --publish never",
     "verify:package": "node scripts/verify-launcher-package.js",
     "verify:installer": "node scripts/verify-installer.js",
+    "verify:branding": "node scripts/verify-windows-branding.js",
     "smoke:installer": "powershell -ExecutionPolicy Bypass -File ../scripts/windows-installer-smoke.ps1",
     "measure:core-release": "node scripts/run-core-release-smoke.js",
     "test:avatar-visual": "node scripts/run-avatar-visual-smoke.js",
@@ -36,6 +38,7 @@
       "!nodemon.json"
     ],
     "win": {
+      "icon": "build/icon.ico",
       "target": [
         {
           "target": "nsis",
@@ -44,7 +47,7 @@
           ]
         }
       ],
-      "signAndEditExecutable": false
+      "signExecutable": false
     },
     "nsis": {
       "oneClick": false,
@@ -106,6 +109,7 @@
     "@electron/asar": "^3.4.1",
     "electron": "^43.1.1",
     "electron-builder": "^26.15.3",
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "resedit": "^1.7.2"
   }
 }

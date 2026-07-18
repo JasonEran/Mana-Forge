@@ -5,11 +5,14 @@ const path = require("node:path");
 const {
   validateReleaseMetadata,
 } = require("../../scripts/check-release-metadata");
+const { writeManaIcon } = require("./generate-mana-icon");
 
 const repoRoot = path.resolve(__dirname, "..", "..");
 const releaseMetadata = validateReleaseMetadata({ repoRoot });
+const icon = writeManaIcon(path.join(repoRoot, "windows-launcher", "build", "icon.ico"));
 const requiredInputs = [
   "node-bin/node.exe",
+  "windows-launcher/build/icon.ico",
   "node-bot/server.js",
   "node-bot/node_modules/express/package.json",
   "runtime/config.js",
@@ -27,6 +30,7 @@ assert.deepEqual(
 process.stdout.write(
   `${JSON.stringify({
     version: releaseMetadata.version,
+    icon: { bytes: icon.bytes, sha256: icon.sha256, sizes: icon.sizes },
     releaseInputs: `${requiredInputs.length}/${requiredInputs.length}`,
   })}\n`,
 );

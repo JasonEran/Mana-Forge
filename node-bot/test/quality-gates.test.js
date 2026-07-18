@@ -45,6 +45,8 @@ test("one quality workflow owns the required release gates", () => {
     "npm run dist",
     "verify:package",
     "verify:installer",
+    "verify:branding",
+    "branding.json",
     "windows-installer-smoke.ps1",
     "check-quality-budgets.js",
     "check-release-metadata.js",
