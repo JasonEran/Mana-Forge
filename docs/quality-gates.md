@@ -98,8 +98,48 @@ Initial model-free Windows baseline captured on July 17, 2026:
 | Launcher ASAR | 36.3 MiB |
 
 This baseline proves the gate and starts the CI trend; it does not claim model
-performance. The complete Core/Full comparison remains the product-profile
-measurement owned by Issue #6.
+performance. The Core/Full dependency and quiet-runtime comparison is owned by
+Issue #6.
+
+### Core Release Measurement
+
+Issue #31 adds the target-machine gate for the complete Core runtime. Before a
+release candidate, install the launcher/backend dependencies and the local
+llama.cpp, Whisper, and Kokoro assets documented by the Windows quick start.
+Ensure ports 5005, 5011, and 8090 are free, then run:
+
+```powershell
+cd windows-launcher
+npm run measure:core-release
+```
+
+The command launches the real Electron 43 main and avatar renderers plus the
+canonical launcher service plan. It rejects remote AI, provider placeholders,
+missing GPU process telemetry, empty Whisper output, invalid WAV output,
+unowned services, occupied canonical ports, shutdown residue, and any value
+above `coreRelease`. Kokoro generates a deterministic local phrase which is
+then transcribed by Whisper; two local LLM requests prove cold model load and
+warm text response. No model or generated audio is committed.
+
+Machine-readable evidence is written to
+`quality/core-release-evidence.json`. The 2026-07-18 target run used an AMD
+Ryzen 7 7800X3D, 31,862 MiB RAM, and an NVIDIA GeForce RTX 5070 Ti with 16,303
+MiB VRAM:
+
+| Metric | Measured | Limit |
+| --- | ---: | ---: |
+| Complete Core process tree | 10 | 12 |
+| Idle RAM | 3,649.4 MiB | 4,096 MiB |
+| Attributed dedicated VRAM | 3,287 MiB | 6,144 MiB |
+| Cold start to renderer/services ready | 1,739 ms | 180,000 ms |
+| Warm local text reply | 93 ms | 30,000 ms |
+| Local Whisper STT | 820 ms | 15,000 ms |
+| Local Kokoro TTS | 3,232 ms | 15,000 ms |
+
+The run transcribed `Mana release validation is ready.` exactly and left zero
+owned child processes or test ports. This target evidence complements the
+model-free clean-install/Doctor/uninstall proof; it does not make model weights
+part of the installer or CI checkout.
 
 ## Branch Protection
 

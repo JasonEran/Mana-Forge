@@ -13,6 +13,7 @@
     "verify:package": "node scripts/verify-launcher-package.js",
     "verify:installer": "node scripts/verify-installer.js",
     "smoke:installer": "powershell -ExecutionPolicy Bypass -File ../scripts/windows-installer-smoke.ps1",
+    "measure:core-release": "node scripts/run-core-release-smoke.js",
     "test:avatar-visual": "node scripts/run-avatar-visual-smoke.js",
     "test:electron-security": "node scripts/run-electron-security-smoke.js"
   },

@@ -59,7 +59,7 @@ speech, and TTS binaries are first-run runtime assets and are not npm packages.
 | Editor/ACP `MANA_EDITOR_ACP_ENABLED` | Developer Integrations | Optional `axios`, editor registration, ACP agent on demand | Doctor editor/agent checks | No editor routes, ACP store, backend probe, or agent process; remove editor registration and run Core install |
 | Directory scanner `MANA_DIR_SCANNER_ENABLED` | Developer Integrations | No external package | Route state in `/health` | Route and module are absent |
 | Background memory `MANA_BACKGROUND_MEMORY_ENABLED` | Knowledge Runtime | ACP session storage | Timer count/job results | No storage load, audit build, scheduled job, or timer; remove memory data if unneeded |
-| Reply verification `MANA_REPLY_VERIFICATION_ENABLED` | Developer Integrations | Optional `esprima` | Dependency availability | Verifier is not imported; run Core install |
+| Reply verification `MANA_REPLY_VERIFICATION_ENABLED` | Developer Integrations | Optional `esprima` and Python token-worker pool | Dependency availability | Verifier and Python workers are not imported or started; run Core install |
 
 ## Health states
 
@@ -95,8 +95,10 @@ The 2026-07-18 Windows snapshot reports:
 | Warning count | 0 | 0 | 0 |
 
 This backend probe intentionally does not load llama, Whisper, or TTS models.
-The complete desktop process/RAM/VRAM/latency limits remain in
-`quality/budgets.json` and the Windows lifecycle/package quality gate.
+The complementary target-machine run in `quality/core-release-evidence.json`
+loads the complete Electron/backend/llama.cpp/Whisper/Kokoro process tree and
+checks every process, RAM, VRAM, startup, text, STT, and TTS limit in
+`quality/budgets.json`. See `docs/quality-gates.md` for the command and results.
 
 ## Runtime retirement
 
