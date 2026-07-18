@@ -181,6 +181,12 @@ jobs:
         working-directory: windows-launcher
         run: npm run verify:installer
 
+      - name: Verify generated Mana branding
+        working-directory: windows-launcher
+        env:
+          MANA_EVIDENCE_FILE: ${{ env.MANA_EVIDENCE_DIR }}/branding.json
+        run: npm run verify:branding
+
       - name: Write installer SHA-256
         run: node scripts/write-installer-checksum.js
 

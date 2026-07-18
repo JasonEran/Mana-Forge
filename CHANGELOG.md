@@ -32,6 +32,9 @@ accounting.
   radial bars, white breathing idle motion, pale-green active energy waves,
   audio-reactive pulses, and reduced-motion support. The same dependency-free
   Canvas component now renders both supported Electron surfaces.
+- Added a deterministic multi-size Windows icon generated from the same 32-bar
+  source. Application and NSIS PE resources are verified against the generated
+  payloads while Authenticode signing remains independently disabled.
 
 ### Changed
 

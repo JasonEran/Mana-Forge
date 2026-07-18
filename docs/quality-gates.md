@@ -11,7 +11,7 @@ branch protection receives one stable signal per responsibility.
 | `Backend full suite` | Ubuntu | Clean `npm ci`, every `node-bot/test/*.test.js` file, production dependency audit |
 | `Backend Core profile` | Ubuntu | Core-only dependency install, representative Core suite, release metadata, optional-package absence |
 | `Launcher suite` | Ubuntu | Clean `npm ci`, every launcher test, complete launcher dependency audit |
-| `Windows lifecycle and package` | Windows | Real backend lifecycle, Electron isolation, canonical NSIS build, ASAR/runtime/model boundary, clean install/Doctor/uninstall smoke, resource budgets |
+| `Windows lifecycle and package` | Windows | Real backend lifecycle, Electron isolation, canonical NSIS build, generated Mana PE branding, ASAR/runtime/model boundary, clean install/Doctor/uninstall smoke, resource budgets |
 | `dco` | Ubuntu | Commit sign-off or the repository's accepted contribution agreement path |
 
 The Windows job uploads `windows-quality-evidence` for 30 days and the unsigned
@@ -90,6 +90,15 @@ active ring, and uploads both PNGs with the other quality evidence.
 Model/provider assets remain first-run and unbundled. The retired runtime
 sources were removed under Issue #9; the launcher suite prevents them from
 returning as workflow, setup, packaging, or publication paths.
+
+The package lifecycle generates `build/icon.ico` from the procedural 32-bar
+source before Electron Builder starts. The Windows job then parses the icon
+groups in both `Mana.exe` and the NSIS installer with `resedit`; every 16-256
+pixel, 32-bit payload must match the generated ICO. Resource editing remains
+enabled for branding and version metadata, while `signExecutable: false`
+separately proves that no Authenticode signing is implied. The parsed groups,
+payload sizes, icon SHA-256, and signing configuration are uploaded as
+`branding.json` with the other Windows quality evidence.
 
 ## Resource Budgets
 

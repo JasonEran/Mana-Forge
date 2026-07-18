@@ -11,6 +11,10 @@
 # electron-builder output (installer .exe, unpacked app, blockmap)
 windows-launcher/dist/
 
+# Deterministic Windows icon generated from the procedural Mana ring before
+# packaging. Source and tests are tracked; the binary build input is not.
+windows-launcher/build/icon.ico
+
 # Ignore virtualenvs and node modules
 **/venv/
 **/node_modules/

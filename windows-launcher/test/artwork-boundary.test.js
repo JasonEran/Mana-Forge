@@ -91,3 +91,13 @@ test("the tray icon is generated in memory", () => {
   assert.match(source, /nativeImage\.createFromBitmap\(/);
   assert.doesNotMatch(source, /nativeImage\.createFromPath\(/);
 });
+
+test("the Windows app icon is generated from source instead of tracked artwork", () => {
+  const tracked = trackedFiles();
+  assert.equal(tracked.includes("windows-launcher/build/icon.ico"), false);
+  assert.ok(
+    fs.existsSync(path.join(repoRoot, "windows-launcher", "scripts", "generate-mana-icon.js")),
+  );
+  const ignore = fs.readFileSync(path.join(repoRoot, ".gitignore"), "utf8");
+  assert.match(ignore, /windows-launcher\/build\/icon\.ico/);
+});

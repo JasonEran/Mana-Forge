@@ -14,6 +14,8 @@ Attribution and redistribution
 Visual identity
 - The current Mana activity ring is rendered entirely from project source
   code and does not distribute character artwork or avatar model files.
+- The Windows application/installer icon is deterministically generated from
+  that same 32-bar source before packaging; no third-party visual asset is used.
 
 Third-party components
 - See THIRD_PARTY.md for a list of third-party dependencies, models, and their
