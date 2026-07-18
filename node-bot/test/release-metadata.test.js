@@ -56,8 +56,8 @@ test("repository release metadata is consistently v0.3.0", () => {
   assert.match(releaseInputs, /validateReleaseMetadata/);
 });
 
-test("release metadata rejects drift, invalid versions, missing changelog, and tag mismatch", (t) => {
-  t.test("lockfile drift", () => {
+test("release metadata rejects drift, invalid versions, missing changelog, and tag mismatch", async (t) => {
+  await t.test("lockfile drift", () => {
     const root = createFixture();
     const lockPath = path.join(root, "node-bot", "package-lock.json");
     const lock = JSON.parse(fs.readFileSync(lockPath, "utf8"));
@@ -66,18 +66,18 @@ test("release metadata rejects drift, invalid versions, missing changelog, and t
     assert.throws(() => validateReleaseMetadata({ repoRoot: root }), /Release version drift/);
   });
 
-  t.test("invalid semantic version", () => {
+  await t.test("invalid semantic version", () => {
     const root = createFixture("v0.3");
     assert.throws(() => validateReleaseMetadata({ repoRoot: root }), /invalid release version/);
   });
 
-  t.test("missing changelog entry", () => {
+  await t.test("missing changelog entry", () => {
     const root = createFixture();
     fs.writeFileSync(path.join(root, "CHANGELOG.md"), "## [Unreleased]\n");
     assert.throws(() => validateReleaseMetadata({ repoRoot: root }), /missing a dated 0\.3\.0/);
   });
 
-  t.test("mismatched tag", () => {
+  await t.test("mismatched tag", () => {
     const root = createFixture();
     assert.throws(
       () => validateReleaseMetadata({ repoRoot: root, tag: "refs/tags/v0.2.0" }),
