@@ -19,7 +19,7 @@ const {
   describeVisionHotkeyError,
   extractReplyErrorDetail,
 } = window.ManaVisionHotkey;
-const { createLive2dAvatar } = window.ManaLive2dAvatar;
+const { createManaRing } = window.ManaRingVisualizer;
 const {
   DEFAULT_GAMING_MAX_WAIT_FOR_SPEECH_MS,
   DEFAULT_MAX_UTTERANCE_MS,
@@ -33,7 +33,6 @@ const chatLogEl = document.getElementById("chatLog");
 const chatInputEl = document.getElementById("chatInput");
 const chatSendEl = document.getElementById("chatSend");
 const manaCanvasEl = document.getElementById("manaCanvas");
-const avatarZoomBtnEl = document.getElementById("avatarZoomBtn");
 
 const WAKE_WORDS = [
   "mana",
@@ -128,52 +127,16 @@ let gamingStatusCheckPromise = null;
 let lastScreenContextAt = 0;
 let lastScreenText = "";
 
-// In-window avatar: the "maximized" Mana rendered inside the chat window.
-// The overlay window keeps its own instance for minimized mode.
+// The overlay window keeps a second instance fed by the same state/RMS events.
 let windowAvatar = null;
 
-const ZOOM_BUTTON_TITLES = {
-  full: "Whole body — click to zoom to waist-up",
-  waist: "Waist-up — click to zoom to bust-up",
-  bust: "Bust-up — click to zoom to whole body",
-};
-
-function updateZoomButtonLabel(level) {
-  if (!avatarZoomBtnEl) {
-    return;
-  }
-  avatarZoomBtnEl.title = ZOOM_BUTTON_TITLES[level] || ZOOM_BUTTON_TITLES.full;
-}
-
-async function initWindowAvatar() {
+function initWindowAvatar() {
   if (!manaCanvasEl) {
     return;
   }
-  const bootstrap = await desktop.getAvatarBootstrap();
-  createLive2dAvatar({
+  windowAvatar = createManaRing({
     canvas: manaCanvasEl,
-    width: manaCanvasEl.clientWidth || 320,
-    height: manaCanvasEl.clientHeight || 480,
-    bootstrap,
-  })
-    .then((instance) => {
-      windowAvatar = instance;
-      if (windowAvatar) {
-        updateZoomButtonLabel(windowAvatar.getZoom());
-      }
-    })
-    .catch((error) => {
-      console.warn("In-window avatar failed to load:", error);
-    });
-}
-
-if (avatarZoomBtnEl) {
-  avatarZoomBtnEl.addEventListener("click", () => {
-    if (!windowAvatar) {
-      return;
-    }
-    const level = windowAvatar.cycleZoom();
-    updateZoomButtonLabel(level);
+    initialState: "idle",
   });
 }
 
@@ -195,8 +158,7 @@ function setAvatarState(state) {
   }
 }
 
-// Lip sync: sample the playing reply audio's RMS amplitude and forward it to
-// the avatar window, where it drives the Live2D mouth parameter.
+// Speech energy drives the ring's traveling wave in both renderer windows.
 let lipSyncAudioContext = null;
 let lipSyncRafId = null;
 
@@ -207,7 +169,7 @@ function stopLipSync() {
   }
   desktop.setAvatarMouth(0);
   if (windowAvatar) {
-    windowAvatar.setMouthTarget(0);
+    windowAvatar.setEnergy(0);
   }
 }
 
@@ -252,7 +214,7 @@ function startLipSync(audioElement) {
         const rms = Math.sqrt(sum / samples.length);
         desktop.setAvatarMouth(rms);
         if (windowAvatar) {
-          windowAvatar.setMouthTarget(rms);
+        windowAvatar.setEnergy(rms);
         }
       }
       lipSyncRafId = requestAnimationFrame(tick);
@@ -1066,6 +1028,7 @@ async function handleVisionHotkey() {
   }
   visionHotkeyBusy = true;
   processing = true;
+  setAvatarState("talking");
   // Pressing the hotkey is an explicit request, so it also wakes Mana.
   awake = true;
 
@@ -1111,6 +1074,7 @@ async function handleVisionHotkey() {
     console.warn("Vision hotkey failed:", error);
     statusEl.textContent = describeVisionHotkeyError(0, error.message);
   } finally {
+    setAvatarState("idle");
     processing = false;
     visionHotkeyBusy = false;
   }
@@ -1178,6 +1142,7 @@ async function handleTranscript(transcript, gamingModeActive = false) {
   }
 
   processing = true;
+  setAvatarState("talking");
   statusEl.textContent = awake ? "Mana is thinking..." : "Mana heard her name...";
   transcriptEl.textContent = `You: ${cleanTranscript}`;
   appendChatMessage("user", cleanTranscript);
@@ -1199,6 +1164,7 @@ async function handleTranscript(transcript, gamingModeActive = false) {
       : "Stopped";
     return true;
   } finally {
+    setAvatarState("idle");
     processing = false;
   }
 }

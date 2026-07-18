@@ -1,5 +1,9 @@
 Developer Preview - Mana v0.2.0
 
+> Archived release note: the third-party testing avatar described below was
+> removed from the current source tree. Current builds use the original
+> procedural Mana ring and do not accept the old model or artwork assets.
+
 Label: Developer Preview
 
 SHA256 (Mana Setup 0.2.0.exe): 30c214af9520f6f3273a0aa8e6c8cc1d73859596417922e916937f9c6943cbc5
@@ -26,14 +30,12 @@ Quick smoke test
 - On app start, confirm the status indicator shows the backend is running.
 - Press "Hold to Talk" and speak a short phrase.
 - Verify transcript appears and a reply is generated. If a reply is
-  returned, TTS should play, and the Live2D avatar (if the Cubism runtime
-  and a model are present — see below) should lip sync and react.
+  returned, TTS should play.
 
 What's new since v0.1.0-beta
 
-- Built-in Live2D avatar with lip sync, emotion reactions, zoom framing,
-  and per-model tuning (`windows-launcher`), now also ported into this
-  installer-packaged desktop client — see "Avatar notice" below.
+- Historical model-avatar experiment with lip sync and emotion reactions.
+  This implementation has been removed from the current source tree.
 - Silence-based voice endpointing, multilingual TTS with per-language voice
   profiles, and spoken-text normalization for emoji/kaomoji/interjections.
 - GPT-SoVITS wired as an opt-in trial voice-cloning provider.
@@ -50,14 +52,8 @@ Full detail: see CHANGELOG.md's [0.2.0] entry.
 
 Avatar notice
 
-The Live2D avatar bundled in this build renders a **temporary testing
-placeholder model**, not Mana's final avatar. Its character design rights
-belong to miHoYo/HoYoverse (see `desktop-client/AVATAR_NOTICE.md` in the
-repo). It is not included in this installer's `resources` — the avatar
-falls back gracefully to the existing PNG sprite UI unless you separately
-fetch the Cubism runtime and place a model, per
-`docs/live2d_avatar_setup.md`. A 3D model option is planned as a future
-alternative avatar format.
+The historical testing avatar is not part of the current repository and must
+not be restored or redistributed. Mana now uses a code-rendered activity ring.
 
 Known issues & caveats
 
@@ -71,10 +67,8 @@ Known issues & caveats
   those separately as documented in THIRD_PARTY.md and BUILD_DESKTOP.md.
 - Antivirus / SmartScreen: some AV/SmartScreen products may flag unsigned
   installers or executables — expected for preview builds.
-- Artwork: the repository does not grant rights to third-party artwork or
-  avatar models. Only add local assets you have permission to use; see
-  LICENSE-ARTWORK. The historical testing avatar model is a third-party
-  placeholder — see the avatar notice above.
+- Artwork: current source builds do not require or load avatar artwork or
+  character models.
 - FAISS/native bindings: if FAISS or other native bindings are not present
   on the target, the server falls back to JS/JSON adapters (functional but
   slower).

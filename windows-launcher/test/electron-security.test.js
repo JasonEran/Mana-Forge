@@ -15,7 +15,6 @@ const {
 
 test("IPC channels are explicit and immutable", () => {
   assert.deepEqual(Object.keys(IPC_CHANNELS).sort(), [
-    "AVATAR_BOOTSTRAP",
     "AVATAR_MOUTH",
     "AVATAR_MOUTH_CHANGED",
     "AVATAR_STATE",

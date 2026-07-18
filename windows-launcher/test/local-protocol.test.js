@@ -4,29 +4,18 @@ const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 
-const {
-  appPathAllowed,
-  avatarPathAllowed,
-  resolveProtocolPath,
-} = require("../local-protocol");
+const { appPathAllowed, resolveProtocolPath } = require("../local-protocol");
 
 test("app protocol exposes only renderer runtime assets", () => {
   assert.equal(appPathAllowed("renderer/index.html"), true);
-  assert.equal(appPathAllowed("avatar/live2d-avatar.js"), true);
-  assert.equal(appPathAllowed("assets/avatar/idle.png"), true);
-  assert.equal(appPathAllowed("node_modules/pixi.js/dist/browser/pixi.min.js"), true);
+  assert.equal(appPathAllowed("avatar/ring-visualizer.js"), true);
+  assert.equal(appPathAllowed("avatar/renderer.js"), true);
+  assert.equal(appPathAllowed("assets/avatar/portrait.png"), false);
+  assert.equal(appPathAllowed("node_modules/renderer.js"), false);
   assert.equal(appPathAllowed("main.js"), false);
   assert.equal(appPathAllowed("preload.js"), false);
-  assert.equal(appPathAllowed("avatar/model-loader.js"), false);
   assert.equal(appPathAllowed("avatar/model/Mana.model3.json"), false);
   assert.equal(appPathAllowed("test/electron-security.test.js"), false);
-});
-
-test("avatar protocol allows only model asset extensions", () => {
-  assert.equal(avatarPathAllowed("Mana.model3.json"), true);
-  assert.equal(avatarPathAllowed("textures/texture.png"), true);
-  assert.equal(avatarPathAllowed("notes.txt"), false);
-  assert.equal(avatarPathAllowed("payload.js"), false);
 });
 
 test("protocol path resolution rejects traversal and disallowed files", (t) => {

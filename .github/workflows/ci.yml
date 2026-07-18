@@ -130,6 +130,12 @@ jobs:
         working-directory: windows-launcher
         run: npm run test:electron-security
 
+      - name: Verify procedural avatar pixels
+        working-directory: windows-launcher
+        env:
+          MANA_VISUAL_EVIDENCE_DIR: ${{ env.MANA_EVIDENCE_DIR }}/avatar
+        run: npm run test:avatar-visual
+
       - name: Build canonical NSIS installer
         working-directory: windows-launcher
         run: npm run dist

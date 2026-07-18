@@ -52,7 +52,6 @@ test("main preload maps semantic methods to fixed channels", async () => {
   const api = exposed.manaDesktop;
   assert.deepEqual(Object.keys(api).sort(), [
     "capturePrimaryScreen",
-    "getAvatarBootstrap",
     "getRendererConfig",
     "onVisionHotkey",
     "openLocalWebUi",
@@ -63,7 +62,6 @@ test("main preload maps semantic methods to fixed channels", async () => {
   api.setAvatarState("idle");
   api.setAvatarMouth(0.2);
   await api.capturePrimaryScreen();
-  await api.getAvatarBootstrap();
   await api.getRendererConfig();
   await api.openLocalWebUi();
   let hotkeyCalls = 0;
@@ -76,7 +74,6 @@ test("main preload maps semantic methods to fixed channels", async () => {
     ["send", "avatar:set-state", "idle"],
     ["send", "avatar:set-mouth", 0.2],
     ["invoke", "screen:capture-primary"],
-    ["invoke", "avatar:get-bootstrap"],
     ["invoke", "renderer:get-config"],
     ["invoke", "external:open-local-web-ui"],
     ["on", "vision:hotkey"],
@@ -84,11 +81,10 @@ test("main preload maps semantic methods to fixed channels", async () => {
   ]);
 });
 
-test("avatar preload exposes only validated subscriptions and bootstrap", async () => {
+test("avatar preload exposes only validated subscriptions", async () => {
   const { calls, exposed, listeners } = loadPreload("avatar-preload.js");
   const api = exposed.manaAvatar;
-  assert.deepEqual(Object.keys(api).sort(), ["getBootstrap", "onMouth", "onState"]);
-  await api.getBootstrap();
+  assert.deepEqual(Object.keys(api).sort(), ["onMouth", "onState"]);
   let state;
   let mouth;
   api.onState((value) => {
@@ -102,8 +98,7 @@ test("avatar preload exposes only validated subscriptions and bootstrap", async 
 
   assert.equal(state, "talking");
   assert.equal(mouth, 1);
-  assert.deepEqual(calls.slice(0, 3), [
-    ["invoke", "avatar:get-bootstrap"],
+  assert.deepEqual(calls.slice(0, 2), [
     ["on", "avatar:state"],
     ["on", "avatar:mouth"],
   ]);

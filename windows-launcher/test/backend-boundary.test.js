@@ -22,7 +22,7 @@ test("renderers contain no Node or raw Electron access", () => {
   for (const relativePath of [
     "renderer/renderer.js",
     "avatar/renderer.js",
-    "avatar/live2d-avatar.js",
+    "avatar/ring-visualizer.js",
   ]) {
     const source = fs.readFileSync(
       path.join(__dirname, "..", relativePath),
@@ -40,13 +40,13 @@ test("renderer emotion states cross the validated avatar boundary", () => {
     "utf8",
   );
   const avatarSource = fs.readFileSync(
-    path.join(__dirname, "..", "avatar", "renderer.js"),
+    path.join(__dirname, "..", "avatar", "ring-visualizer.js"),
     "utf8",
   );
 
   for (const state of ["idle", "talking", "excited", "angry", "sad", "disgusted"]) {
     assert.match(securitySource, new RegExp(`"${state}"`), state);
-    assert.match(avatarSource, new RegExp(`\\b${state}:`), state);
+    assert.match(avatarSource, new RegExp(`"${state}"`), state);
   }
 });
 
@@ -100,7 +100,7 @@ test("main process installs navigation, permission, and validated IPC policies",
   assert.doesNotMatch(source, /ipcMain\.(?:on|handle)\(\s*["']/);
 
   const registrations = source.match(/ipcMain\.(?:on|handle)\(IPC_CHANNELS\.[A-Z_]+/g) || [];
-  assert.equal(registrations.length, 6);
+  assert.equal(registrations.length, 5);
   const senderChecks = source.match(/isTrustedSender\s*\(/g) || [];
-  assert.ok(senderChecks.length >= 6, "every renderer-to-main path must validate its sender");
+  assert.ok(senderChecks.length >= 5, "every renderer-to-main path must validate its sender");
 });

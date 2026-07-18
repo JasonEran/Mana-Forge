@@ -11,6 +11,13 @@ accounting.
 
 ## [Unreleased]
 
+### Added
+
+- Replaced character artwork with an original procedural Mana identity: 32
+  radial bars, white breathing idle motion, pale-green active energy waves,
+  audio-reactive pulses, and reduced-motion support. The same dependency-free
+  Canvas component now renders both supported Electron surfaces.
+
 ### Removed
 
 - Removed five PNG avatar files at the rights holder's request, along with
@@ -18,6 +25,15 @@ accounting.
   documentation references. Tray and status UI fallbacks now use generated or
   CSS-only indicators, and a boundary test prevents the removed assets from
   being added again.
+- Removed the remaining PNG/SVG avatar art, model loader and protocol, model
+  renderer, fetch/check tools, setup guides, notices, and Pixi/model-runtime
+  dependencies. The frozen desktop and native launcher paths no longer read
+  avatar files.
+
+### Changed
+
+- Restored sandbox and context isolation in the frozen desktop client after
+  removing the renderer dependency that had required Node integration.
 
 ## [0.2.0] - 2026-07-12
 
@@ -26,8 +42,8 @@ accounting.
   app): same driver as `windows-launcher`, with emotion-reactive states and
   RMS lip sync wired into the reply/audio flow, plus a zoom control and an
   always-visible in-app disclaimer banner. Clearly marked as a temporary
-  testing placeholder, not the final avatar — see
-  `desktop-client/AVATAR_NOTICE.md` for the miHoYo/HoYoverse attribution.
+  testing placeholder, not the final avatar. This historical implementation
+  was removed from current source under the Unreleased changes above.
   Required temporarily enabling `nodeIntegration` for the desktop client's
   main window (documented tradeoff, scoped to this feature).
 - **Setup automation script** (`tools/setup-mana.ps1`) for first-run npm
@@ -41,8 +57,8 @@ accounting.
   bust-up), and an idle-tilt correction for models whose idle motion pitches
   back sharply. Every tuning knob (mouth gain, eye-open scale, blink/smile/
   brow parameter ids, idle tilt angles, state→motion/expression mapping) is
-  configurable per-model via `mana-avatar.json`, so swapping the model
-  folder is a drop-in operation — see `docs/live2d_avatar_setup.md`.
+  configurable per-model via `mana-avatar.json`. This historical implementation
+  was removed from current source under the Unreleased changes above.
 - **Silence-based voice endpointing**: Mana waits for an actual pause
   (~2.2s, tunable) before treating speech as a finished prompt, instead of
   cutting a long sentence off at a fixed duration.
@@ -69,8 +85,7 @@ accounting.
 - **Relicensed from PolyForm Noncommercial 1.0.0 to Apache License 2.0**
   for the code, so GitHub's license picker/badge recognizes it. This
   permits commercial use of the code by others, a deliberate tradeoff for
-  recognizability. Third-party artwork and local avatar models are not
-  covered by the code license; see `LICENSE-ARTWORK`.
+  recognizability. Third-party assets remained subject to their own terms.
 
 ### Fixed
 - Closed two real gitignore gaps: personal voice-audition/reference audio

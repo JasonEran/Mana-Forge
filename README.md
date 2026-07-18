@@ -2,10 +2,6 @@
 
 **License (code): Apache License 2.0 — © 2026 ManaAI.** See LICENSE and NOTICE.
 
-**Avatar assets are not covered by the code license.** Bring only artwork you have permission to use; see LICENSE-ARTWORK and THIRD_PARTY.md.
-
-**Live2D Cubism Core** is proprietary to Live2D Inc., is not part of this repository, and is fetched at setup time under Live2D's own terms; see THIRD_PARTY.md.
-
 Mana is a local-first AI assistant for Windows. It listens from the desktop launcher, transcribes speech locally, replies with local GGUF models, speaks through local TTS services, and can read visible screen text after it is awake.
 
 The project is built for a personal Windows setup: one user, local models by default, clear setup checks, and optional companion features when you want phone access or avatar control.
@@ -51,7 +47,7 @@ see [runtime configuration](docs/runtime_configuration.md).
 - **Local image understanding**: with a vision GGUF installed, Mana can look at screenshots and images and talk about them; see [docs/vision_setup.md](docs/vision_setup.md).
 - **Look-at-my-screen hotkey**: press `Ctrl+Alt+M` (configurable via `MANA_VISION_HOTKEY`) to have Mana capture the screen, describe it, and speak the answer.
 - **Gaming mode**: Mana reduces idle work while watched games are running.
-- **Desktop avatar support**: Mana emotes through a built-in Live2D VTuber avatar with lip sync and emotion reactions ([docs/live2d_avatar_setup.md](docs/live2d_avatar_setup.md)), PNG overlay fallback, and optional VTube Studio hotkey control. A fully 3D model option is planned as a future alternative.
+- **Procedural desktop identity**: Mana is represented by a code-rendered 32-bar ring that breathes while idle and reacts to speech energy and reply emotion without bundled artwork or a model runtime ([design notes](docs/procedural_avatar.md)).
 - **Mobile companion path**: phone chat and summary sync are available through the local backend and optional tunnel setup.
 - **Editor coding handoff**: Mana can detect local Zed or VS Code CLIs and open projects or files for coding help without applying edits silently.
 - **FFXIV and market helpers**: Mana can query Universalis crafting/market data and Alpha Vantage stock summaries when configured.
@@ -168,8 +164,7 @@ Common troubleshooting:
 - [Windows quick start](docs/quick_start_windows.md): full setup and daily run flow.
 - [Mobile PWA and Cloudflare Tunnel](docs/mobile_pwa_cloudflare.md): phone companion setup.
 - [Runtime boundary threat model](docs/security/runtime-boundary-threat-model.md): API, tunnel, renderer, screen-data, and child-process security boundaries.
-- [PNG avatar setup](docs/png_avatar_setup.md): desktop avatar overlay.
-- [Live2D avatar setup](docs/live2d_avatar_setup.md): built-in VTuber avatar with lip sync.
+- [Procedural avatar](docs/procedural_avatar.md): ring behavior, state contract, and validation.
 - [VTube Studio setup](docs/vtube_studio_setup.md): avatar hotkeys and reactions.
 - [Native launcher plan](docs/native_launcher_plan.md): experimental lower-memory launcher direction.
 - [Chatterbox voice tuning](docs/chatterbox_voice_tuning.md): Chatterbox voice settings.

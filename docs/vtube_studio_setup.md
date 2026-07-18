@@ -89,6 +89,6 @@ This gives Mana basic avatar control without tying the core voice loop to a spec
 ## Current limits
 
 - This integration controls hotkeys only.
-- It does not yet drive Live2D parameters directly.
+- It does not share animation parameters with Mana's built-in procedural ring.
 - It does not yet animate mouth movement from generated audio.
 - It depends on the currently loaded VTube Studio model having useful hotkeys configured.

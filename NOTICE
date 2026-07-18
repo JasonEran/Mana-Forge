@@ -11,16 +11,10 @@ Attribution and redistribution
   carry forward this NOTICE file's attribution content per License
   section 4(d).
 
-Artwork restrictions
-- Third-party artwork and avatar model files are not covered by the code
-  license and must not be added or redistributed without permission. See
-  LICENSE-ARTWORK for details. The model historically loaded
-  in `desktop-client` is a temporary testing placeholder whose character
-  design rights belong to miHoYo/HoYoverse, not ManaAI — see
-  `desktop-client/AVATAR_NOTICE.md`.
+Visual identity
+- The current Mana activity ring is rendered entirely from project source
+  code and does not distribute character artwork or avatar model files.
 
 Third-party components
 - See THIRD_PARTY.md for a list of third-party dependencies, models, and their
-  respective license or usage restrictions. In particular, the Live2D Cubism
-  Core runtime is proprietary to Live2D Inc., is not distributed with this
-  repository, and is downloaded at setup time under Live2D's own terms.
+  respective license or usage restrictions.

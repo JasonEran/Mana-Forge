@@ -63,6 +63,10 @@ security/preload files, the shared runtime, backend source and production
 dependencies, plus bundled Node. It rejects development assets and model-weight
 extensions (`.bin`, `.gguf`, `.onnx`, `.safetensors`, and similar).
 
+The same Windows job captures real Electron frames for the procedural avatar.
+The pixel gate requires a nonblank white idle ring and a nonblank pale-green
+active ring, and uploads both PNGs with the other quality evidence.
+
 Model/provider assets remain first-run and unbundled. `desktop-client` has no
 workflow, artifact, or publication path; it remains frozen only for the archive
 review in Issue #9.

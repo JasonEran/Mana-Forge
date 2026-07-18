@@ -9,7 +9,8 @@ const distRoot = path.join(launcherRoot, "dist");
 const REQUIRED_FILES = Object.freeze([
   "/avatar-preload.js",
   "/avatar/index.html",
-  "/avatar/model-loader.js",
+  "/avatar/renderer.js",
+  "/avatar/ring-visualizer.js",
   "/electron-security.js",
   "/local-protocol.js",
   "/main.js",
@@ -20,6 +21,9 @@ const FORBIDDEN_PATTERNS = Object.freeze([
   /^\/nodemon\.json$/,
   /^\/scripts\//,
   /^\/test\//,
+  /^\/assets\/avatar\//,
+  /^\/avatar\/(?:live2d|model-loader)/i,
+  /\.(?:model3\.json|moc3|motion3\.json|exp3\.json)$/i,
   /\.(?:bin|ckpt|gguf|onnx|pt|pth|safetensors)$/i,
 ]);
 const MODEL_WEIGHT_PATTERN = /\.(?:bin|ckpt|gguf|onnx|pt|pth|safetensors)$/i;

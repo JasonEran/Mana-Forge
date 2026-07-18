@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src blob:; connect-src 'self' mana-avatar: http://127.0.0.1:5005; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'"
+      content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; media-src blob:; connect-src 'self' http://127.0.0.1:5005; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'"
     />
     <title>Mana</title>
     <style>
@@ -149,27 +149,6 @@
         height: 100%;
       }
 
-      #avatarZoomBtn {
-        position: absolute;
-        right: 6px;
-        bottom: 6px;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        border: 1px solid var(--border);
-        background: var(--panel-2);
-        color: var(--text);
-        font-size: 14px;
-        line-height: 1;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0.85;
-      }
-
-      #avatarZoomBtn:hover { opacity: 1; }
-
       #composerColumn {
         flex: 1;
         display: flex;
@@ -295,8 +274,7 @@
 
       <div id="bottomBar">
         <div id="avatarDock">
-          <canvas id="manaCanvas"></canvas>
-          <button id="avatarZoomBtn" title="Zoom avatar view">⤢</button>
+          <canvas id="manaCanvas" role="img" aria-label="Mana activity"></canvas>
         </div>
         <div id="composerColumn">
           <div id="controlsRow">
@@ -350,14 +328,11 @@
     <div id="transcript"></div>
     <div id="modelReply"></div>
 
-    <!-- Live2D runtime for the in-window avatar (fetched at setup; the dock
-         stays empty and harmless when core or model are absent). -->
     <script src="doctor-panel.js"></script>
     <script src="vision-hotkey.js"></script>
     <script src="voice-endpointing.js"></script>
     <script src="reply-emotion.js"></script>
-    <script src="../avatar/live2d-logic.js"></script>
-    <script src="../avatar/live2d-avatar.js"></script>
+    <script src="../avatar/ring-visualizer.js"></script>
     <script src="renderer.js"></script>
   </body>
 </html>

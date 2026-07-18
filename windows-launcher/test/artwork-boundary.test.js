@@ -11,6 +11,10 @@ const removedFiles = [
   "sprite-loading-2.png",
   "sprite-loading-3.png",
   "sprite-speak.png",
+  "idle.png",
+  "idle.svg",
+  "talking.png",
+  "talking.svg",
 ];
 
 function trackedFiles() {
@@ -19,7 +23,8 @@ function trackedFiles() {
     encoding: "utf8",
   })
     .split("\0")
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter((file) => fs.existsSync(path.join(repoRoot, file)));
 }
 
 function trackedTextFiles() {
@@ -29,7 +34,7 @@ function trackedTextFiles() {
     .filter((file) => fs.existsSync(file));
 }
 
-test("removed third-party sprites are absent and unreferenced", () => {
+test("removed avatar artwork is absent and unreferenced", () => {
   assert.equal(fs.existsSync(path.join(repoRoot, "sprites")), false);
   const tracked = trackedFiles();
   for (const removedFile of removedFiles) {
@@ -47,6 +52,35 @@ test("removed third-party sprites are absent and unreferenced", () => {
     for (const removedFile of removedFiles) {
       assert.equal(source.includes(removedFile), false, `${file}: ${removedFile}`);
     }
+  }
+});
+
+test("avatar rendering is code-only and has no model runtime dependencies", () => {
+  const tracked = trackedFiles();
+  assert.deepEqual(
+    tracked.filter((file) => file.startsWith("windows-launcher/assets/avatar/")),
+    [],
+  );
+  assert.deepEqual(
+    tracked.filter((file) => /\.(?:model3\.json|moc3|motion3\.json|exp3\.json)$/i.test(file)),
+    [],
+  );
+
+  const runtimeFiles = trackedTextFiles().filter((file) => {
+    const relative = path.relative(repoRoot, file).replace(/\\/g, "/");
+    return (
+      (relative.startsWith("windows-launcher/") &&
+        !relative.startsWith("windows-launcher/test/") &&
+        relative !== "windows-launcher/scripts/verify-launcher-package.js") ||
+      relative.startsWith("desktop-client/") ||
+      relative.startsWith("windows-native-launcher/")
+    );
+  });
+  for (const file of runtimeFiles) {
+    if (file === __filename) continue;
+    const source = fs.readFileSync(file, "utf8");
+    assert.doesNotMatch(source, /Live2D|live2d|pixi-live2d-display|pixi\.js/i, file);
+    assert.doesNotMatch(source, /assets[\\/]avatar/i, file);
   }
 });
 

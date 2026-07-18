@@ -21,7 +21,7 @@ paths are outside this boundary.
 | Local model and memory files | Read/write by another local process | OS account permissions; no claim of protection from same-user malware |
 | Whisper, Llama, Kokoro, and optional children | Orphans, port capture, command/path substitution | Typed configuration, fixed descriptors, supervisor ownership and process-tree cleanup |
 | Electron renderers | Script injection escalating to OS access | Sandbox and context isolation; no Node integration; narrow window-specific preloads; strict CSP and navigation policy |
-| Live2D model content | File traversal, remote resource load, executable content | Main-process validation, real-path containment, extension allowlist, and a read-only model protocol |
+| Procedural avatar renderer | Script substitution or renderer privilege escalation | Enumerated local source files, strict CSP, sandbox, context isolation, and no model/file-loading protocol |
 
 ## Network Security Invariants
 
@@ -47,10 +47,8 @@ paths are outside this boundary.
   `send`, `invoke`, channel name, file path, command, or arbitrary URL API.
 - Every renderer-to-main channel checks the expected window, top-level frame,
   exact `mana-app://app` document URL, and bounded payload shape.
-- `mana-app://app` exposes only enumerated renderer assets. Main-process,
-  preload, test, and model-loader sources are not protocol-readable.
-- `mana-avatar://model` exposes only validated resources inside the selected
-  model root and grants CORS only to `mana-app://app`.
+- `mana-app://app` exposes only enumerated renderer source files. Main-process,
+  preload, test, dependency, image, and model paths are not protocol-readable.
 - Browser navigation, redirects, and new windows are denied. The only external
   link operation opens the fixed local UI URL `http://127.0.0.1:7860/`.
 - Permission requests deny by default. Only the trusted main window may request

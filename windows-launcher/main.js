@@ -15,10 +15,6 @@ const {
   normalizeMouthRms,
   normalizeSilenceBufferMs,
 } = require("./electron-security");
-const {
-  loadAvatarBootstrap,
-  resolveAvatarModel,
-} = require("./avatar/model-loader");
 const { resolveBundledNode } = require("../runtime/node-runtime");
 const {
   APP_ORIGIN,
@@ -306,7 +302,6 @@ app.whenReady().then(() => {
     protocol,
     net,
     appRoot: __dirname,
-    avatarRoot: () => resolveAvatarModel({ env: process.env }).modelDir,
   });
   configureRuntime();
   session.defaultSession.setPermissionCheckHandler(
@@ -490,18 +485,6 @@ ipcMain.handle(IPC_CHANNELS.RENDERER_CONFIG, async (event) => {
   return {
     silenceBufferMs: normalizeSilenceBufferMs(process.env.MANA_SILENCE_BUFFER_MS),
   };
-});
-ipcMain.handle(IPC_CHANNELS.AVATAR_BOOTSTRAP, async (event) => {
-  const trustedMain = isTrustedSender(event, mainWindow?.webContents, MAIN_DOCUMENT_URL);
-  const trustedAvatar = isTrustedSender(
-    event,
-    avatarWindow?.webContents,
-    AVATAR_DOCUMENT_URL,
-  );
-  if (!trustedMain && !trustedAvatar) {
-    throw new Error("Untrusted avatar bootstrap request.");
-  }
-  return loadAvatarBootstrap({ env: process.env });
 });
 ipcMain.handle(IPC_CHANNELS.OPEN_LOCAL_WEB_UI, async (event) => {
   if (!isTrustedSender(event, mainWindow?.webContents, MAIN_DOCUMENT_URL)) {

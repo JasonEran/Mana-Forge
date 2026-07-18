@@ -13,8 +13,7 @@
     "verify:package": "node scripts/verify-launcher-package.js",
     "verify:installer": "node scripts/verify-installer.js",
     "smoke:installer": "powershell -ExecutionPolicy Bypass -File ../scripts/windows-installer-smoke.ps1",
-    "fetch-live2d-core": "node scripts/fetch-live2d-core.js",
-    "check-live2d-model": "node scripts/check-live2d-model.js",
+    "test:avatar-visual": "node scripts/run-avatar-visual-smoke.js",
     "test:electron-security": "node scripts/run-electron-security-smoke.js"
   },
   "author": "",
@@ -39,7 +38,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "signAndEditExecutable": false
@@ -68,12 +69,16 @@
       {
         "from": "../node-bot/node_modules",
         "to": "node-bot/node_modules",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       },
       {
         "from": "../runtime",
         "to": "runtime",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       },
       {
         "from": "../tts-service",
@@ -90,7 +95,9 @@
       {
         "from": "../node-bin",
         "to": "node_bin",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ]
   },
@@ -99,14 +106,5 @@
     "electron": "^43.1.1",
     "electron-builder": "^26.15.3",
     "nodemon": "^3.1.14"
-  },
-  "dependencies": {
-    "pixi-live2d-display": "^0.4.0",
-    "pixi.js": "^6.5.10"
-  },
-  "overrides": {
-    "pixi-live2d-display": {
-      "gh-pages": "^6.3.0"
-    }
   }
 }

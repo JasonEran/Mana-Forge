@@ -31,29 +31,6 @@ or bundling in this repo. This project intentionally keeps large binaries and
 model weights out of source control; please follow the docs to download and
 install required artifacts.
 
-- pixi.js (npm)
-  - MIT license. Bundled via npm in `windows-launcher` and `desktop-client`
-    for the built-in Live2D avatar renderer.
-
-- pixi-live2d-display (npm)
-  - MIT license. Bundled via npm in `windows-launcher` and `desktop-client`;
-    renders Live2D Cubism models inside the avatar UI.
-
-- Live2D Cubism Core (live2dcubismcore.min.js)
-  - Proprietary — Live2D Proprietary Software License Agreement. NOT
-    distributed in this repository. Fetched from Live2D's official CDN by
-    `npm run fetch-live2d-core` in `windows-launcher` and `desktop-client`
-    and kept git-ignored. Use is subject to Live2D's terms:
-    https://www.live2d.com/en/terms/
-
-- Live2D avatar model files (`windows-launcher/avatar/model/`,
-  `desktop-client/avatar/model/`)
-  - Personal/proprietary artwork, git-ignored. See LICENSE-ARTWORK. The
-    model currently loaded in `desktop-client` is a temporary testing
-    placeholder, not the final avatar — see
-    `desktop-client/AVATAR_NOTICE.md` for the character's real-world IP
-    attribution (miHoYo/HoYoverse).
-
 - SearXNG (tools/searxng, git-ignored, fetched by tools/setup-searxng.ps1)
   - AGPL-3.0 license. Runs as a separate local process; Mana's backend talks
     to it only over localhost HTTP, so this does not affect the license of

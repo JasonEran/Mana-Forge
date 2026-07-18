@@ -85,9 +85,8 @@ function detectTextMood(text) {
 }
 
 // Positive/energetic moods read as "excited"; sniff/ow read as "sad";
-// grr/hmph read as "angry"; disgust is its own state (see live2d-logic's
-// "disgusted" preferences — this model shows it via a blank "white-eyes"
-// expression). Anything ambiguous (thinking, relief, a shrug) is left as
+// grr/hmph read as "angry"; disgust has its own ring motion profile.
+// Anything ambiguous (thinking, relief, a shrug) is left as
 // plain "talking" rather than guessing.
 const MOOD_STATE = {
   smile: "excited",

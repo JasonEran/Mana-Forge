@@ -4,28 +4,11 @@ const { pathToFileURL } = require("node:url");
 
 const APP_ORIGIN = "mana-app://app";
 const APP_SCHEME = "mana-app";
-const AVATAR_ORIGIN = "mana-avatar://model";
-const AVATAR_SCHEME = "mana-avatar";
 
 const APP_ALLOWED_PATHS = [
-  /^assets\/avatar\/(?:idle|talking)\.(?:png|svg)$/,
-  /^assets\/live2d\/live2dcubismcore\.min\.js$/,
-  /^avatar\/(?:index\.html|live2d-avatar\.js|live2d-logic\.js|renderer\.js)$/,
+  /^avatar\/(?:index\.html|renderer\.js|ring-visualizer\.js)$/,
   /^renderer\/(?:index\.html|renderer\.js|doctor-panel\.js|reply-emotion\.js|vision-hotkey\.js|voice-endpointing\.js)$/,
-  /^node_modules\/pixi\.js\/dist\/browser\/pixi\.min\.js$/,
-  /^node_modules\/pixi-live2d-display\/dist\/cubism4\.min\.js$/,
 ];
-const AVATAR_ALLOWED_EXTENSIONS = new Set([
-  ".json",
-  ".moc3",
-  ".png",
-  ".jpg",
-  ".jpeg",
-  ".webp",
-  ".wav",
-  ".mp3",
-  ".ogg",
-]);
 
 function resolveProtocolPath(options) {
   const { requestUrl, expectedHost, rootDir, allowedPath, fsImpl = fs } = options;
@@ -69,7 +52,7 @@ function resolveProtocolPath(options) {
 }
 
 function createProtocolHandler(options) {
-  const { expectedHost, rootProvider, allowedPath, corsOrigin, net } = options;
+  const { expectedHost, rootProvider, allowedPath, net } = options;
   return async function handleProtocol(request) {
     try {
       const filePath = resolveProtocolPath({
@@ -78,15 +61,7 @@ function createProtocolHandler(options) {
         rootDir: rootProvider(),
         allowedPath,
       });
-      const response = await net.fetch(pathToFileURL(filePath).href);
-      if (!corsOrigin) return response;
-      const headers = new Headers(response.headers);
-      headers.set("Access-Control-Allow-Origin", corsOrigin);
-      return new Response(response.body, {
-        status: response.status,
-        statusText: response.statusText,
-        headers,
-      });
+      return await net.fetch(pathToFileURL(filePath).href);
     } catch (error) {
       return new Response("Not found", { status: 404 });
     }
@@ -95,10 +70,6 @@ function createProtocolHandler(options) {
 
 function appPathAllowed(relativePath) {
   return APP_ALLOWED_PATHS.some((pattern) => pattern.test(relativePath));
-}
-
-function avatarPathAllowed(relativePath) {
-  return AVATAR_ALLOWED_EXTENSIONS.has(path.extname(relativePath).toLowerCase());
 }
 
 function registerPrivilegedSchemes(protocol) {
@@ -113,20 +84,10 @@ function registerPrivilegedSchemes(protocol) {
         stream: true,
       },
     },
-    {
-      scheme: AVATAR_SCHEME,
-      privileges: {
-        secure: true,
-        standard: true,
-        supportFetchAPI: true,
-        corsEnabled: true,
-        stream: true,
-      },
-    },
   ]);
 }
 
-function installLocalProtocols({ protocol, net, appRoot, avatarRoot }) {
+function installLocalProtocols({ protocol, net, appRoot }) {
   protocol.handle(
     APP_SCHEME,
     createProtocolHandler({
@@ -136,25 +97,12 @@ function installLocalProtocols({ protocol, net, appRoot, avatarRoot }) {
       net,
     }),
   );
-  protocol.handle(
-    AVATAR_SCHEME,
-    createProtocolHandler({
-      expectedHost: "model",
-      rootProvider: avatarRoot,
-      allowedPath: avatarPathAllowed,
-      corsOrigin: APP_ORIGIN,
-      net,
-    }),
-  );
 }
 
 module.exports = {
   APP_ORIGIN,
   APP_SCHEME,
-  AVATAR_ORIGIN,
-  AVATAR_SCHEME,
   appPathAllowed,
-  avatarPathAllowed,
   installLocalProtocols,
   registerPrivilegedSchemes,
   resolveProtocolPath,
