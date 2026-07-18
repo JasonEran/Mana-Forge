@@ -73,6 +73,9 @@ jobs:
         working-directory: node-bot
         run: npm ci --omit=optional --no-audit --progress=false
 
+      - name: Validate release metadata
+        run: node scripts/check-release-metadata.js
+
       - name: Run Core profile suite
         working-directory: node-bot
         run: npm run test:core
@@ -178,6 +181,9 @@ jobs:
         working-directory: windows-launcher
         run: npm run verify:installer
 
+      - name: Write installer SHA-256
+        run: node scripts/write-installer-checksum.js
+
       - name: Run clean install, launch, Doctor, and uninstall smoke
         shell: pwsh
         env:
@@ -196,7 +202,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mana-windows-installer
-          path: windows-launcher/dist/Mana-Setup-*.exe
+          path: |
+            windows-launcher/dist/Mana-Setup-*.exe
+            windows-launcher/dist/Mana-Setup-*.exe.sha256
           if-no-files-found: error
           retention-days: 14
 

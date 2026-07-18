@@ -47,6 +47,9 @@ test("one quality workflow owns the required release gates", () => {
     "verify:installer",
     "windows-installer-smoke.ps1",
     "check-quality-budgets.js",
+    "check-release-metadata.js",
+    "write-installer-checksum.js",
+    "Mana-Setup-*.exe.sha256",
     "upload-artifact@v4",
   ]) {
     assert.match(workflow, new RegExp(contract.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));

@@ -9,13 +9,33 @@ branch protection receives one stable signal per responsibility.
 | Check | Platform | Contract |
 | --- | --- | --- |
 | `Backend full suite` | Ubuntu | Clean `npm ci`, every `node-bot/test/*.test.js` file, production dependency audit |
+| `Backend Core profile` | Ubuntu | Core-only dependency install, representative Core suite, release metadata, optional-package absence |
 | `Launcher suite` | Ubuntu | Clean `npm ci`, every launcher test, complete launcher dependency audit |
 | `Windows lifecycle and package` | Windows | Real backend lifecycle, Electron isolation, canonical NSIS build, ASAR/runtime/model boundary, clean install/Doctor/uninstall smoke, resource budgets |
 | `dco` | Ubuntu | Commit sign-off or the repository's accepted contribution agreement path |
 
 The Windows job uploads `windows-quality-evidence` for 30 days and the unsigned
-`mana-windows-installer` CI artifact for 14 days. Lifecycle, package, and
-installer JSON are machine-produced evidence, not hand-written reports.
+`mana-windows-installer` CI artifact for 14 days. The installer artifact also
+contains an ASCII SHA-256 companion bound to the versioned filename. Lifecycle,
+package, and installer JSON are machine-produced evidence, not hand-written
+reports.
+
+## Release Metadata
+
+`scripts/check-release-metadata.js` is the repository-wide version contract.
+It requires launcher/backend manifests and lockfile roots to share one strict
+semantic version, requires a matching dated changelog entry, verifies the
+version-derived x64 installer name, and rejects a mismatched release tag.
+
+```powershell
+node scripts/check-release-metadata.js
+$env:MANA_RELEASE_TAG = "v0.3.0"
+node scripts/check-release-metadata.js
+```
+
+The Core test tier exercises success and failure cases. Quality gates run the
+command directly before packaging, and `scripts/write-installer-checksum.js`
+reuses the same contract before writing the checksum.
 
 ## Test Tiers
 
@@ -147,6 +167,7 @@ Protect `main` against direct pushes and require these exact checks after this
 workflow lands:
 
 - `Backend full suite`
+- `Backend Core profile`
 - `Launcher suite`
 - `Pull request contract`
 - `Windows lifecycle and package`

@@ -3,9 +3,11 @@
 Last synced: 2026-06-29. This snapshot predates the current repository Issue
 tracker and is not the active delivery plan.
 
-Use the **Mana - One Runtime Modernization** GitHub Project, the
-`v0.3 - One Runtime Foundation` milestone, and
-[ADR 0001](../adr/0001-supported-windows-runtime.md) for current work.
+The **Mana - One Runtime Modernization** Project and
+`v0.3 - One Runtime Foundation` milestone completed on 2026-07-18. Current
+release-candidate work is tracked by Issue #33 and milestone
+`v0.3.0 - Release Candidate`; [ADR 0001](../adr/0001-supported-windows-runtime.md)
+remains the supported-runtime decision.
 
 ## Completed
 
