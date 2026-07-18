@@ -66,7 +66,10 @@ function createAcpMemoryStore(options = {}) {
   const dataDir =
     options.dataDir ||
     process.env.MANA_ACP_MEMORY_DIR ||
-    path.join(__dirname, "data", "acp-memory");
+    path.join(
+      process.env.MANA_DATA_DIR || path.join(__dirname, "data"),
+      "acp-memory",
+    );
   const sessionsDir = path.join(dataDir, "sessions");
   const now = options.now || (() => new Date().toISOString());
   const maxRecentTurns = Math.max(1, Number(options.maxRecentTurns || 20));

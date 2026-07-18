@@ -63,6 +63,18 @@ test("backend descriptor derives one command, port, cwd, and health contract", (
   assert.equal(descriptor.env.MANA_BACKEND_HOST, "127.0.0.1");
   assert.equal(descriptor.env.MANA_ALLOW_REMOTE_ACCESS, "0");
   assert.equal(descriptor.env.VTUBE_STUDIO_ENABLED, "0");
+  assert.equal(
+    descriptor.env.MANA_DATA_DIR,
+    path.join(repoRoot, "node-bot", "data"),
+  );
+  assert.equal(
+    descriptor.env.MANA_ACP_MEMORY_DIR,
+    path.join(repoRoot, "node-bot", "data", "acp-memory"),
+  );
+  assert.equal(
+    descriptor.env.MOBILE_MEMORY_DIR,
+    path.join(repoRoot, "node-bot", "data", "mobile"),
+  );
   assert.equal(descriptor.startupTimeoutMs, 1234);
   assert.equal(descriptor.shutdownTimeoutMs, 4321);
   assert.equal(descriptor.restart.enabled, true);

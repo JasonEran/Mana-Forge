@@ -10,11 +10,12 @@ branch protection receives one stable signal per responsibility.
 | --- | --- | --- |
 | `Backend full suite` | Ubuntu | Clean `npm ci`, every `node-bot/test/*.test.js` file, production dependency audit |
 | `Launcher suite` | Ubuntu | Clean `npm ci`, every launcher test, complete launcher dependency audit |
-| `Windows lifecycle and package` | Windows | Real backend start, health, local request, owned shutdown, port release, Electron isolation, launcher pack, ASAR/model boundary, resource budgets |
+| `Windows lifecycle and package` | Windows | Real backend lifecycle, Electron isolation, canonical NSIS build, ASAR/runtime/model boundary, clean install/Doctor/uninstall smoke, resource budgets |
 | `dco` | Ubuntu | Commit sign-off or the repository's accepted contribution agreement path |
 
-The Windows job uploads `windows-quality-evidence` for 30 days. Its lifecycle
-and package JSON files are inputs to the budget gate, not hand-written reports.
+The Windows job uploads `windows-quality-evidence` for 30 days and the unsigned
+`mana-windows-installer` CI artifact for 14 days. Lifecycle, package, and
+installer JSON are machine-produced evidence, not hand-written reports.
 
 ## Test Tiers
 
@@ -48,27 +49,30 @@ starts the real backend through `RuntimeSupervisor`. It verifies:
 3. `/models/status` completes through a real local API route;
 4. shutdown removes the owned process tree and releases the port.
 
-The job starts from clean `npm ci` installations. This is the first-run source
-runtime gate. Clean installer/VM and uninstall proof remains Issue #8 because
-that issue owns migration of backend/runtime resources into the installer.
+The job starts from clean `npm ci` installations. The source-runtime smoke is
+kept as a focused supervisor baseline, while `windows-installer-smoke.ps1`
+installs the canonical NSIS artifact into an isolated location, launches it,
+reaches `/health`, `/doctor`, and `/models/status`, releases the backend port,
+and verifies uninstall removal.
 
 ## Packaging Boundary
 
-The Windows job builds the canonical `windows-launcher` unpacked package and
-parses its actual ASAR. The gate requires the Electron security/preload/runtime
-files and rejects development tests, development scripts, `nodemon.json`, and
-model-weight extensions (`.bin`, `.gguf`, `.onnx`, `.safetensors`, and similar).
+The Windows job builds the canonical `windows-launcher` NSIS installer and
+parses its actual ASAR and unpacked resources. The gate requires Electron
+security/preload files, the shared runtime, backend source and production
+dependencies, plus bundled Node. It rejects development assets and model-weight
+extensions (`.bin`, `.gguf`, `.onnx`, `.safetensors`, and similar).
 
-This gate deliberately does not publish an installer. Issue #8 will extend the
-same verifier when the supported installer begins carrying `runtime` and
-`node-bot`; it must not introduce a second packaging/lifecycle workflow.
+Model/provider assets remain first-run and unbundled. `desktop-client` has no
+workflow, artifact, or publication path; it remains frozen only for the archive
+review in Issue #9.
 
 ## Resource Budgets
 
 `quality/budgets.json` is the versioned source of truth.
 
 - `ciLifecycle` is enforced on every PR: one owned backend process, backend
-  RSS, cold start, health/local-request latency, and ASAR size.
+  RSS, cold start, health/local-request latency, ASAR size, and installer size.
 - `coreRelease` defines release limits for the complete Core profile: process
   count, idle RAM/VRAM, cold start, warm text, STT, and TTS latency.
 

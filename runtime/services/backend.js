@@ -1,6 +1,6 @@
 const path = require("node:path");
 
-const { withPath } = require("../config");
+const { resolveDataDir, withPath } = require("../config");
 const { createNetworkSecurityConfig } = require("../network-security");
 
 function createBackendServiceDescriptor(options = {}) {
@@ -30,6 +30,10 @@ function createBackendServiceDescriptor(options = {}) {
     parsedUrl.port || (parsedUrl.protocol === "https:" ? 443 : 80),
   );
   const networkSecurity = createNetworkSecurityConfig(env);
+  const dataDir = resolveDataDir(
+    env,
+    options.dataDir || path.join(repoRoot, "node-bot", "data"),
+  );
 
   return {
     id: "backend",
@@ -41,6 +45,16 @@ function createBackendServiceDescriptor(options = {}) {
       MANA_ALLOW_REMOTE_ACCESS: networkSecurity.remoteAccessRequested ? "1" : "0",
       MANA_BACKEND_HOST: networkSecurity.host,
       MANA_CORS_ALLOWED_ORIGINS: env.MANA_CORS_ALLOWED_ORIGINS || "",
+      MANA_CONFIG_FILE: env.MANA_CONFIG_FILE || "",
+      MANA_DATA_DIR: dataDir,
+      MANA_ACP_MEMORY_DIR:
+        env.MANA_ACP_MEMORY_DIR || path.join(dataDir, "acp-memory"),
+      MOBILE_MEMORY_DIR:
+        env.MOBILE_MEMORY_DIR || path.join(dataDir, "mobile"),
+      VECTOR_STORE_DIR:
+        env.VECTOR_STORE_DIR || path.join(dataDir, "vector_store"),
+      SCREEN_OCR_CACHE_PATH:
+        env.SCREEN_OCR_CACHE_PATH || path.join(dataDir, "tmp", "tesseract"),
       MOBILE_PASSCODE_HASH: env.MOBILE_PASSCODE_HASH || "",
       MOBILE_SESSION_SECRET: env.MOBILE_SESSION_SECRET || "",
       MOBILE_SESSION_TTL_MS: env.MOBILE_SESSION_TTL_MS || "43200000",

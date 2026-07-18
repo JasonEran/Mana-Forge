@@ -9,7 +9,9 @@ function parseArgs(args) {
   const values = {};
   for (let index = 0; index < args.length; index += 1) {
     const name = args[index];
-    if (!["--budgets", "--lifecycle", "--package"].includes(name)) {
+    if (
+      !["--budgets", "--lifecycle", "--package", "--installer"].includes(name)
+    ) {
       throw new TypeError(`Unknown argument ${name}.`);
     }
     const value = args[index + 1];
@@ -25,7 +27,7 @@ function parseArgs(args) {
 function readJson(filePath, label) {
   assert.ok(filePath, `${label} evidence path is required.`);
   assert.ok(fs.existsSync(filePath), `${label} evidence is missing: ${filePath}`);
-  return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  return JSON.parse(fs.readFileSync(filePath, "utf8").replace(/^\uFEFF/, ""));
 }
 
 function checkValue(name, actual, limit) {
@@ -34,7 +36,12 @@ function checkValue(name, actual, limit) {
   return { actual, limit, status: "pass" };
 }
 
-function checkCiBudgets({ budgets, lifecycle, packageEvidence }) {
+function checkCiBudgets({
+  budgets,
+  lifecycle,
+  packageEvidence,
+  installerEvidence,
+}) {
   const limits = budgets?.profiles?.ciLifecycle?.limits;
   assert.ok(limits, "ciLifecycle limits are missing.");
   const actual = {
@@ -44,6 +51,7 @@ function checkCiBudgets({ budgets, lifecycle, packageEvidence }) {
     healthLatencyMs: lifecycle.healthLatencyMs,
     localRequestLatencyMs: lifecycle.localRequestLatencyMs,
     packageAsarMiB: packageEvidence.asarMiB,
+    installerMiB: installerEvidence.installerMiB,
   };
   return Object.fromEntries(
     Object.entries(limits).map(([name, limit]) => [
@@ -58,7 +66,13 @@ function main(args = process.argv.slice(2)) {
   const budgets = readJson(paths.budgets || defaultBudgetsPath, "budget");
   const lifecycle = readJson(paths.lifecycle, "lifecycle");
   const packageEvidence = readJson(paths.package, "package");
-  const results = checkCiBudgets({ budgets, lifecycle, packageEvidence });
+  const installerEvidence = readJson(paths.installer, "installer");
+  const results = checkCiBudgets({
+    budgets,
+    lifecycle,
+    packageEvidence,
+    installerEvidence,
+  });
   process.stdout.write(`${JSON.stringify({ profile: "ciLifecycle", results })}\n`);
 }
 

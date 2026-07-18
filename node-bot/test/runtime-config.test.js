@@ -8,6 +8,7 @@ const {
   discoverRuntime,
   loadManaConfig,
   parseEnv,
+  resolveDataDir,
   withPath,
 } = require("../../runtime/config");
 
@@ -37,6 +38,14 @@ test("parseEnv supports comments, export, quotes, and equals in values", () => {
 
 test("withPath joins service URLs without duplicate slashes", () => {
   assert.equal(withPath("http://127.0.0.1:5005/", "/health"), "http://127.0.0.1:5005/health");
+});
+
+test("resolveDataDir preserves the development fallback and accepts packaged storage", () => {
+  const fallback = path.resolve("node-bot", "data");
+  const packaged = path.resolve("mana-user-data", "data");
+
+  assert.equal(resolveDataDir({}, fallback), fallback);
+  assert.equal(resolveDataDir({ MANA_DATA_DIR: packaged }, fallback), packaged);
 });
 
 test("loadManaConfig gives process environment precedence over root .env", (t) => {

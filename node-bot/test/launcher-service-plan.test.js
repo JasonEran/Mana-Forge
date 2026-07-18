@@ -16,14 +16,19 @@ function ids(plan) {
 }
 
 test("default launcher plan owns core services and reports missing optional assets", () => {
+  const dataDir = path.join(repoRoot, "user-data");
   const plan = createLauncherServicePlan({
     repoRoot,
     env: {},
     fsImpl: missingFs,
+    command: "C:\\Mana\\node_bin\\node.exe",
+    dataDir,
   });
 
   assert.deepEqual(ids(plan), ["backend", "kokoro"]);
   assert.equal(plan.descriptors[0].required, true);
+  assert.equal(plan.descriptors[0].command, "C:\\Mana\\node_bin\\node.exe");
+  assert.equal(plan.descriptors[0].env.MANA_DATA_DIR, dataDir);
   assert.equal(plan.descriptors[1].required, true);
   assert.equal(plan.warnings.length, 2);
   assert.match(plan.warnings[0], /Retriever script is missing/);
@@ -38,6 +43,22 @@ test("disabled optional services produce neither descriptors nor warnings", () =
   });
 
   assert.deepEqual(ids(plan), ["backend", "kokoro"]);
+  assert.deepEqual(plan.warnings, []);
+});
+
+test("model-free packaged first run can defer Kokoro setup", () => {
+  const plan = createLauncherServicePlan({
+    repoRoot,
+    env: {
+      TTS_PROVIDER: "kokoro",
+      MANA_START_KOKORO: "0",
+      MANA_START_RETRIEVER: "0",
+      MANA_START_SEARXNG: "0",
+    },
+    fsImpl: missingFs,
+  });
+
+  assert.deepEqual(ids(plan), ["backend"]);
   assert.deepEqual(plan.warnings, []);
 });
 

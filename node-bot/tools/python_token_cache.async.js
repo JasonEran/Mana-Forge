@@ -117,7 +117,10 @@ function heuristicCount(text) {
 }
 
 function cachePath() {
-  return path.join(__dirname, "..", "data", "token_count_cache.json");
+  return path.join(
+    process.env.MANA_DATA_DIR || path.join(__dirname, "..", "data"),
+    "token_count_cache.json",
+  );
 }
 
 function readCacheSync() {

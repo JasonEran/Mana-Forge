@@ -6,7 +6,7 @@ waiting, lip sync from her own voice while speaking, and reaction motions
 based on the emotion of each reply.
 
 This doc covers the supported `windows-launcher` implementation. A historical
-copy exists in frozen `desktop-client` while its packaging work is migrated;
+copy remains in frozen `desktop-client` pending the archive review;
 do not use that path for setup, releases, or new avatar work. See
 `desktop-client/AVATAR_NOTICE.md` only for the historical model attribution.
 Everything below applies to the supported launcher.

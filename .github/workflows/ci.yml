@@ -112,6 +112,14 @@ jobs:
         working-directory: windows-launcher
         run: npm ci --no-audit --progress=false
 
+      - name: Stage bundled Node runtime
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path node-bin | Out-Null
+          $node = (Get-Command node -ErrorAction Stop).Source
+          Copy-Item -LiteralPath $node -Destination node-bin/node.exe -Force
+          if (-not (Test-Path node-bin/node.exe)) { throw "Bundled Node staging failed." }
+
       - name: Run real Windows backend lifecycle smoke
         shell: pwsh
         env:
@@ -122,19 +130,42 @@ jobs:
         working-directory: windows-launcher
         run: npm run test:electron-security
 
-      - name: Build unpacked canonical launcher
+      - name: Build canonical NSIS installer
         working-directory: windows-launcher
-        run: npm run pack
+        run: npm run dist
 
       - name: Verify packaged boundary and model exclusion
         working-directory: windows-launcher
         env:
           MANA_EVIDENCE_FILE: ${{ env.MANA_EVIDENCE_DIR }}/package.json
+          MANA_REQUIRE_BUNDLED_NODE: "1"
         run: npm run verify:package
+
+      - name: Verify canonical installer artifact
+        working-directory: windows-launcher
+        run: npm run verify:installer
+
+      - name: Run clean install, launch, Doctor, and uninstall smoke
+        shell: pwsh
+        env:
+          MANA_INSTALLER_EVIDENCE_FILE: ${{ env.MANA_EVIDENCE_DIR }}/installer.json
+        run: |
+          $installer = Get-ChildItem windows-launcher/dist -File -Filter 'Mana-Setup-*.exe' | Select-Object -First 1
+          if (-not $installer) { throw "Canonical Mana installer was not found." }
+          & powershell -NoProfile -ExecutionPolicy Bypass -File scripts/windows-installer-smoke.ps1 -InstallerPath $installer.FullName
+          if ($LASTEXITCODE -ne 0) { throw "Installer smoke failed with exit code $LASTEXITCODE." }
 
       - name: Enforce resource budgets
         shell: pwsh
-        run: node scripts/check-quality-budgets.js --lifecycle "$env:MANA_EVIDENCE_DIR\lifecycle.json" --package "$env:MANA_EVIDENCE_DIR\package.json"
+        run: node scripts/check-quality-budgets.js --lifecycle "$env:MANA_EVIDENCE_DIR\lifecycle.json" --package "$env:MANA_EVIDENCE_DIR\package.json" --installer "$env:MANA_EVIDENCE_DIR\installer.json"
+
+      - name: Upload canonical Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: mana-windows-installer
+          path: windows-launcher/dist/Mana-Setup-*.exe
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Upload quality evidence
         if: always()

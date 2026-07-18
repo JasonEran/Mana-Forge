@@ -16,7 +16,9 @@ function cosine(a, b) {
 }
 
 function makeFallbackStore(opts = {}) {
-  const dir = opts.dir || path.join(__dirname, '..', 'data', 'vector_store');
+  const dir =
+    opts.dir ||
+    path.join(process.env.MANA_DATA_DIR || path.join(__dirname, '..', 'data'), 'vector_store');
   const file = path.join(dir, 'vector_store.json');
   let items = []; // { id, vector, meta }
 
@@ -56,7 +58,9 @@ function createStore(opts = {}) {
   if (faissModule) {
     // Implement a thin FAISS-backed store when available
     // For now, if a binding is present, provide a simplified wrapper that stores vectors in memory and uses FAISS index when asked
-    const dir = opts.dir || path.join(__dirname, '..', 'data', 'vector_store');
+    const dir =
+      opts.dir ||
+      path.join(process.env.MANA_DATA_DIR || path.join(__dirname, '..', 'data'), 'vector_store');
     let ids = [];
     let vectors = [];
     let metas = {};

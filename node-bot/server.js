@@ -53,6 +53,7 @@ const fs = require("fs");
 const path = require("path");
 const http = require("http");
 const https = require("https");
+const DATA_DIR = process.env.MANA_DATA_DIR || path.join(__dirname, "data");
 const { createWorker } = require("tesseract.js");
 const { VTubeStudioClient } = require("./vtube-studio-client");
 const { registerVTubeRoutes } = require("./vtube-routes");
@@ -151,7 +152,7 @@ function createApp(deps = {}) {
   app.use(createOriginGuard(networkSecurity));
   app.use(cors(createCorsOptions(networkSecurity)));
   app.use(express.json({ limit: "15mb" }));
-  	const upload = multer({ dest: path.join(__dirname, "tmp") });
+  const upload = multer({ dest: path.join(DATA_DIR, "tmp") });
 
   	  // wire mobile device store (allow override via deps for tests)
   	  const deviceStore = deps.deviceStore || new MobileDeviceStore();
@@ -185,7 +186,7 @@ const SCREEN_CONTEXT_MAX_CHARS = Number(
   process.env.SCREEN_CONTEXT_MAX_CHARS || 1200,
 );
 const SCREEN_OCR_CACHE_PATH =
-  process.env.SCREEN_OCR_CACHE_PATH || path.join(__dirname, "tmp", "tesseract");
+  process.env.SCREEN_OCR_CACHE_PATH || path.join(DATA_DIR, "tmp", "tesseract");
 const WHISPER_THREADS = Number(process.env.WHISPER_THREADS || 2);
 // Biases whisper.cpp toward Mana's wake words and Singapore English/Singlish
 // vocabulary via an initial prompt, per docs/speech_recognition_improvement_plan.md.
@@ -443,8 +444,7 @@ let BACKGROUND_AUDIT_LAST_REBUILD = null;
 let VECTOR_STORE_REBUILD_LOCK = false;
 
 const VECTOR_REBUILD_AUDIT_PATH = path.join(
-  __dirname,
-  "data",
+  DATA_DIR,
   "vector_rebuild_audit.jsonl",
 );
 
@@ -1241,7 +1241,7 @@ function ensureDirectory(dirPath) {
   fs.mkdirSync(dirPath, { recursive: true });
 }
 
-ensureDirectory(path.join(__dirname, "tmp"));
+ensureDirectory(path.join(DATA_DIR, "tmp"));
 
 function registerRoutes(app, upload, deps = {}) {
   const env = deps.env || process.env;

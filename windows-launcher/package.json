@@ -8,8 +8,11 @@
     "start": "electron .",
     "dev": "nodemon --config nodemon.json",
     "pack": "electron-builder --dir",
+    "predist": "node scripts/check-release-inputs.js",
+    "dist": "electron-builder --win nsis --publish never",
     "verify:package": "node scripts/verify-launcher-package.js",
-    "dist": "electron-builder",
+    "verify:installer": "node scripts/verify-installer.js",
+    "smoke:installer": "powershell -ExecutionPolicy Bypass -File ../scripts/windows-installer-smoke.ps1",
     "fetch-live2d-core": "node scripts/fetch-live2d-core.js",
     "check-live2d-model": "node scripts/check-live2d-model.js",
     "test:electron-security": "node scripts/run-electron-security-smoke.js"
@@ -20,11 +23,75 @@
     "node": ">=22.12.0"
   },
   "build": {
+    "appId": "com.mana.ai",
+    "productName": "Mana",
+    "artifactName": "Mana-Setup-${version}-${arch}.${ext}",
+    "directories": {
+      "buildResources": "build"
+    },
     "files": [
       "**/*",
       "!test{,/**}",
       "!scripts{,/**}",
       "!nodemon.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "include": "build/installer.nsh",
+      "warningsAsErrors": false
+    },
+    "extraResources": [
+      {
+        "from": "../node-bot",
+        "to": "node-bot",
+        "filter": [
+          "**/*",
+          "!test{,/**}",
+          "!scripts{,/**}",
+          "!tmp{,/**}",
+          "!data{,/**}",
+          "!*.log"
+        ]
+      },
+      {
+        "from": "../node-bot/node_modules",
+        "to": "node-bot/node_modules",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "../runtime",
+        "to": "runtime",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "../tts-service",
+        "to": "tts-service",
+        "filter": [
+          "**/*",
+          "!venv{,/**}",
+          "!kokoro{,/**}",
+          "!__pycache__{,/**}",
+          "!*.wav",
+          "!*.mp3"
+        ]
+      },
+      {
+        "from": "../node-bin",
+        "to": "node_bin",
+        "filter": ["**/*"]
+      }
     ]
   },
   "devDependencies": {

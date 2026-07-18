@@ -2,7 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const DEFAULT_DATA_DIR = path.join(__dirname, 'data');
+const DEFAULT_DATA_DIR = process.env.MANA_DATA_DIR
+  ? path.join(process.env.MANA_DATA_DIR, 'mobile')
+  : path.join(__dirname, 'data');
 
 function defaultFilePath() {
   const dataDir = process.env.MOBILE_MEMORY_DIR || DEFAULT_DATA_DIR;

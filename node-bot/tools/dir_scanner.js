@@ -7,7 +7,10 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 
-const INDEX_PATH = path.join(__dirname, "..", "data", "dir_index.json");
+const INDEX_PATH = path.join(
+  process.env.MANA_DATA_DIR || path.join(__dirname, "..", "data"),
+  "dir_index.json",
+);
 function ensureIndexDir() {
   try {
     fs.mkdirSync(path.dirname(INDEX_PATH), { recursive: true });

@@ -1,4 +1,5 @@
 const { loadManaConfig } = require("../runtime/config");
+const fs = require("node:fs");
 const {
   createLauncherServicePlan,
 } = require("../runtime/services/launcher");
@@ -18,6 +19,7 @@ const {
   loadAvatarBootstrap,
   resolveAvatarModel,
 } = require("./avatar/model-loader");
+const { resolveBundledNode } = require("../runtime/node-runtime");
 const {
   APP_ORIGIN,
   installLocalProtocols,
@@ -66,11 +68,47 @@ const runtimeSupervisor = new RuntimeSupervisor();
 const MAIN_DOCUMENT_URL = `${APP_ORIGIN}/renderer/index.html`;
 const AVATAR_DOCUMENT_URL = `${APP_ORIGIN}/avatar/index.html`;
 
-const launcherServicePlan = createLauncherServicePlan({ repoRoot: ROOT_DIR });
-for (const descriptor of launcherServicePlan.descriptors) {
-  runtimeSupervisor.register(descriptor);
+function configureRuntime() {
+  const dataDir =
+    process.env.MANA_DATA_DIR || path.join(app.getPath("userData"), "data");
+  const runtimeEnv = {
+    ...process.env,
+    MANA_DATA_DIR: dataDir,
+    MANA_ACP_MEMORY_DIR:
+      process.env.MANA_ACP_MEMORY_DIR || path.join(dataDir, "acp-memory"),
+    MOBILE_MEMORY_DIR:
+      process.env.MOBILE_MEMORY_DIR || path.join(dataDir, "mobile"),
+    VECTOR_STORE_DIR:
+      process.env.VECTOR_STORE_DIR || path.join(dataDir, "vector_store"),
+    SCREEN_OCR_CACHE_PATH:
+      process.env.SCREEN_OCR_CACHE_PATH ||
+      path.join(dataDir, "tmp", "tesseract"),
+  };
+  const kokoroRoot = path.join(ROOT_DIR, "tts-service");
+  const kokoroReady = [
+    path.join(kokoroRoot, "venv", "Scripts", "python.exe"),
+    path.join(kokoroRoot, "kokoro", "kokoro-v1.0.int8.onnx"),
+    path.join(kokoroRoot, "kokoro", "voices-v1.0.bin"),
+  ].every((filePath) => fs.existsSync(filePath));
+  if (!kokoroReady && !process.env.MANA_START_KOKORO) {
+    runtimeEnv.MANA_START_KOKORO = "0";
+  }
+  const launcherServicePlan = createLauncherServicePlan({
+    repoRoot: ROOT_DIR,
+    env: runtimeEnv,
+    command:
+      resolveBundledNode({
+        env: runtimeEnv,
+        repoRoot: ROOT_DIR,
+        resourcesPath: process.resourcesPath,
+      }) || "node",
+    dataDir,
+  });
+  for (const descriptor of launcherServicePlan.descriptors) {
+    runtimeSupervisor.register(descriptor);
+  }
+  for (const warning of launcherServicePlan.warnings) console.warn(warning);
 }
-for (const warning of launcherServicePlan.warnings) console.warn(warning);
 
 async function startWindowsServices() {
   if (runtimeShutdownStarted) return;
@@ -270,6 +308,7 @@ app.whenReady().then(() => {
     appRoot: __dirname,
     avatarRoot: () => resolveAvatarModel({ env: process.env }).modelDir,
   });
+  configureRuntime();
   session.defaultSession.setPermissionCheckHandler(
     (webContents, permission, _requestingOrigin, details) =>
       isAllowedMediaPermission(

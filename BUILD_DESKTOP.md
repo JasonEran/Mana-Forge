@@ -1,99 +1,80 @@
-Desktop Packaging Status (Historical `desktop-client` Path)
+# Windows Packaging
 
-> `desktop-client` is frozen and is not the supported runtime or release
-> target. Mana's supported Windows runtime is `windows-launcher -> node-bot ->
-> local Whisper / local Llama / Kokoro`. See
-> [ADR 0001](docs/adr/0001-supported-windows-runtime.md).
->
-> The instructions below are retained only as migration reference while the
-> installer design is moved to `windows-launcher`. Do not publish a release
-> from this path or add product features to it.
+`windows-launcher` is the only supported Windows installer owner. The frozen
+`desktop-client` directory is not built or published.
 
-Building the historical desktop-client installer (Windows)
+## Migration Inventory
 
-This guide walks through producing a Windows installer for the Electron desktop client locally.
+| Historical behavior | Canonical disposition |
+| --- | --- |
+| Per-user NSIS with selectable install directory | Retained in `windows-launcher/build/installer.nsh` and package metadata |
+| Optional start-at-login registry value | Retained; uninstall removes the value |
+| Bundled `node.exe` resource | Retained as `resources/node_bin/node.exe` with explicit runtime resolution |
+| Backend copied beside Electron resources | Retained with production dependencies and the shared `runtime/` contract |
+| Direct `spawn()`/`kill()` lifecycle in `desktop-client` | Dropped; packaged and development launches both use `RuntimeSupervisor` |
+| Bundled model weights | Rejected; models remain first-run/unbundled assets |
+| Frozen renderer/avatar implementation | Not migrated; `windows-launcher` remains the sole product shell |
 
-Prerequisites
+## Local Build
 
-- OS: Windows 10/11 (recommended for building Windows installer). You can build on Windows runner in CI or locally.
-- Node.js: v18 LTS (install from https://nodejs.org/). Ensure `node` and `npm` are in PATH.
-- Git: repository checkout.
-- NSIS: Install Nullsoft Scriptable Install System (makensis) and ensure `makensis` is in PATH. Download: https://nsis.sourceforge.io/Download
-- Disk space: Electron downloads are large — allow at least 2-4 GB for the build.
+On Windows 10/11 with Node.js 22.12 or newer:
 
-Notes about the backend (node-bot)
+```powershell
+cd C:\ManaAI\Mana
+powershell -ExecutionPolicy Bypass -File .\scripts\fetch_node_bin.ps1 `
+  -Version 22.12.0 -Arch x64
+cd node-bot
+npm ci
+cd ..\windows-launcher
+npm ci
+npm run dist
+npm run verify:package
+npm run verify:installer
+```
 
-- The packaged installer will include the backend files under the app's resources (configured as extraResources). The packaged installer can also include a bundled Node runtime so the app runs standalone without Node installed on target machines.
+The NSIS artifact is written to `windows-launcher/dist/Mana-Setup-<version>-x64.exe`.
+The installer is per-user, supports a custom installation directory, and
+removes its autostart registry value during uninstall.
 
-Bundling Node runtime (standalone installer)
+## Bundled Node
 
-- To create a truly standalone installer that does not require Node on the target machine, place a portable Node distribution into a folder named `node-bin` at the repository root. The packager will include this into the app resources as `node_bin` and the launcher will prefer the bundled node executable if present.
+The package accepts an optional official Node distribution staged at the
+repository root as `node-bin/node.exe`. `windows-launcher` copies it into the
+installer as `resources/node_bin/node.exe` and prefers it for the supervised
+backend. Development falls back to the configured system `node` command.
 
-  - Windows: place `node.exe` and its associated files into `node-bin/` (e.g., `node-bin/node.exe`, other DLLs if required).
-  - Linux/macOS: place the corresponding platform-specific Node binary under `node-bin/bin/node`.
+Do not commit `node-bin`; verify the upstream Node redistribution terms before
+publishing a release. The CI package gate stages the runner's Node executable
+only to validate the resource boundary.
 
-- Note: Please verify the Node distribution you bundle is permitted for redistribution. Official Node binaries are typically redistributable, but confirm licensing if you are unsure.
+## First Run
 
-Build steps (local)
+Model weights are deliberately not bundled. Install local Whisper/llama.cpp
+assets and the Kokoro runtime through the existing setup instructions after
+installation. Until those assets exist, the launcher starts the backend and
+reports the missing provider state in Doctor; it does not download weights as
+part of the installer.
 
-1. Open a Developer PowerShell / CMD as administrator (recommended) and navigate to the repo root:
+Runtime data is written below Electron's per-user `userData` directory. The
+installed resources contain source/runtime files only and are never used as a
+database location.
 
-   cd C:\ManaAI\Mana
+For an isolated install/launch/Doctor/uninstall check:
 
-2. Prepare a bundled Node runtime (optional for standalone)
+```powershell
+cd C:\ManaAI\Mana
+powershell -ExecutionPolicy Bypass -File .\scripts\windows-installer-smoke.ps1 `
+  -InstallerPath .\windows-launcher\dist\Mana-Setup-0.2.0-x64.exe
+```
 
-   - If you want a standalone installer, create a `node-bin` folder at the repo root and copy the platform-appropriate Node binary into it (see notes above). Example:
+The smoke checks installation into a temporary directory, backend `/health`,
+Doctor, model status, port release, and removal of the installed executable.
+It disables optional provider startup for this model-free proof and writes
+machine-readable evidence when `MANA_INSTALLER_EVIDENCE_FILE` is set.
 
-     mkdir node-bin
-     copy C:\path\to\node.exe node-bin\node.exe
+## Rollback
 
-3. Install dependencies for backend (node-bot) and desktop client:
-
-   cd node-bot
-   npm ci
-
-   cd ..\desktop-client
-   npm ci
-
-   - Optional: fetch the Live2D Cubism Core runtime so the (currently
-     testing-placeholder) avatar renders instead of falling back to PNG
-     sprites: `npm run fetch-live2d-core`. See AVATAR_NOTICE.md.
-
-4. Run the build (this will produce an installer in desktop-client/dist):
-
-   npm run dist
-
-   - The command uses electron-builder to create an NSIS installer by default.
-   - Build logs will appear in the console. The first build downloads Electron and can take several minutes.
-
-5. Find artifacts:
-
-   - After a successful build, installers will be in `desktop-client/dist/` (e.g., Mana Setup 0.1.0.exe).
-
-6. Test the installer on a clean Windows machine (or VM):
-
-   - If you bundled node into node-bin, the app should run standalone.
-   - If not bundled, ensure Node is installed on the target machine (same major/minor as your dev Node version recommended).
-   - Run the installed app and confirm it spawns the backend and that audio recording/transcription/reply flows work.
-
-Environment variables for code signing (optional)
-
-- If you want to sign the installer with a code-signing certificate, set the following environment variables before building (or configure in electron-builder settings):
-  - CSC_LINK: base64-encoded PKCS#12 (p12) certificate or a link to a certificate
-  - CSC_KEY_PASSWORD: password for the certificate
-
-- On GitHub Actions, set these as repository secrets if you want CI to produce signed installers.
-
-Troubleshooting
-
-- makensis not found: ensure NSIS is installed and makensis is on PATH.
-- Build fails downloading Electron: check network, retry, or use a faster connection.
-- Packaged app cannot spawn backend: if you did not bundle node, ensure Node is installed on target machine and in PATH. If you bundled node, ensure the bundled binary is valid and included in the installer.
-
-Optional: Bundle Node runtime alternatives
-
-- To avoid bundling Node, an alternative is to compile the backend into a single native executable using tools like pkg or nexe and include that in extraResources. This may simplify redistribution but has tradeoffs (native compilation complexity, OS/arch builds).
-
-Questions / Next steps
-
-- I can bundle an official Node binary into `node-bin` for you if you provide the binary or permit me to download and include it. I can also implement the bundling and test a local build here if you want me to run the build in this environment (it will consume time and download artifacts).
+The migration is isolated to `windows-launcher`, runtime resource descriptors,
+and packaging docs. Revert the packaging PR and remove its branch-protection
+check only if the installer artifact or clean-install evidence regresses; the
+development launcher/backend contract remains unchanged.

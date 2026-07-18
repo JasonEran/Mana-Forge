@@ -1,7 +1,8 @@
 const fs = require("fs");
 const path = require("path");
 
-const INDEX_PATH = path.join(__dirname, "..", "data", "retriever_index.json");
+const DATA_DIR = process.env.MANA_DATA_DIR || path.join(__dirname, "..", "data");
+const INDEX_PATH = path.join(DATA_DIR, "retriever_index.json");
 
 // Embedding settings
 const USE_EMBEDDINGS =
@@ -19,7 +20,7 @@ const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL || "https://api.openai.com";
 const { createStore } = require("./vector-store");
 const VECTOR_STORE_DIR =
   process.env.VECTOR_STORE_DIR ||
-  path.join(__dirname, "..", "tools", "vector_store");
+  path.join(DATA_DIR, "vector_store");
 const vectorStore = createStore({ dir: VECTOR_STORE_DIR });
 
 function normalize(text) {

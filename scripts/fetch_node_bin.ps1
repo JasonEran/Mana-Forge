@@ -1,11 +1,11 @@
 <#
 PowerShell helper to download a Windows Node.js distribution and place it into repo-root\node-bin
 Usage examples (from repo root):
-  powershell -ExecutionPolicy Bypass -File .\scripts\fetch_node_bin.ps1 -Version 18.18.0 -Arch x64
-  powershell -ExecutionPolicy Bypass -File .\scripts\fetch_node_bin.ps1 -Version 18.18.0 -Arch x86 -Force
+  powershell -ExecutionPolicy Bypass -File .\scripts\fetch_node_bin.ps1 -Version 22.12.0 -Arch x64
+  powershell -ExecutionPolicy Bypass -File .\scripts\fetch_node_bin.ps1 -Version 22.12.0 -Arch x86 -Force
 
 Defaults:
- - Version: 18.18.0
+ - Version: 22.12.0
  - Arch: x64
 
 This script will:
@@ -17,7 +17,7 @@ Note: Verify redistribution rights before distributing installers that bundle No
 #>
 
 param(
-    [string]$Version = "18.18.0",
+    [string]$Version = "22.12.0",
     [ValidateSet('x64','x86','arm64')][string]$Arch = 'x64',
     [switch]$Force
 )
@@ -146,8 +146,8 @@ try{
     } catch {}
 
     Write-Host "\nDone. node-bin prepared at: $nodeBinDir"
-    Write-Host "Bundled Node is ready for migration into the supported windows-launcher packaging flow."
-    Write-Host "Do not publish the frozen desktop-client path; see docs/adr/0001-supported-windows-runtime.md."
+    Write-Host "Bundled Node is ready for the supported windows-launcher packaging flow."
+    Write-Host "Do not publish the frozen desktop-client path; see BUILD_DESKTOP.md."
 
 } catch {
     Write-Error "Error: $($_.Exception.Message)"
