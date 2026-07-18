@@ -1,4 +1,4 @@
-Node bot (Mana) — local backend
+# Mana Forge Local Backend
 
 The backend defaults to the Core capability profile. For a dependency-minimal
 install use `npm ci --omit=optional`; use `npm ci` plus `MANA_PROFILE=full` only
@@ -11,7 +11,7 @@ inventory and lifecycle contract is in
 
 Local Embedding Service (optional, local-only)
 
-To enable fully-local semantic retrieval without external APIs, run a small local embedding service and enable embeddings in Mana.
+To enable fully-local semantic retrieval without external APIs, run a small local embedding service and enable embeddings in Mana Forge.
 
 1) Install Python dependencies (recommended in a venv):
 
@@ -30,7 +30,7 @@ On Windows PowerShell use:
 $env:RETRIEVER_EMBEDDER_SECRET="mysecret"
 python node-bot\tools\local_embedder.py --port 9001 --model all-MiniLM-L6-v2 --http-secret $env:RETRIEVER_EMBEDDER_SECRET
 
-3) Enable embeddings in Mana (Node):
+3) Enable embeddings in Mana Forge (Node):
 
 # set to true to enable embeddings; the retriever will prefer the local embedder at RETRIEVER_EMBEDDER_URL
 export USE_EMBEDDINGS=1

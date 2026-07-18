@@ -1,10 +1,10 @@
-Third-party components and models used by Mana
+# Third-party Components and Models Used by Mana Forge
 
 This file lists notable third-party components, binaries, and model artifacts
 that the project references. Many of these are governed by their own
 licenses and must be obtained separately and used according to their terms.
 
-Common items referenced by Mana:
+Common items referenced by Mana Forge:
 
 - whisper.cpp / whisper.cpp binaries
   - Not distributed in this repo. Obtain from the upstream project and follow
@@ -32,12 +32,12 @@ model weights out of source control; please follow the docs to download and
 install required artifacts.
 
 - SearXNG (tools/searxng, git-ignored, fetched by tools/setup-searxng.ps1)
-  - AGPL-3.0 license. Runs as a separate local process; Mana's backend talks
+  - AGPL-3.0 license. Runs as a separate local process; Mana Forge's backend talks
     to it only over localhost HTTP, so this does not affect the license of
-    Mana's own code. See https://github.com/searxng/searxng for terms.
+    Mana Forge's own code. See https://github.com/searxng/searxng for terms.
 
 - GPT-SoVITS (tools/gpt-sovits, git-ignored, downloaded per docs/gpt_sovits_setup.md)
   - MIT license. Trial voice-cloning provider running as a separate local
     process (Windows self-contained package incl. its own Python runtime);
-    Mana's backend talks to it only over localhost HTTP. See
+    Mana Forge's backend talks to it only over localhost HTTP. See
     https://github.com/RVC-Boss/GPT-SoVITS for terms.

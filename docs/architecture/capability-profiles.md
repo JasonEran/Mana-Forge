@@ -1,6 +1,6 @@
 # Capability profiles
 
-Mana starts in the **Core** profile. Optional capabilities are absent unless a
+Mana Forge starts in the **Core** profile. Optional capabilities are absent unless a
 single capability flag is set to `1`, or the operator explicitly selects the
 **Full** profile with `MANA_PROFILE=full`.
 

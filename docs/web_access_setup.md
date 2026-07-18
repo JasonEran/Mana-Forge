@@ -14,7 +14,7 @@ page you name necessarily means fetching that page).
 once per machine:
 
 ```powershell
-cd C:\ManaAI\Mana\tools
+cd C:\path\to\Mana-Forge\tools
 .\setup-searxng.ps1
 ```
 
@@ -78,7 +78,7 @@ the search feature depends on it.
 To restart SearXNG by hand:
 
 ```powershell
-cd C:\ManaAI\Mana\tools\searxng
-$env:SEARXNG_SETTINGS_PATH = "C:\ManaAI\Mana\tools\searxng\mana-settings.yml"
+cd C:\path\to\Mana-Forge\tools\searxng
+$env:SEARXNG_SETTINGS_PATH = "C:\path\to\Mana-Forge\tools\searxng\mana-settings.yml"
 .\venv\Scripts\python.exe -m searx.webapp
 ```

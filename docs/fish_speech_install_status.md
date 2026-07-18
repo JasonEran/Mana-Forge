@@ -21,11 +21,11 @@ sudo apt-get install -y build-essential portaudio19-dev
 Then retry:
 
 ```bash
-cd /mnt/c/ManaAI/Mana/tools/fish-speech
+cd /mnt/c/path/to/Mana-Forge/tools/fish-speech
 /home/user/.local/bin/uv sync --extra cu128
 ```
 
 Hardware note
 - Local GPU detected: NVIDIA GeForce RTX 3070 Ti, 8GB VRAM.
 - Fish Speech docs mention 24GB VRAM for inference, so local server performance may be limited.
-- Mana can already use `TTS_PROVIDER=fish` with Kokoro fallback while Fish Speech is being evaluated.
+- Mana Forge can already use `TTS_PROVIDER=fish` with Kokoro fallback while Fish Speech is being evaluated.

@@ -12,7 +12,7 @@ removed, and switching back is one environment variable.
 package), so set it up once per machine:
 
 ```powershell
-cd C:\ManaAI\Mana\tools
+cd C:\path\to\Mana-Forge\tools
 .\setup-gpt-sovits.ps1
 ```
 
@@ -37,7 +37,7 @@ quality, more so than for Chatterbox. A 5-15 second clean clip works well.
 2. Get its exact transcript. The most reliable way is Mana's own local
    Whisper:
    ```powershell
-   cd C:\ManaAI\Mana
+   cd C:\path\to\Mana-Forge
    tools\whisper\Release\whisper-cli.exe -m tools\whisper\models\ggml-tiny.en.bin -f your-clip.wav -otxt -of transcript
    ```
    Read the output — Whisper's tiny model can occasionally hallucinate
@@ -51,7 +51,7 @@ quality, more so than for Chatterbox. A 5-15 second clean clip works well.
 
 ```powershell
 $env:TTS_PROVIDER = "gpt_sovits"
-$env:GPT_SOVITS_REF_AUDIO = "C:\ManaAI\Mana\tts-service\references\gpt-sovits-mitsuki.wav"
+$env:GPT_SOVITS_REF_AUDIO = "C:\path\to\Mana-Forge\tts-service\references\gpt-sovits-mitsuki.wav"
 $env:GPT_SOVITS_PROMPT_TEXT = "In a quiet village where the sky brushes the fields in hues of gold, young Mia discovered a map leading to forgotten treasures."
 $env:GPT_SOVITS_PROMPT_LANG = "en"   # language spoken in the reference clip
 ```
@@ -136,7 +136,7 @@ reply will "succeed" while producing no sound.
 To verify audio is real (not silent) yourself:
 
 ```powershell
-cd C:\ManaAI\Mana\tts-service
+cd C:\path\to\Mana-Forge\tts-service
 .\venv\Scripts\python.exe -c "import soundfile as sf, numpy as np; a,sr=sf.read('path\to\file.wav'); print('rms=%.4f' % np.sqrt((a.astype(np.float64)**2).mean()))"
 ```
 

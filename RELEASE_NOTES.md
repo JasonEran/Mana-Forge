@@ -1,8 +1,10 @@
 Developer Preview - Mana v0.2.0
 
-> Archived release note: the third-party testing avatar described below was
-> removed from the current source tree. Current builds use the original
-> procedural Mana ring and do not accept the old model or artwork assets.
+> Historical record: this file describes v0.2.0, released under the former
+> product name Mana. The current product is Mana Forge. Artifact names,
+> checksums, and release facts below remain unchanged. The third-party testing
+> avatar was removed; current builds use the original procedural ring and do
+> not accept the old model or artwork assets.
 
 Label: Developer Preview
 

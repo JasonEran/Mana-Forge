@@ -1,7 +1,7 @@
-# Mana Mobile PWA Cloudflare Setup
+# Mana Forge Mobile PWA Cloudflare Setup
 
-This guide exposes only Mana's mobile gateway through a dedicated
-Cloudflare-protected hostname. Mana detects the public host and Cloudflare
+This guide exposes only Mana Forge's mobile gateway through a dedicated
+Cloudflare-protected hostname. Mana Forge detects the public host and Cloudflare
 forwarding headers, permits `/mobile`, and rejects core, admin, caption, and
 tray surfaces even though `cloudflared` connects over loopback.
 
@@ -18,7 +18,7 @@ tray surfaces even though `cloudflared` connects over loopback.
 Generate a passcode hash from `node-bot`:
 
 ```powershell
-cd C:\ManaAI\Mana\node-bot
+cd C:\path\to\Mana-Forge\node-bot
 $passcode = Read-Host -AsSecureString "Mana mobile passcode"
 $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($passcode)
 try {

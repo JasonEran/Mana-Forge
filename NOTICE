@@ -1,4 +1,4 @@
-Mana
+Mana Forge
 Copyright 2026 ManaAI (https://github.com/Yuuzulight)
 
 This product is licensed under the Apache License, Version 2.0. You may
@@ -12,7 +12,7 @@ Attribution and redistribution
   section 4(d).
 
 Visual identity
-- The current Mana activity ring is rendered entirely from project source
+- The current Mana Forge activity ring is rendered entirely from project source
   code and does not distribute character artwork or avatar model files.
 - The Windows application/installer icon is deterministically generated from
   that same 32-bar source before packaging; no third-party visual asset is used.

@@ -2,7 +2,7 @@ Vector Store — Local Semantic Retrieval (Mana)
 
 Overview
 
-Mana supports a local, pluggable vector store adapter for semantic search. The adapter attempts to use a native FAISS binding when available (USE_FAISS=1) and falls back to a safe JavaScript JSON store when native FAISS is not installed.
+Mana Forge supports a local, pluggable vector store adapter for semantic search. The adapter attempts to use a native FAISS binding when available (USE_FAISS=1) and falls back to a safe JavaScript JSON store when native FAISS is not installed.
 
 Default location
 

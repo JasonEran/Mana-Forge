@@ -1,14 +1,20 @@
-# Mana
+# Mana Forge
 
 **License (code): Apache License 2.0 — © 2026 ManaAI.** See LICENSE and NOTICE.
 
-Mana is a local-first AI assistant for Windows. It listens from the desktop launcher, transcribes speech locally, replies with local GGUF models, speaks through local TTS services, and can read visible screen text after it is awake.
+Mana Forge is a local-first AI assistant for Windows. It listens from the desktop launcher, transcribes speech locally, replies with local GGUF models, speaks through local TTS services, and can read visible screen text after it is awake.
 
 The project is built for a personal Windows setup: one user, local models by default, clear setup checks, and optional companion features when you want phone access or avatar control.
 
+**Naming:** Mana Forge is the product and repository. **Mana** is the assistant
+persona and wake word, so voice prompts and user-facing conversation may still
+use that shorter name. Existing `MANA_*` settings, `mana-app://`, package names,
+and Windows artifact names are compatibility identifiers and remain unchanged
+until a separately planned migration.
+
 ## Supported Runtime
 
-Mana has one supported Windows runtime for v0.3:
+Mana Forge has one supported Windows runtime for v0.3:
 
 ```text
 windows-launcher -> node-bot -> local Whisper / local Llama / Kokoro
@@ -30,10 +36,10 @@ runtime, health, uninstall, and measurement contracts.
 ## Quick Start
 
 ```powershell
-cd C:\ManaAI\Mana\node-bot
+cd C:\path\to\Mana-Forge\node-bot
 npm ci --omit=optional
 
-cd C:\ManaAI\Mana\windows-launcher
+cd C:\path\to\Mana-Forge\windows-launcher
 npm install
 npm run start
 ```
@@ -45,7 +51,7 @@ see [runtime configuration](docs/runtime_configuration.md).
 
 ## Highlights
 
-- **Local AI by default**: Mana uses local `llama.cpp` models unless remote AI is explicitly enabled.
+- **Local AI by default**: Mana Forge uses local `llama.cpp` models unless remote AI is explicitly enabled.
 - **Voice loop**: wake Mana once with `Mana` or `wake up`, then keep talking without repeating the wake word.
 - **Local transcription**: audio is transcribed through `whisper.cpp`.
 - **Local text generation**: replies come from GGUF models through `llama.cpp`.
@@ -53,15 +59,15 @@ see [runtime configuration](docs/runtime_configuration.md).
 - **Screen text awareness**: after Mana is awake, the launcher can capture the primary display and OCR readable text locally.
 - **Local image understanding**: with a vision GGUF installed, Mana can look at screenshots and images and talk about them; see [docs/vision_setup.md](docs/vision_setup.md).
 - **Look-at-my-screen hotkey**: press `Ctrl+Alt+M` (configurable via `MANA_VISION_HOTKEY`) to have Mana capture the screen, describe it, and speak the answer.
-- **Gaming mode**: Mana reduces idle work while watched games are running.
-- **Procedural desktop identity**: Mana is represented by a code-rendered 32-bar ring that breathes while idle and reacts to speech energy and reply emotion without bundled artwork or a model runtime ([design notes](docs/procedural_avatar.md)).
+- **Gaming mode**: Mana Forge reduces idle work while watched games are running.
+- **Procedural desktop identity**: Mana is represented by the Mana Forge code-rendered 32-bar ring, which breathes while idle and reacts to speech energy and reply emotion without bundled artwork or a model runtime ([design notes](docs/procedural_avatar.md)).
 - **Mobile companion path**: phone chat and summary sync are available through the local backend and optional tunnel setup.
-- **Editor coding handoff**: Mana can detect local Zed or VS Code CLIs and open projects or files for coding help without applying edits silently.
-- **FFXIV and market helpers**: Mana can query Universalis crafting/market data and Alpha Vantage stock summaries when configured.
+- **Editor coding handoff**: Mana Forge can detect local Zed or VS Code CLIs and open projects or files for coding help without applying edits silently.
+- **FFXIV and market helpers**: Mana Forge can query Universalis crafting/market data and Alpha Vantage stock summaries when configured.
 
 ## Architecture
 
-Mana is intentionally split into small runtime pieces. Only the components in
+Mana Forge is intentionally split into small runtime pieces. Only the components in
 the supported-runtime chain above are current product paths; the remaining
 directories have the lifecycle states defined in ADR 0001.
 
@@ -77,7 +83,7 @@ directories have the lifecycle states defined in ADR 0001.
 
 ## Local AI And Privacy
 
-Mana is designed to run on your machine instead of depending on a hosted assistant stack.
+Mana Forge is designed to run on your machine instead of depending on a hosted assistant stack.
 
 Default behavior:
 
@@ -132,11 +138,11 @@ The intended local model stack is:
 - **Coding mode**: `qwen2.5-coder-7b-instruct-q4_k_m.gguf`
 - **Vision (optional)**: a multimodal GGUF such as `Qwen2.5-VL-3B-Instruct-Q4_K_M.gguf` plus its `mmproj` file; see [docs/vision_setup.md](docs/vision_setup.md)
 
-If `LLAMA_MODEL` is unset, Mana searches local model folders and chooses the default profile in order: 4B, 1.5B, then 8B.
+If `LLAMA_MODEL` is unset, Mana Forge searches local model folders and chooses the default profile in order: 4B, 1.5B, then 8B.
 
 ## Doctor And Troubleshooting
 
-Mana includes setup checks for the local runtime.
+Mana Forge includes setup checks for the local runtime.
 
 From the backend:
 
@@ -280,7 +286,7 @@ Do not push if required checks fail. Fix the failure first, or clearly document 
 
 ## Status
 
-Mana is under active development. The supported path is:
+Mana Forge is under active development. The supported path is:
 
 ```text
 windows-launcher -> node-bot -> local Whisper / local Llama / Kokoro

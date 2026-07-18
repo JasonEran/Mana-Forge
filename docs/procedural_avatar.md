@@ -1,6 +1,6 @@
-# Procedural Mana Ring
+# Mana Forge Procedural Ring
 
-Mana's supported desktop identity is generated at runtime by
+Mana Forge's supported desktop identity is generated at runtime by
 `windows-launcher/avatar/ring-visualizer.js`. It has no raster art, vector
 art, character model, remote resource, or rendering-library dependency.
 

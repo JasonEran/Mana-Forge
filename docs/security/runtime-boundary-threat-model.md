@@ -79,7 +79,7 @@ boundary.
 
 ## Current Residual Risk
 
-Local same-user processes remain inside the host trust boundary. Mana does not
+Local same-user processes remain inside the host trust boundary. Mana Forge does not
 claim to resist malware already executing as the user. Direct LAN mode is HTTP;
 use a TLS tunnel to prevent bearer-token observation on the network.
 

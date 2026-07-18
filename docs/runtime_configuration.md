@@ -1,6 +1,6 @@
 # Runtime Configuration
 
-Mana uses one configuration contract for the supported Windows runtime.
+Mana Forge uses one configuration contract for the supported Windows runtime.
 
 ## Precedence
 
@@ -30,7 +30,7 @@ file exists. The legacy location is not read at runtime.
 
 ## Automatic Discovery
 
-When explicit paths are absent, Mana searches:
+When explicit paths are absent, Mana Forge searches:
 
 - `tools/llama/` for the newest versioned `llama-cli` and matching
   `llama-server`;

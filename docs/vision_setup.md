@@ -25,7 +25,7 @@ are matched by the `mmproj` prefix).
 Recommended for 8 GB VRAM (fits alongside a running game):
 
 ```powershell
-cd C:\ManaAI\Mana\tools\llama\gguf-models
+cd C:\path\to\Mana-Forge\tools\llama\gguf-models
 curl -L -O "https://huggingface.co/ggml-org/Qwen2.5-VL-3B-Instruct-GGUF/resolve/main/Qwen2.5-VL-3B-Instruct-Q4_K_M.gguf"
 curl -L -O "https://huggingface.co/ggml-org/Qwen2.5-VL-3B-Instruct-GGUF/resolve/main/mmproj-Qwen2.5-VL-3B-Instruct-f16.gguf"
 ```
@@ -42,8 +42,8 @@ curl -L -O "https://huggingface.co/ggml-org/Qwen2.5-VL-7B-Instruct-GGUF/resolve/
 Auto-detection can be overridden:
 
 ```powershell
-$env:LLAMA_VISION_MODEL = "C:\ManaAI\Mana\tools\llama\gguf-models\Qwen2.5-VL-3B-Instruct-Q4_K_M.gguf"
-$env:LLAMA_VISION_MMPROJ = "C:\ManaAI\Mana\tools\llama\gguf-models\mmproj-Qwen2.5-VL-3B-Instruct-f16.gguf"
+$env:LLAMA_VISION_MODEL = "C:\path\to\Mana-Forge\tools\llama\gguf-models\Qwen2.5-VL-3B-Instruct-Q4_K_M.gguf"
+$env:LLAMA_VISION_MMPROJ = "C:\path\to\Mana-Forge\tools\llama\gguf-models\mmproj-Qwen2.5-VL-3B-Instruct-f16.gguf"
 ```
 
 Run `npm run doctor` in `node-bot` to confirm the vision model check.

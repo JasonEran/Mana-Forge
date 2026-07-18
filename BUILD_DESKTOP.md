@@ -1,6 +1,6 @@
 # Windows Packaging
 
-`windows-launcher` is the only supported Windows installer owner. The legacy
+`windows-launcher` is the only supported Mana Forge Windows installer owner. The legacy
 `desktop-client` source was removed after its installer behavior migrated and
 was validated under Issues #8 and #9.
 
@@ -21,7 +21,7 @@ was validated under Issues #8 and #9.
 On Windows 10/11 with Node.js 22.12 or newer:
 
 ```powershell
-cd C:\ManaAI\Mana
+cd C:\path\to\Mana-Forge
 powershell -ExecutionPolicy Bypass -File .\scripts\fetch_node_bin.ps1 `
   -Version 22.12.0 -Arch x64
 cd node-bot
@@ -41,7 +41,7 @@ The installer is per-user, supports a custom installation directory, and
 removes its autostart registry value during uninstall.
 
 `prepack`/`predist` generate `windows-launcher/build/icon.ico` from the
-repository-owned 32-bar Mana ring. The build applies it to the application and
+repository-owned 32-bar Mana Forge ring. The build applies it to the application and
 NSIS resources while `signExecutable: false` keeps the candidate unsigned.
 `npm run verify:branding` compares every embedded PE icon payload with the
 generated source before the checksum is written.
@@ -72,7 +72,7 @@ database location.
 For an isolated install/launch/Doctor/uninstall check:
 
 ```powershell
-cd C:\ManaAI\Mana
+cd C:\path\to\Mana-Forge
 powershell -ExecutionPolicy Bypass -File .\scripts\windows-installer-smoke.ps1 `
   -InstallerPath .\windows-launcher\dist\Mana-Setup-0.3.0-x64.exe
 ```

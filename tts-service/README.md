@@ -1,7 +1,6 @@
-Chatterbox Turbo TTS service
-============================
+# Mana Forge Local TTS Services
 
-This folder contains two local TTS services for Mana.
+This folder contains two local TTS services for Mana Forge.
 
 - Kokoro ONNX is the faster primary test path on `http://127.0.0.1:5011`.
 - Chatterbox Turbo is the higher-quality fallback path on `http://127.0.0.1:5010`.
@@ -55,13 +54,13 @@ Start
 -----
 Kokoro:
 ```powershell
-cd C:\ManaAI\Mana\tts-service
+cd C:\path\to\Mana-Forge\tts-service
 .\start_kokoro.ps1
 ```
 The first Kokoro start downloads the ONNX model and voices into `tts-service\kokoro`.
 
 Chatterbox:
 ```powershell
-cd C:\ManaAI\Mana\tts-service
+cd C:\path\to\Mana-Forge\tts-service
 .\start.ps1
 ```

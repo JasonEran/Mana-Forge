@@ -1,6 +1,6 @@
-Fish Speech TTS
+# Fish Speech TTS
 
-Mana can optionally call a local Fish Speech server as a TTS provider.
+Mana Forge can optionally call a local Fish Speech server as a TTS provider.
 
 Reference
 - Fish Speech repository: https://github.com/fishaudio/fish-speech
