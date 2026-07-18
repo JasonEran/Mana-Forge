@@ -6,7 +6,6 @@
     "electron-security.js",
     "renderer",
     "avatar",
-    "assets/avatar",
     "../node-bot"
   ],
   "ext": "js,json,html,css,md",

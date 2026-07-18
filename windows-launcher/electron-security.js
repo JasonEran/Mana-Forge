@@ -1,5 +1,4 @@
 const IPC_CHANNELS = Object.freeze({
-  AVATAR_BOOTSTRAP: "avatar:get-bootstrap",
   AVATAR_MOUTH: "avatar:set-mouth",
   AVATAR_MOUTH_CHANGED: "avatar:mouth",
   AVATAR_STATE: "avatar:set-state",

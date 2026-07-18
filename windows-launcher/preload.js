@@ -1,7 +1,6 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 const channels = Object.freeze({
-  avatarBootstrap: "avatar:get-bootstrap",
   avatarMouth: "avatar:set-mouth",
   avatarState: "avatar:set-state",
   openLocalWebUi: "external:open-local-web-ui",
@@ -21,7 +20,6 @@ contextBridge.exposeInMainWorld(
   "manaDesktop",
   Object.freeze({
     capturePrimaryScreen: () => ipcRenderer.invoke(channels.screenCapturePrimary),
-    getAvatarBootstrap: () => ipcRenderer.invoke(channels.avatarBootstrap),
     getRendererConfig: () => ipcRenderer.invoke(channels.rendererConfig),
     onVisionHotkey: (callback) => subscribe(channels.visionHotkey, callback),
     openLocalWebUi: () => ipcRenderer.invoke(channels.openLocalWebUi),

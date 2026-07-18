@@ -10,7 +10,6 @@ function subscribe(channel, callback, normalize) {
 contextBridge.exposeInMainWorld(
   "manaAvatar",
   Object.freeze({
-    getBootstrap: () => ipcRenderer.invoke("avatar:get-bootstrap"),
     onMouth: (callback) =>
       subscribe("avatar:mouth", callback, (value) =>
         Math.max(0, Math.min(1, Number(value) || 0)),

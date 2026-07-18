@@ -12,14 +12,13 @@ registerPrivilegedSchemes(protocol);
 
 const expectedMainApi = [
   "capturePrimaryScreen",
-  "getAvatarBootstrap",
   "getRendererConfig",
   "onVisionHotkey",
   "openLocalWebUi",
   "setAvatarMouth",
   "setAvatarState",
 ];
-const expectedAvatarApi = ["getBootstrap", "onMouth", "onState"];
+const expectedAvatarApi = ["onMouth", "onState"];
 
 async function loadIsolatedWindow({ documentUrl, preloadPath, bridgeName, expectedApi }) {
   const errors = [];
@@ -60,13 +59,11 @@ async function loadIsolatedWindow({ documentUrl, preloadPath, bridgeName, expect
 app.whenReady()
   .then(async () => {
     ipcMain.handle("renderer:get-config", () => ({ silenceBufferMs: 2200 }));
-    ipcMain.handle("avatar:get-bootstrap", () => ({ available: false }));
     const root = path.resolve(__dirname, "..");
     installLocalProtocols({
       protocol,
       net,
       appRoot: root,
-      avatarRoot: () => path.join(root, "avatar", "model"),
     });
     const backendOrigins = [];
     session.defaultSession.webRequest.onBeforeSendHeaders(

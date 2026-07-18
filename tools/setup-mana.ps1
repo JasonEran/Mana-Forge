@@ -171,7 +171,6 @@ rather than auto-downloaded by this script:
      - Web search/wiki access: tools\setup-searxng.ps1
      - GPT-SoVITS trial voice: tools\setup-gpt-sovits.ps1
      - Vision (screen description): docs\vision_setup.md
-     - Live2D avatar: cd windows-launcher; npm run fetch-live2d-core
 
 Full details for every step: docs\quick_start_windows.md
 

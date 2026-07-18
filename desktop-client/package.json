@@ -7,17 +7,12 @@
   "scripts": {
     "start": "electron .",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder --win nsis --publish never",
-    "fetch-live2d-core": "node scripts/fetch-live2d-core.js"
+    "dist": "electron-builder --win nsis --publish never"
   },
   "license": "Apache-2.0",
   "devDependencies": {
     "electron": "^26.6.10",
     "electron-builder": "^24.7.0"
-  },
-  "dependencies": {
-    "pixi-live2d-display": "^0.4.0",
-    "pixi.js": "^6.5.10"
   },
   "build": {
     "appId": "com.mana.ai",
@@ -47,12 +42,16 @@
       {
         "from": "../node-bot",
         "to": "node-bot",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       },
       {
         "from": "../node-bin",
         "to": "node_bin",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ]
   }
