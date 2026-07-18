@@ -4,9 +4,11 @@ Last synced: 2026-06-29. This file references an earlier Issue/PR sequence
 from before the current repository Issue tracker was enabled. It is retained
 for historical implementation context and is not the active plan.
 
-The active engineering plan is the **Mana - One Runtime Modernization** GitHub
-Project and its `v0.3 - One Runtime Foundation` milestone. Start with issue #2
-and [ADR 0001](../adr/0001-supported-windows-runtime.md).
+The modernization Project and `v0.3 - One Runtime Foundation` milestone are
+complete. Current work is Issue #33 in milestone
+`v0.3.0 - Release Candidate`; [ADR 0001](../adr/0001-supported-windows-runtime.md)
+remains the supported-runtime decision. The issue numbers below belong to the
+historical tracker and must not be treated as current GitHub backlog.
 
 ## In Progress
 

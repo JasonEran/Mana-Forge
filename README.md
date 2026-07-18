@@ -286,6 +286,8 @@ Mana is under active development. The supported path is:
 windows-launcher -> node-bot -> local Whisper / local Llama / Kokoro
 ```
 
-The v0.3 engineering priority is one supported runtime: unified configuration
-and lifecycle ownership, backend modularization, security hardening, optional
-capability isolation, and release-quality verification.
+The v0.3.0 foundation is complete and validated: unified configuration and
+lifecycle ownership, backend boundaries, security hardening, optional
+capability isolation, a canonical installer, and measured local voice-loop
+budgets. The current repository state is a release candidate, not a published
+or code-signed release. See [the release process](docs/release-process.md).

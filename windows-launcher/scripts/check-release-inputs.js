@@ -2,7 +2,12 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 
+const {
+  validateReleaseMetadata,
+} = require("../../scripts/check-release-metadata");
+
 const repoRoot = path.resolve(__dirname, "..", "..");
+const releaseMetadata = validateReleaseMetadata({ repoRoot });
 const requiredInputs = [
   "node-bin/node.exe",
   "node-bot/server.js",
@@ -20,5 +25,8 @@ assert.deepEqual(
   `Release inputs are missing: ${missing.join(", ")}. Run backend npm ci and stage the official Node runtime before npm run dist.`,
 );
 process.stdout.write(
-  `${JSON.stringify({ releaseInputs: `${requiredInputs.length}/${requiredInputs.length}` })}\n`,
+  `${JSON.stringify({
+    version: releaseMetadata.version,
+    releaseInputs: `${requiredInputs.length}/${requiredInputs.length}`,
+  })}\n`,
 );

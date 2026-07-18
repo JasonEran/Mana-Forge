@@ -31,9 +31,11 @@ npm ci
 npm run dist
 npm run verify:package
 npm run verify:installer
+node ..\scripts\write-installer-checksum.js
 ```
 
-The NSIS artifact is written to `windows-launcher/dist/Mana-Setup-<version>-x64.exe`.
+The NSIS artifact is written to `windows-launcher/dist/Mana-Setup-<version>-x64.exe`
+with an ASCII `<installer>.sha256` companion.
 The installer is per-user, supports a custom installation directory, and
 removes its autostart registry value during uninstall.
 
@@ -65,13 +67,18 @@ For an isolated install/launch/Doctor/uninstall check:
 ```powershell
 cd C:\ManaAI\Mana
 powershell -ExecutionPolicy Bypass -File .\scripts\windows-installer-smoke.ps1 `
-  -InstallerPath .\windows-launcher\dist\Mana-Setup-0.2.0-x64.exe
+  -InstallerPath .\windows-launcher\dist\Mana-Setup-0.3.0-x64.exe
 ```
 
 The smoke checks installation into a temporary directory, backend `/health`,
 Doctor, model status, port release, and removal of the installed executable.
 It disables optional provider startup for this model-free proof and writes
 machine-readable evidence when `MANA_INSTALLER_EVIDENCE_FILE` is set.
+
+Candidate artifacts are unsigned and are not public releases. Follow
+[the release process](docs/release-process.md) for version validation,
+checksum verification, signing policy, publication authorization, and
+rollback.
 
 ## Rollback
 

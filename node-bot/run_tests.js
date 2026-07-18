@@ -19,6 +19,7 @@ const CORE_TESTS = Object.freeze([
   "network-security.test.js",
   "quality-gates.test.js",
   "request-validation.test.js",
+  "release-metadata.test.js",
   "runtime-config.test.js",
   "runtime-entrypoints.test.js",
   "runtime-supervisor.test.js",

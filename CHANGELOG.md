@@ -11,12 +11,36 @@ accounting.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-07-18
+
 ### Added
 
+- Declared one supported Windows runtime:
+  `windows-launcher -> node-bot -> local Whisper / local Llama / Kokoro`, with
+  an accepted ADR and explicit lifecycle states for every competing path.
+- Added one configuration contract and one `RuntimeSupervisor` for launcher,
+  backend, Doctor, packaged-app discovery, service readiness, restart/backoff,
+  logging, port ownership, and process-tree cleanup.
+- Added explicit Core and Full capability profiles. Optional integrations no
+  longer install, boot, probe, schedule work, reserve ports, or produce warning
+  noise unless enabled.
+- Added one required Quality gates workflow covering Core and Full backend
+  suites, launcher tests, Electron isolation, the canonical NSIS installer,
+  clean install/Doctor/uninstall, resource budgets, dependency audits, and
+  machine-readable evidence.
 - Replaced character artwork with an original procedural Mana identity: 32
   radial bars, white breathing idle motion, pale-green active energy waves,
   audio-reactive pulses, and reduced-motion support. The same dependency-free
   Canvas component now renders both supported Electron surfaces.
+
+### Changed
+
+- Reduced `node-bot/server.js` to an explicit composition root with route
+  ownership boundaries and lifecycle-owned background work.
+- Moved installer ownership to `windows-launcher`; packaged and development
+  launches now consume the same shared configuration and supervisor contracts.
+- Made the local llama-server the measured Core reply path while keeping
+  remote AI disabled by default and model weights outside the installer.
 
 ### Removed
 
@@ -29,11 +53,37 @@ accounting.
   renderer, fetch/check tools, setup guides, notices, and Pixi/model-runtime
   dependencies. The frozen desktop and native launcher paths no longer read
   avatar files.
+- Removed the superseded `desktop-client`, `wsl-bot`, and `win-bot` runtime
+  trees after inventorying their behavior, licensing, migration, and rollback
+  paths. They remain auditable in Git history but are not supported products.
 
-### Changed
+### Fixed
 
-- Restored sandbox and context isolation in the frozen desktop client after
-  removing the renderer dependency that had required Node integration.
+- Kept persistent Python token-cache workers out of the Core profile, reducing
+  the measured complete runtime from 13 processes to 10 instead of weakening
+  the 12-process release budget.
+- Corrected Windows executable and repository path handling across the shared
+  runtime and editor/ACP boundaries.
+
+### Security
+
+- Enforced loopback-only Core services, explicit authenticated remote mode,
+  restricted CORS, protected administrative mutations, and secret-safe
+  diagnostics.
+- Enabled Electron sandboxing and context isolation, disabled renderer Node
+  integration, narrowed preload IPC, and enforced navigation, window-open,
+  permission, and external-link policies.
+- Completed backend and launcher runtime dependency audits with no accepted
+  high or critical findings.
+
+### Validation
+
+- Verified a real Windows Core loop with local Whisper, llama.cpp/Qwen3-4B,
+  and Kokoro: 10 processes, 3,649.4 MiB RAM, 3,287 MiB dedicated VRAM, 1,739 ms
+  cold start, 93 ms warm text, 820 ms STT, and 3,232 ms TTS.
+- Verified clean shutdown with ports 5005, 5011, and 8090 released and zero
+  descendant processes. The committed target evidence is
+  `quality/core-release-evidence.json`.
 
 ## [0.2.0] - 2026-07-12
 
