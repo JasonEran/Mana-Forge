@@ -1,4 +1,4 @@
-Contributing to Mana
+# Contributing to Mana Forge
 
 Short version
 
@@ -77,4 +77,4 @@ ADMIN_TOKEN for remote admin UI access
 - To allow remote access you may set an `ADMIN_TOKEN` environment variable on the server. When `ADMIN_TOKEN` is set, clients must present the token in the `Authorization: Bearer <token>` header or `x-admin-token` header.
 - CI and test jobs that exercise admin endpoints should set the `ADMIN_TOKEN` secret in the repository settings (name: `ADMIN_TOKEN`).
 
-Thank you for your interest in contributing to Mana. We welcome well-scoped proposals and will respond to request issues in due course.
+Thank you for your interest in contributing to Mana Forge. We welcome well-scoped proposals and will respond to request issues in due course.

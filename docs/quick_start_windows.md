@@ -1,4 +1,4 @@
-Quick start (Windows, current path)
+# Mana Forge Quick Start for Windows
 
 This document describes the supported setup as of June 18, 2026.
 
@@ -30,7 +30,7 @@ Project goal
    - Local model files for Whisper and Llama
 
 2) Configure backend environment variables
-   - Mana loads `.env` from the repository root. Process environment variables
+   - Mana Forge loads `.env` from the repository root. Process environment variables
      take precedence, and local Llama/Whisper paths are auto-discovered under
      `tools\` when explicit paths are unset. See `docs/runtime_configuration.md`.
    - Open PowerShell and set:
@@ -67,14 +67,14 @@ Project goal
 
 3) Install launcher and backend dependencies
    - In PowerShell:
-     - `cd C:\ManaAI\Mana\node-bot`
+     - `cd C:\path\to\Mana-Forge\node-bot`
      - `npm install`
-     - `cd C:\ManaAI\Mana\windows-launcher`
+     - `cd C:\path\to\Mana-Forge\windows-launcher`
      - `npm install`
 
 4) Install the local TTS services
    - In PowerShell:
-     - `cd C:\ManaAI\Mana\tts-service`
+     - `cd C:\path\to\Mana-Forge\tts-service`
      - `.\start.ps1`
      - `.\start_kokoro.ps1`
 
@@ -82,7 +82,7 @@ Project goal
 
 5) Start the launcher
    - In PowerShell:
-     - `cd C:\ManaAI\Mana\windows-launcher`
+     - `cd C:\path\to\Mana-Forge\windows-launcher`
      - `npm run start`
 
    The launcher starts `node-bot` automatically and will also try to start Kokoro as primary TTS and Chatterbox as fallback.

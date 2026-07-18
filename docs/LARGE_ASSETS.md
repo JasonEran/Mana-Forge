@@ -14,19 +14,19 @@ Files that the downloader can fetch (default mapping)
 
 PowerShell (Windows)
 1. Set an environment variable pointing to your asset base URL (example uses a GitHub release URL):
-   $env:ASSET_BASE_URL = 'https://github.com/your-user/Mana/releases/download/v1.0'
+   $env:ASSET_BASE_URL = 'https://github.com/your-user/Mana-Forge/releases/download/v1.0'
 2. Run the downloader from the repo root:
    .\tools\download_large_assets.ps1 -BaseUrl $env:ASSET_BASE_URL -OutDir .
 
 Bash (Linux / macOS)
 1. Export ASSET_BASE_URL, or pass it as the first argument:
-   export ASSET_BASE_URL=https://github.com/your-user/Mana/releases/download/v1.0
+   export ASSET_BASE_URL=https://github.com/your-user/Mana-Forge/releases/download/v1.0
 2. Run the downloader:
    ./tools/download_large_assets.sh "$ASSET_BASE_URL" .
 
 Hosting assets
 - Recommended: upload the binary assets to a GitHub Release attached to a tag for the repository.
-  e.g. https://github.com/your-user/Mana/releases/tag/v1.0
+  e.g. https://github.com/your-user/Mana-Forge/releases/tag/v1.0
 - Alternative: use an S3 bucket, Google Cloud Storage, or any static file host and set ASSET_BASE_URL accordingly.
 
 Security & integrity

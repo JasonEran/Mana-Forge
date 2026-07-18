@@ -1,4 +1,4 @@
-# Mana Market Analysis Helper
+# Mana Forge Market Analysis Helper
 
 Mana's market feature should help explain public stock-market data from normal
 voice or text prompts. It should stay focused on analysis and never place trades.

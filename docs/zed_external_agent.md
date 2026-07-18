@@ -2,7 +2,7 @@
 
 Mana can be launched by Zed as a local External Agent through Zed's `agent_servers` settings.
 
-This path is local-first. The agent entry point refuses remote AI when `MANA_ALLOW_REMOTE_AI=1` unless a future explicit override path is added for that launch mode. Code edits require reviewable proposals and explicit approval through Mana's local backend; the agent must not silently modify files.
+This path is local-first. The agent entry point refuses remote AI when `MANA_ALLOW_REMOTE_AI=1` unless a future explicit override path is added for that launch mode. Code edits require reviewable proposals and explicit approval through Mana Forge's local backend; the agent must not silently modify files.
 
 ## Zed Settings
 
@@ -14,7 +14,7 @@ Add this to your Zed settings, adjusting the path if Mana is installed somewhere
     "mana": {
       "type": "custom",
       "command": "node",
-      "args": ["C:\\ManaAI\\Mana\\node-bot\\mana-acp-agent.js", "--acp"],
+      "args": ["C:\\path\\to\\Mana-Forge\\node-bot\\mana-acp-agent.js", "--acp"],
       "env": {
         "MANA_ALLOW_REMOTE_AI": "0",
         "MANA_DEFAULT_EDITOR": "zed",
@@ -38,14 +38,14 @@ To allow Mana to access paths outside the active workspace, add an allowlist:
 You can print the same snippet from the backend folder:
 
 ```powershell
-cd C:\ManaAI\Mana\node-bot
+cd C:\path\to\Mana-Forge\node-bot
 node .\mana-acp-agent.js --print-zed-config
 ```
 
 Start Mana's local backend before using the Zed External Agent:
 
 ```powershell
-cd C:\ManaAI\Mana\node-bot
+cd C:\path\to\Mana-Forge\node-bot
 npm start
 ```
 
@@ -58,7 +58,7 @@ Mana stores Zed External Agent conversation memory locally so future ACP/model p
 Default location:
 
 ```text
-C:\ManaAI\Mana\node-bot\data\acp-memory\sessions
+C:\path\to\Mana-Forge\node-bot\data\acp-memory\sessions
 ```
 
 Each session is saved as a local JSON file with compact summary text and recent turns. No cloud sync or remote AI is used for this memory path.
@@ -74,7 +74,7 @@ To move the memory folder, set `MANA_ACP_MEMORY_DIR` in the Zed `env` block:
 Run Doctor after configuring Zed:
 
 ```powershell
-cd C:\ManaAI\Mana\node-bot
+cd C:\path\to\Mana-Forge\node-bot
 npm run doctor
 ```
 
@@ -121,4 +121,4 @@ Autonomous mode can approve proposals and run allowed tests without per-step app
 
 ## Registry Packaging
 
-Mana includes registry-ready metadata at `zed-agent/mana-agent.json`. Public registry publication may require a separate Zed-side submission or review process.
+Mana Forge includes registry-ready metadata at `zed-agent/mana-agent.json`. Public registry publication may require a separate Zed-side submission or review process.

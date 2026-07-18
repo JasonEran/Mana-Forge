@@ -1,6 +1,6 @@
 # Release Process
 
-Mana separates a validated CI candidate from an authorized public release.
+Mana Forge separates a validated CI candidate from an authorized public release.
 Merging a version-preparation PR does not create a tag, sign an executable, or
 publish a GitHub Release.
 
@@ -68,7 +68,7 @@ Before promotion, confirm all of the following:
 - Core target evidence passes every budget in `quality/budgets.json`;
 - clean install, launch, Doctor, shutdown, and uninstall evidence passed;
 - the installer filename and SHA-256 match version `0.3.0`;
-- application and installer PE icon resources match the generated Mana ICO;
+- application and installer PE icon resources match the generated Mana Forge ICO;
 - the signing decision is recorded and independently verified.
 
 ## Public Release Authorization

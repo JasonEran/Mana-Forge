@@ -76,6 +76,9 @@ jobs:
       - name: Validate release metadata
         run: node scripts/check-release-metadata.js
 
+      - name: Validate current documentation branding
+        run: node scripts/check-doc-branding.js
+
       - name: Run Core profile suite
         working-directory: node-bot
         run: npm run test:core

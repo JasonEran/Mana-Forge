@@ -1,6 +1,6 @@
 # Quality and Release Gates
 
-Mana uses one required workflow, `.github/workflows/ci.yml`, for the supported
+Mana Forge uses one required workflow, `.github/workflows/ci.yml`, for the supported
 Windows runtime. Duplicate fast/full workflows are intentionally prohibited so
 branch protection receives one stable signal per responsibility.
 
@@ -11,7 +11,7 @@ branch protection receives one stable signal per responsibility.
 | `Backend full suite` | Ubuntu | Clean `npm ci`, every `node-bot/test/*.test.js` file, production dependency audit |
 | `Backend Core profile` | Ubuntu | Core-only dependency install, representative Core suite, release metadata, optional-package absence |
 | `Launcher suite` | Ubuntu | Clean `npm ci`, every launcher test, complete launcher dependency audit |
-| `Windows lifecycle and package` | Windows | Real backend lifecycle, Electron isolation, canonical NSIS build, generated Mana PE branding, ASAR/runtime/model boundary, clean install/Doctor/uninstall smoke, resource budgets |
+| `Windows lifecycle and package` | Windows | Real backend lifecycle, Electron isolation, canonical NSIS build, generated Mana Forge PE branding, ASAR/runtime/model boundary, clean install/Doctor/uninstall smoke, resource budgets |
 | `dco` | Ubuntu | Commit sign-off or the repository's accepted contribution agreement path |
 
 The Windows job uploads `windows-quality-evidence` for 30 days and the unsigned
@@ -22,7 +22,10 @@ reports.
 
 ## Release Metadata
 
-`scripts/check-release-metadata.js` is the repository-wide version contract.
+`scripts/check-doc-branding.js` keeps current entry documentation on the Mana
+Forge product name and rejects obsolete checkout paths while allowing the Mana
+assistant name and compatibility identifiers. `scripts/check-release-metadata.js`
+is the repository-wide version contract.
 It requires launcher/backend manifests and lockfile roots to share one strict
 semantic version, requires a matching dated changelog entry, verifies the
 version-derived x64 installer name, and rejects a mismatched release tag.

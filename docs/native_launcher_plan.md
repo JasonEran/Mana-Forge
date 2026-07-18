@@ -6,7 +6,7 @@ is not a supported runtime or release target. See
 
 ## Goal
 
-Keep Mana's gameplay runtime lighter by replacing Electron with a native Windows tray app and transparent PNG overlay.
+Keep Mana Forge's gameplay runtime lighter by replacing Electron with a native Windows tray app and transparent PNG overlay.
 
 Expected memory shape:
 - native tray and overlay: much smaller than Electron
@@ -34,7 +34,7 @@ This machine currently has the .NET 8 runtime but not the .NET SDK.
 Install the .NET 8 SDK, then build:
 
 ```powershell
-cd C:\ManaAI\Mana\windows-native-launcher
+cd C:\path\to\Mana-Forge\windows-native-launcher
 dotnet build
 dotnet run
 ```
