@@ -8,13 +8,13 @@ const testDir = path.join(__dirname, "test");
 const CORE_TESTS = Object.freeze([
   "backend-architecture.test.js",
   "background-lifecycle.test.js",
+  "capabilities-registry.test.js",
+  "capability-manifest.test.js",
+  "capability-boundaries.test.js",
   "doctor.test.js",
-  "e2e-pairing-smoke.test.js",
   "health-components.test.js",
   "kokoro-service-descriptor.test.js",
   "launcher-service-plan.test.js",
-  "mobile-auth.test.js",
-  "mobile-device-store.test.js",
   "network-security.test.js",
   "quality-gates.test.js",
   "request-validation.test.js",
@@ -26,10 +26,13 @@ const CORE_TESTS = Object.freeze([
 ]);
 
 const OPTIONAL_TESTS = Object.freeze([
-  "capabilities-registry.test.js",
-  "capability-boundaries.test.js",
   "dir-scanner.test.js",
   "ffxiv-market-capability.test.js",
+  "e2e-pairing-smoke.test.js",
+  "mobile-auth.test.js",
+  "mobile-device-store.test.js",
+  "mobile-memory-store.test.js",
+  "mobile-routes.test.js",
   "retriever-admin.test.js",
   "tts-runtime.test.js",
   "vtube-runtime.test.js",
@@ -73,6 +76,7 @@ function main(args = process.argv.slice(2)) {
     // Priority adjustment is best effort outside Windows developer machines.
   }
   const tier = parseTier(args);
+  const profile = tier === "core" ? "core" : "full";
   const files = filesForTier(tier);
   for (const file of files) {
     if (!fs.existsSync(path.join(testDir, file))) {
@@ -86,7 +90,7 @@ function main(args = process.argv.slice(2)) {
   for (const file of files) {
     const fileStartedAt = Date.now();
     run(process.execPath, ["--test", path.join(testDir, file)], {
-      env: { ...process.env, NODE_ENV: "test" },
+      env: { ...process.env, NODE_ENV: "test", MANA_PROFILE: profile },
     });
     console.log(`--- ${file} finished in ${Date.now() - fileStartedAt}ms`);
   }

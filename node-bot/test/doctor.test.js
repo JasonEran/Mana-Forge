@@ -48,6 +48,7 @@ test("doctor checks return structured pass warn and fail results", () => {
   try {
     const result = runDoctorChecks({
       env: {
+        MANA_PROFILE: "full",
         MANA_ALLOW_REMOTE_AI: "1",
         LLAMA_BIN: existingFile,
         LLAMA_MODEL: path.join(tempDir, "missing-model.gguf"),
@@ -114,6 +115,7 @@ test("doctor checks return structured pass warn and fail results", () => {
 test("doctor reports Mana external agent entry point availability", () => {
   const result = runDoctorChecks({
     env: {
+      MANA_EDITOR_ACP_ENABLED: "1",
       MANA_ALLOW_REMOTE_AI: "0",
       LLAMA_BIN: "",
       LLAMA_MODEL: "",
@@ -157,6 +159,7 @@ test("doctor reports configured Zed editor availability", () => {
   try {
     const result = runDoctorChecks({
       env: {
+        MANA_EDITOR_ACP_ENABLED: "1",
         MANA_ALLOW_REMOTE_AI: "0",
         LLAMA_BIN: "",
         LLAMA_MODEL: "",
@@ -280,6 +283,7 @@ test("async doctor checks GPT-SoVITS only when it is the selected provider", asy
   }, async ({ url }) => {
     const enabledResult = await runDoctorChecksAsync({
       env: {
+        MANA_ALTERNATE_TTS_ENABLED: "1",
         MANA_ALLOW_REMOTE_AI: "0",
         LLAMA_BIN: "",
         LLAMA_MODEL: "",
@@ -421,6 +425,7 @@ test("async doctor reports invalid runtime descriptors without leaking secrets",
   const secret = "doctor-password-value";
   const result = await runDoctorChecksAsync({
     env: {
+      MANA_EDITOR_ACP_ENABLED: "1",
       MANA_ALLOW_REMOTE_AI: "0",
       MANA_BACKEND_URL: `http://user:${secret}@127.0.0.1:5005`,
       TTS_PROVIDER: "kokoro",
@@ -503,6 +508,7 @@ test("async doctor reports Zed external agent backend health", async () => {
   }, async ({ url }) => {
     const result = await runDoctorChecksAsync({
       env: {
+        MANA_EDITOR_ACP_ENABLED: "1",
         MANA_ALLOW_REMOTE_AI: "0",
         LLAMA_BIN: "",
         LLAMA_MODEL: "",
@@ -538,4 +544,39 @@ test("async doctor reports Zed external agent backend health", async () => {
       });
     }
   });
+});
+
+test("Core doctor reports disabled capabilities without probing them", async () => {
+  let optionalProbeCalls = 0;
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "mana-doctor-core-"));
+  const result = await runDoctorChecksAsync({
+    env: {
+      MANA_PROFILE: "core",
+      MANA_BACKEND_URL: `http://127.0.0.1:${await getFreePort()}`,
+      TTS_PROVIDER: "kokoro",
+    },
+    paths: { dataDir },
+    ports: [],
+    services: [],
+    versions: { node: "v22.19.0" },
+    searxngProbe: async () => {
+      optionalProbeCalls += 1;
+      return { ok: true };
+    },
+    zedExternalAgentBackendProbe: async () => {
+      optionalProbeCalls += 1;
+      return { ok: true };
+    },
+  });
+
+  try {
+    assert.equal(optionalProbeCalls, 0);
+    for (const id of ["searxng", "zed-external-agent-backend"]) {
+      const check = result.checks.find((candidate) => candidate.id === id);
+      assert.equal(check.status, "pass");
+      assert.equal(check.capabilityStatus, "disabled");
+    }
+  } finally {
+    fs.rmSync(dataDir, { recursive: true, force: true });
+  }
 });

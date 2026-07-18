@@ -268,6 +268,7 @@ test("reply keeps explicit modelProfile above active profile", async () => {
 
 test("reply continues when optional market context fails", async () => {
   const app = createApp({
+    env: { MANA_PROFILE: "full" },
     buildCraftProfitContextForPrompt: async () => "",
     buildUniversalisContextForPrompt: async () => "",
     buildMarketContextForPrompt: async () => {
@@ -295,6 +296,7 @@ test("reply skips optional context builders for general repository prompts", asy
   const calls = [];
   let contextCalls = 0;
   const app = createApp({
+    env: { MANA_PROFILE: "full" },
     buildCraftProfitContextForPrompt: async () => {
       contextCalls += 1;
       throw new Error("craft context should not run");
@@ -332,6 +334,7 @@ test("reply skips optional context builders for general repository prompts", asy
 test("reply skips optional context builders when includeContext is false", async () => {
   let contextCalls = 0;
   const app = createApp({
+    env: { MANA_PROFILE: "full" },
     buildCraftProfitContextForPrompt: async () => {
       contextCalls += 1;
       return "craft context";
@@ -369,6 +372,7 @@ test("reply skips optional context builders when includeContext is false", async
 
 test("vision describe returns a reply from the vision runtime", async () => {
   const app = createApp({
+    env: { MANA_VISION_ENABLED: "1" },
     getVisionStatus: () => ({ available: true, model: "vl.gguf", mmproj: "mmproj.gguf" }),
     runVisionReply: async (prompt, images) => {
       assert.equal(prompt, "What is this?");
@@ -391,6 +395,7 @@ test("vision describe returns a reply from the vision runtime", async () => {
 
 test("vision describe reports 503 when no vision model is available", async () => {
   const app = createApp({
+    env: { MANA_VISION_ENABLED: "1" },
     getVisionStatus: () => ({ available: false, reason: "No local vision model found." }),
     runVisionReply: async () => {
       throw new Error("should not be called");
@@ -411,6 +416,7 @@ test("vision describe reports 503 when no vision model is available", async () =
 test("reply with an attached image routes through the vision runtime", async () => {
   let visionCalls = 0;
   const app = createApp({
+    env: { MANA_VISION_ENABLED: "1" },
     getVisionStatus: () => ({ available: true }),
     runVisionReply: async (prompt, images) => {
       visionCalls += 1;
@@ -437,6 +443,7 @@ test("reply with an attached image routes through the vision runtime", async () 
 
 test("reply with an image allows empty text", async () => {
   const app = createApp({
+    env: { MANA_VISION_ENABLED: "1" },
     getVisionStatus: () => ({ available: true }),
     runVisionReply: async (prompt, images) => {
       assert.equal(prompt, "");
@@ -457,6 +464,7 @@ test("reply with an image allows empty text", async () => {
 
 test("POST /web/search returns results from the injected searchWeb", async () => {
   const app = createApp({
+    env: { MANA_WEB_ACCESS_ENABLED: "1" },
     searchWeb: async (query, options) => {
       assert.equal(query, "chocobo racing tips");
       assert.equal(options.limit, 3);
@@ -478,6 +486,7 @@ test("POST /web/search returns results from the injected searchWeb", async () =>
 
 test("POST /web/search rejects a missing query", async () => {
   const app = createApp({
+    env: { MANA_WEB_ACCESS_ENABLED: "1" },
     searchWeb: async () => {
       throw new Error("should not be called");
     },
@@ -492,6 +501,7 @@ test("POST /web/search rejects a missing query", async () => {
 
 test("POST /web/read returns the injected fetchPage result", async () => {
   const app = createApp({
+    env: { MANA_WEB_ACCESS_ENABLED: "1" },
     fetchPage: async (url) => {
       assert.equal(url, "https://example.com/page");
       return { url, title: "Example", text: "Hello page", truncated: false };
@@ -511,6 +521,7 @@ test("POST /web/read returns the injected fetchPage result", async () => {
 
 test("GET /wiki/:term returns the injected wikiLookup result", async () => {
   const app = createApp({
+    env: { MANA_WEB_ACCESS_ENABLED: "1" },
     wikiLookup: async (term) => {
       assert.equal(term, "chocobo");
       return { title: "Chocobo", extract: "A large bird.", url: "https://en.wikipedia.org/wiki/Chocobo" };
@@ -528,6 +539,7 @@ test("GET /wiki/:term returns the injected wikiLookup result", async () => {
 
 test("GET /wiki/:term returns 404 when nothing matches", async () => {
   const app = createApp({
+    env: { MANA_WEB_ACCESS_ENABLED: "1" },
     wikiLookup: async () => null,
   });
 
@@ -539,6 +551,7 @@ test("GET /wiki/:term returns 404 when nothing matches", async () => {
 
 test("reply falls back to web context when no market question is detected", async () => {
   const app = createApp({
+    env: { MANA_WEB_ACCESS_ENABLED: "1" },
     buildCraftProfitContextForPrompt: async () => "",
     buildUniversalisContextForPrompt: async () => "",
     buildMarketContextForPrompt: async () => "",

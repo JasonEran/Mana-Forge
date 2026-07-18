@@ -83,12 +83,12 @@ async function main() {
     MANA_CONFIG_FILE: path.join(tempRoot, "missing.env"),
     MANA_ACP_MEMORY_DIR: path.join(tempRoot, "acp-memory"),
     MANA_LLAMA_SERVER: "0",
+    MANA_PROFILE: "core",
     MOBILE_MEMORY_DIR: path.join(tempRoot, "mobile-memory"),
     NODE_ENV: "test",
     RETRIEVER_HEALTH_DELAY_MS: "1",
     RETRIEVER_HEALTH_RETRIES: "1",
     TTS_PROVIDER: "none",
-    VTUBE_STUDIO_ENABLED: "0",
   };
   const descriptor = createBackendServiceDescriptor({
     backendUrl: baseUrl,
@@ -105,6 +105,7 @@ async function main() {
     MANA_CONFIG_FILE: env.MANA_CONFIG_FILE,
     MANA_ACP_MEMORY_DIR: env.MANA_ACP_MEMORY_DIR,
     MANA_LLAMA_SERVER: env.MANA_LLAMA_SERVER,
+    MANA_PROFILE: env.MANA_PROFILE,
     MOBILE_MEMORY_DIR: env.MOBILE_MEMORY_DIR,
     NODE_ENV: env.NODE_ENV,
     RETRIEVER_HEALTH_DELAY_MS: env.RETRIEVER_HEALTH_DELAY_MS,

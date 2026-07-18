@@ -4,13 +4,15 @@ const os = require("node:os");
 const path = require("node:path");
 const { loadManaConfig } = require("../runtime/config");
 const {
+  isCapabilityEnabled,
+  resolveCapabilityManifest,
+} = require("./capabilities/manifest");
+const {
   createBackendServiceDescriptor,
 } = require("../runtime/services/backend");
 const {
   createKokoroServiceDescriptor,
 } = require("../runtime/services/kokoro");
-const { createEditorIntegrations } = require("./zed-integration");
-const { assertLocalAiPolicy } = require("./mana-acp-agent");
 
 loadManaConfig();
 
@@ -36,6 +38,23 @@ function makeCheck(id, label, status, message, details = {}) {
     message,
     details,
   };
+}
+
+function withCapabilityStatus(check, capabilityStatus) {
+  return { ...check, capabilityStatus };
+}
+
+function disabledCapabilityCheck(id, label, key, manifest) {
+  return withCapabilityStatus(
+    makeCheck(
+      id,
+      label,
+      "pass",
+      `${manifest.capabilities[key].label} is disabled.`,
+      { enabled: false },
+    ),
+    "disabled",
+  );
 }
 
 function summarizeChecks(checks) {
@@ -171,20 +190,20 @@ function checkMobileAuth(env) {
   const secret = env.MOBILE_SESSION_SECRET || "";
 
   if (hash && secret) {
-    return makeCheck(
+    return withCapabilityStatus(makeCheck(
       "mobile-auth",
       "Mobile auth",
       "pass",
       "Mobile passcode hash and session secret are configured.",
-    );
+    ), "configured");
   }
 
-  return makeCheck(
+  return withCapabilityStatus(makeCheck(
     "mobile-auth",
     "Mobile auth",
     "warn",
     "Mobile passcode hash or session secret is missing.",
-  );
+  ), "degraded");
 }
 
 function checkStorage(paths = {}) {
@@ -204,13 +223,14 @@ function checkStorage(paths = {}) {
 }
 
 function checkEditorIntegrations(options = {}) {
+  const { createEditorIntegrations } = require("./zed-integration");
   const status = createEditorIntegrations({
     env: options.env || process.env,
     commandResolver: options.commandResolver,
   }).getStatus();
 
   return Object.entries(status.editors).map(([id, editor]) =>
-    makeCheck(
+    withCapabilityStatus(makeCheck(
       `${id}-editor`,
       id === "vscode" ? "VS Code editor" : "Zed editor",
       editor.available ? "pass" : "warn",
@@ -220,16 +240,17 @@ function checkEditorIntegrations(options = {}) {
         source: editor.source,
         defaultEditor: status.defaultEditor === id,
       },
-    ),
+    ), editor.available ? "available" : "degraded"),
   );
 }
 
 function checkZedExternalAgent(options = {}) {
+  const { assertLocalAiPolicy } = require("./ai/local-ai-policy");
   const env = options.env || process.env;
   const entryPoint = options.entryPoint || path.join(__dirname, "mana-acp-agent.js");
 
   if (!checkPathExists(entryPoint)) {
-    return makeCheck(
+    return withCapabilityStatus(makeCheck(
       "zed-external-agent",
       "Zed external agent",
       "fail",
@@ -238,14 +259,14 @@ function checkZedExternalAgent(options = {}) {
         entryPoint,
         command: `node ${entryPoint} --acp`,
       },
-    );
+    ), "degraded");
   }
 
   try {
     const localAi = assertLocalAiPolicy(env, {
       allowRemoteOverride: options.allowRemoteOverride === true,
     });
-    return makeCheck(
+    return withCapabilityStatus(makeCheck(
       "zed-external-agent",
       "Zed external agent",
       "pass",
@@ -256,9 +277,9 @@ function checkZedExternalAgent(options = {}) {
         remoteAllowed: localAi.remoteAllowed,
         mode: localAi.mode,
       },
-    );
+    ), "available");
   } catch (error) {
-    return makeCheck(
+    return withCapabilityStatus(makeCheck(
       "zed-external-agent",
       "Zed external agent",
       "warn",
@@ -268,7 +289,7 @@ function checkZedExternalAgent(options = {}) {
         command: `node ${entryPoint} --acp`,
         remoteAllowed: true,
       },
-    );
+    ), "degraded");
   }
 }
 
@@ -414,20 +435,20 @@ async function probeZedExternalAgentBackend(
 ) {
   const url = getZedExternalAgentBackendHealthTarget(runtimeState);
   if (!url) {
-    return makeCheck(
+    return withCapabilityStatus(makeCheck(
       "zed-external-agent-backend",
       "Zed external agent backend",
       "warn",
       "Backend runtime configuration is invalid; see the runtime-config check.",
       {},
-    );
+    ), "degraded");
   }
 
   const result = await probe({
     id: "zed-external-agent-backend",
     url,
   });
-  return makeCheck(
+  return withCapabilityStatus(makeCheck(
     "zed-external-agent-backend",
     "Zed external agent backend",
     result.ok ? "pass" : "warn",
@@ -435,23 +456,13 @@ async function probeZedExternalAgentBackend(
       ? "Zed external agent local backend is reachable."
       : "Zed external agent local backend is not reachable. Start node-bot before using Zed External Agent.",
     result,
-  );
+  ), result.ok ? "available" : "degraded");
 }
 
 async function probeSearxngHealth(env, probe = probeHttpHealth) {
-  if (env.MANA_WEB_ACCESS_ENABLED === "0") {
-    return makeCheck(
-      "searxng",
-      "Web search (SearXNG)",
-      "warn",
-      "Web access is disabled (MANA_WEB_ACCESS_ENABLED=0).",
-      {},
-    );
-  }
-
   const url = (env.SEARXNG_URL || "http://127.0.0.1:8890").replace(/\/+$/, "") + "/";
   const result = await probe({ id: "searxng", url });
-  return makeCheck(
+  return withCapabilityStatus(makeCheck(
     "searxng",
     "Web search (SearXNG)",
     result.ok ? "pass" : "warn",
@@ -459,7 +470,7 @@ async function probeSearxngHealth(env, probe = probeHttpHealth) {
       ? "Local SearXNG is reachable; web search is available."
       : "Local SearXNG is not reachable. Web search will fail; wiki lookups and pointed-at page reads still work. See docs/web_access_setup.md.",
     result,
-  );
+  ), result.ok ? "available" : "degraded");
 }
 
 // GPT-SoVITS's api_v2.py has no /health route, so this only checks whether
@@ -469,7 +480,7 @@ async function probeGptSovitsHealth(env, probe = probeHttpHealth) {
   const url = (env.GPT_SOVITS_TTS_URL || "http://127.0.0.1:9880") + "/";
   const result = await probe({ id: "gpt-sovits", url });
   const reachable = result.ok || Number.isInteger(result.statusCode);
-  return makeCheck(
+  return withCapabilityStatus(makeCheck(
     "gpt-sovits",
     "GPT-SoVITS (trial voice)",
     reachable ? "pass" : "warn",
@@ -477,7 +488,7 @@ async function probeGptSovitsHealth(env, probe = probeHttpHealth) {
       ? "GPT-SoVITS is reachable."
       : "TTS_PROVIDER is gpt_sovits, but GPT-SoVITS is not reachable. See docs/gpt_sovits_setup.md.",
     { ...result, ok: reachable },
-  );
+  ), reachable ? "available" : "degraded");
 }
 
 function getDefaultPortChecks(runtimeState) {
@@ -533,6 +544,8 @@ function buildDoctorResult(checks, now = () => new Date()) {
 
 function runDoctorChecks(options = {}) {
   const env = options.env || process.env;
+  const capabilityManifest =
+    options.capabilityManifest || resolveCapabilityManifest(env);
   const versions = options.versions || { node: process.version };
   const paths = options.paths || {
     dataDir:
@@ -541,6 +554,63 @@ function runDoctorChecks(options = {}) {
         ? path.join(env.MANA_DATA_DIR, "mobile")
         : path.join(__dirname, "data")),
   };
+
+  const visionCheck = isCapabilityEnabled("vision", env)
+    ? withCapabilityStatus(
+        checkRequiredFile(
+          "llama-vision-model",
+          "Llama vision model",
+          env.LLAMA_VISION_MODEL || "",
+          "LLAMA_VISION_MODEL is not configured. Install a vision GGUF model and projector. See docs/vision_setup.md.",
+        ),
+        env.LLAMA_VISION_MODEL ? "configured" : "degraded",
+      )
+    : disabledCapabilityCheck(
+        "llama-vision-model",
+        "Llama vision model",
+        "vision",
+        capabilityManifest,
+      );
+  const mobileCheck = isCapabilityEnabled("mobile", env)
+    ? checkMobileAuth(env)
+    : disabledCapabilityCheck(
+        "mobile-auth",
+        "Mobile auth",
+        "mobile",
+        capabilityManifest,
+      );
+  const editorChecks = isCapabilityEnabled("editorAcp", env)
+    ? [
+        ...checkEditorIntegrations({
+          env,
+          commandResolver: options.zedCommandResolver,
+        }),
+        checkZedExternalAgent({
+          env,
+          entryPoint: options.zedExternalAgentEntryPoint,
+          allowRemoteOverride: options.allowRemoteOverride,
+        }),
+      ]
+    : [
+        disabledCapabilityCheck(
+          "zed-editor",
+          "Zed editor",
+          "editorAcp",
+          capabilityManifest,
+        ),
+        disabledCapabilityCheck(
+          "vscode-editor",
+          "VS Code editor",
+          "editorAcp",
+          capabilityManifest,
+        ),
+        disabledCapabilityCheck(
+          "zed-external-agent",
+          "Zed external agent",
+          "editorAcp",
+          capabilityManifest,
+        ),
+      ];
 
   const checks = [
     checkNodeRuntime(versions.node),
@@ -563,25 +633,12 @@ function runDoctorChecks(options = {}) {
       env.LLAMA_SERVER_BIN || "",
       "LLAMA_SERVER_BIN is not configured. Mana auto-detects the bundled llama-server.exe and falls back to one-shot llama-cli replies.",
     ),
-    checkRequiredFile(
-      "llama-vision-model",
-      "Llama vision model",
-      env.LLAMA_VISION_MODEL || "",
-      "LLAMA_VISION_MODEL is not configured. Mana auto-detects vision GGUF models under tools/llama; image replies stay unavailable until one is installed. See docs/vision_setup.md.",
-    ),
+    visionCheck,
     checkWhisperConfig(env),
     checkTtsServices(options.services || []),
-    checkMobileAuth(env),
+    mobileCheck,
     checkStorage(paths),
-    ...checkEditorIntegrations({
-      env,
-      commandResolver: options.zedCommandResolver,
-    }),
-    checkZedExternalAgent({
-      env,
-      entryPoint: options.zedExternalAgentEntryPoint,
-      allowRemoteOverride: options.allowRemoteOverride,
-    }),
+    ...editorChecks,
   ];
 
   return buildDoctorResult(checks, options.now);
@@ -589,19 +646,36 @@ function runDoctorChecks(options = {}) {
 
 async function runDoctorChecksAsync(options = {}) {
   const env = options.env || process.env;
+  const capabilityManifest =
+    options.capabilityManifest || resolveCapabilityManifest(env);
   const runtimeState = buildRuntimeDiagnosticState(env, options.runtime);
   const services = await probeTtsServices(
     env,
     options.services,
     runtimeState,
   );
-  const zedExternalAgentBackend = await probeZedExternalAgentBackend(
-    env,
-    runtimeState,
-    options.zedExternalAgentBackendProbe,
-  );
-  const searxngHealth = await probeSearxngHealth(env, options.searxngProbe);
+  const zedExternalAgentBackend = isCapabilityEnabled("editorAcp", env)
+    ? await probeZedExternalAgentBackend(
+        env,
+        runtimeState,
+        options.zedExternalAgentBackendProbe,
+      )
+    : disabledCapabilityCheck(
+        "zed-external-agent-backend",
+        "Zed external agent backend",
+        "editorAcp",
+        capabilityManifest,
+      );
+  const searxngHealth = isCapabilityEnabled("webAccess", env)
+    ? await probeSearxngHealth(env, options.searxngProbe)
+    : disabledCapabilityCheck(
+        "searxng",
+        "Web search (SearXNG)",
+        "webAccess",
+        capabilityManifest,
+      );
   const gptSovitsHealth =
+    isCapabilityEnabled("alternateTts", env) &&
     String(env.TTS_PROVIDER || "").trim().toLowerCase() === "gpt_sovits"
       ? await probeGptSovitsHealth(env, options.gptSovitsProbe)
       : null;
@@ -613,6 +687,7 @@ async function runDoctorChecksAsync(options = {}) {
   const checks = runDoctorChecks({
     ...options,
     env,
+    capabilityManifest,
     services,
   }).checks;
 

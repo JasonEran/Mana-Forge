@@ -16,7 +16,7 @@ async function withServer(app, fn) {
 }
 
 test("health includes component readiness while preserving top-level fields", async () => {
-  const app = createApp();
+  const app = createApp({ env: { MANA_PROFILE: "core" } });
 
   await withServer(app, async (baseUrl) => {
     const response = await fetch(`${baseUrl}/health`);
@@ -29,27 +29,32 @@ test("health includes component readiness while preserving top-level fields", as
     assert.equal(typeof body.remoteAiEnabled, "boolean");
 
     assert.deepEqual(Object.keys(body.components).sort(), [
+      "alternateTts",
       "backend",
+      "backgroundMemory",
       "cloudflareTunnel",
       "dirScanner",
+      "editorAcp",
       "ffxivMarket",
       "localLlama",
       "localMemory",
+      "mobile",
       "mobileAuth",
+      "replyVerification",
+      "retrieval",
+      "stockMarket",
       "tts",
+      "vision",
       "vtubeStudio",
       "webAccess",
       "whisper",
     ]);
     assert.equal(body.components.backend.status, "available");
     assert.equal(body.components.backend.configured, true);
-    assert.deepEqual(body.components.ffxivMarket, {
-      status: "configured",
-      configured: true,
-      message: "FFXIV market providers are configured from local defaults.",
-      universalisConfigured: true,
-      xivapiConfigured: true,
-    });
+    assert.equal(body.components.ffxivMarket.status, "disabled");
+    assert.equal(body.components.ffxivMarket.configured, false);
+    assert.equal(body.components.retrieval.status, "disabled");
+    assert.equal(body.components.mobileAuth.status, "disabled");
     assert.equal(typeof body.components.localLlama.message, "string");
   });
 });
@@ -86,7 +91,8 @@ test("health component details do not expose secret values", async () => {
       MOBILE_PASSCODE_HASH: "secret-passcode-hash",
       MOBILE_SESSION_SECRET: "secret-session-value",
       CLOUDFLARE_TUNNEL_TOKEN: "secret-cloudflare-token",
-      VTUBE_STUDIO_ENABLED: "1",
+      MANA_MOBILE_ENABLED: "1",
+      MANA_VTUBE_STUDIO_ENABLED: "1",
     },
   });
 
@@ -96,7 +102,7 @@ test("health component details do not expose secret values", async () => {
     const raw = JSON.stringify(body);
 
     assert.equal(response.status, 200);
-    assert.equal(body.components.mobileAuth.status, "available");
+    assert.equal(body.components.mobileAuth.status, "configured");
     assert.equal(body.components.cloudflareTunnel.status, "configured");
     assert.equal(body.components.vtubeStudio.status, "configured");
     assert.equal(raw.includes("secret-passcode-hash"), false);

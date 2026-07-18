@@ -83,14 +83,19 @@ async function checkSearxngHealth() {
 const webAccessCapability = {
   key: KEY,
   registerRoutes: registerWebAccessRoutes,
-  getHealth: () => ({
-    status: isWebAccessEnabled() ? "configured" : "disabled",
-    configured: isWebAccessEnabled(),
-    message: isWebAccessEnabled()
-      ? "Web search, wiki lookups, and page reads are enabled. Search needs local SearXNG running; wiki and page reads only need internet."
-      : "Web access is disabled (MANA_WEB_ACCESS_ENABLED=0).",
-    searxngUrl: getSearxngUrl(),
-  }),
+  getHealth: (context = {}) => {
+    const enabled =
+      context.capabilityManifest?.capabilities?.[KEY]?.enabled ??
+      isWebAccessEnabled();
+    return {
+      status: enabled ? "configured" : "disabled",
+      configured: enabled,
+      message: enabled
+        ? "Web search, wiki lookups, and page reads are enabled. Search needs local SearXNG running; wiki and page reads only need internet."
+        : "Web access is disabled (MANA_WEB_ACCESS_ENABLED=0).",
+      searxngUrl: getSearxngUrl(),
+    };
+  },
   checkSearxngHealth,
 };
 

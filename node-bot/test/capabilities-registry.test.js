@@ -61,10 +61,45 @@ test("buildCapabilityHealth collects health by capability key", () => {
 
   assert.deepEqual(health, {
     alpha: {
+      enabled: true,
       status: "available",
       configured: true,
       message: "Alpha is available.",
     },
+  });
+});
+
+test("registry neither registers nor probes a disabled capability", () => {
+  let routeCalls = 0;
+  let healthCalls = 0;
+  const capability = {
+    key: "alpha",
+    registerRoutes: () => {
+      routeCalls += 1;
+    },
+    getHealth: () => {
+      healthCalls += 1;
+      return { status: "available" };
+    },
+  };
+  const context = {
+    capabilityManifest: {
+      capabilities: {
+        alpha: { key: "alpha", label: "Alpha", enabled: false },
+      },
+    },
+  };
+
+  registerCapabilities({}, [capability], context);
+  const health = buildCapabilityHealth([capability], context);
+
+  assert.equal(routeCalls, 0);
+  assert.equal(healthCalls, 0);
+  assert.deepEqual(health.alpha, {
+    status: "disabled",
+    configured: false,
+    enabled: false,
+    message: "Alpha is disabled.",
   });
 });
 

@@ -2,6 +2,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const { withPath } = require("../config");
+const { isCapabilityEnabled } = require("../../node-bot/capabilities/manifest");
 const { createBackendServiceDescriptor } = require("./backend");
 const { createKokoroServiceDescriptor } = require("./kokoro");
 
@@ -19,13 +20,14 @@ function createLauncherServicePlan(options = {}) {
   ];
   const warnings = [];
   const provider = String(env.TTS_PROVIDER || "kokoro").trim().toLowerCase();
+  const alternateTtsEnabled = isCapabilityEnabled("alternateTts", env);
 
   if (provider === "kokoro" && env.MANA_START_KOKORO !== "0") {
     descriptors.push(createKokoroServiceDescriptor({ env, fsImpl, repoRoot }));
-  } else if (provider === "chatterbox") {
+  } else if (provider === "chatterbox" && alternateTtsEnabled) {
     descriptors.push(createChatterboxDescriptor({ env, repoRoot }));
     addKokoroFallback(descriptors, { env, fsImpl, repoRoot });
-  } else if (provider === "gpt_sovits") {
+  } else if (provider === "gpt_sovits" && alternateTtsEnabled) {
     const gpt = createGptSovitsDescriptor({ env, fsImpl, repoRoot });
     if (gpt.descriptor) descriptors.push(gpt.descriptor);
     if (gpt.warning) warnings.push(gpt.warning);
@@ -45,6 +47,7 @@ function createLauncherServicePlan(options = {}) {
   }
 
   if (
+    alternateTtsEnabled &&
     provider === "kokoro" &&
     env.START_FALLBACK_CHATTERBOX === "1"
   ) {
@@ -58,13 +61,19 @@ function createLauncherServicePlan(options = {}) {
     );
   }
 
-  if (env.MANA_START_RETRIEVER !== "0") {
+  if (
+    isCapabilityEnabled("retrieval", env) &&
+    env.MANA_START_RETRIEVER !== "0"
+  ) {
     const retriever = createRetrieverDescriptor({ env, fsImpl, repoRoot });
     if (retriever.descriptor) descriptors.push(retriever.descriptor);
     if (retriever.warning) warnings.push(retriever.warning);
   }
 
-  if (env.MANA_START_SEARXNG !== "0") {
+  if (
+    isCapabilityEnabled("webAccess", env) &&
+    env.MANA_START_SEARXNG !== "0"
+  ) {
     const searxng = createSearxngDescriptor({ env, fsImpl, repoRoot });
     if (searxng.descriptor) descriptors.push(searxng.descriptor);
     if (searxng.warning) warnings.push(searxng.warning);

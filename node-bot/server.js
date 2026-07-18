@@ -35,6 +35,10 @@ This server aims to avoid Python. You must download and place the whisper.cpp an
 
 const { loadManaConfig } = require("../runtime/config");
 const {
+  isCapabilityEnabled,
+  resolveCapabilityManifest,
+} = require("./capabilities/manifest");
+const {
   createCorsOptions,
   createNetworkSecurityConfig,
   createOriginGuard,
@@ -54,43 +58,11 @@ const path = require("path");
 const http = require("http");
 const https = require("https");
 const DATA_DIR = process.env.MANA_DATA_DIR || path.join(__dirname, "data");
-const { createWorker } = require("tesseract.js");
-const { VTubeStudioClient } = require("./vtube-studio-client");
-const { registerVTubeRoutes } = require("./vtube-routes");
-const { createVTubeRuntime } = require("./vtube-runtime");
-	const { registerMobileRoutes } = require("./mobile-routes");
-	const { createMobileAuth } = require("./mobile-auth");
-	const { createMobileMemoryStore } = require("./mobile-memory-store");
-	const { registerCoreRoutes } = require("./server-routes");
-	const { registerDiagnosticRoutes } = require("./diagnostic-routes");
-	const { registerModelRoutes } = require("./model-routes");
-	const {
-	  registerCapabilities,
-	} = require("./capabilities/registry");
-	const {
-	  ffxivMarketCapability,
-	} = require("./capabilities/ffxiv-market-capability");
-	const dirScannerCapability = require("./capabilities/dir-scanner-capability");
-const {
-  webAccessCapability,
-} = require("./capabilities/web-access-capability");
-const {
-  buildWebContextForPrompt,
-  fetchPage,
-  searchWeb,
-  wikiLookup,
-} = require("./tools/web-access");
-	const { runDoctorChecksAsync } = require("./doctor");
-	const { MobileDeviceStore } = require("./mobile-device-store");
-	// NOTE: mobile-auth and mobile-memory-store may exist; we add device store integration here
-	const {
-	  buildMarketContextForPrompt,
-	  createMarketDataClient,
-	  isMarketQuestion,
-	} = require("./market-data");
+const { registerCoreRoutes } = require("./server-routes");
+const { registerDiagnosticRoutes } = require("./diagnostic-routes");
+const { registerModelRoutes } = require("./model-routes");
+const { registerCapabilities } = require("./capabilities/registry");
 const { createTtsRuntime } = require("./tts-runtime");
-const { createAcpMemoryStore } = require("./acp-memory-store");
-const { registerEditorRoutes } = require("./editor-routes");
 const { registerDebugRoutes } = require("./debug-routes");
 const { registerRuntimeStatusRoutes } = require("./runtime-status-routes");
 const { registerAdminUiRoutes } = require("./admin-ui-routes");
@@ -109,42 +81,72 @@ const {
 } = require("./ai/local-llama-runtime");
 const { createLlamaServerRuntime } = require("./ai/llama-server-runtime");
 const { createRestartController } = require("./admin-restart");
-const {
-  FFXIV_PROFIT_TOP_LIMIT,
-  FFXIV_RECIPE_SOURCE,
-  XIVAPI_RECIPE_PAGE_SIZE,
-  XIVAPI_RECIPE_SCAN_LIMIT,
-  UNIVERSALIS_DEFAULT_WORLD,
-  buildCraftProfitContextForPrompt,
-  buildUniversalisContextForPrompt,
-  clampInteger,
-  cleanItemNameCandidate,
-  configureFfxivMarketTools,
-  extractExplicitItemNameFromText,
-  extractHoveredItemName,
-  findProfitableCrafts,
-  formatCraftRankingDetails,
-  getCraftMarketabilityRequirement,
-  getCraftRankingValue,
-  getGarlandNodeGatheringJob,
-  getGarlandNodeGatheringSources,
-  getSalesHistoryAdjustedPrice,
-  getUniversalisMarketSummary,
-  isIgnoredGatheringMaterial,
-  materialPassesGatheringFilters,
-  normalizeCraftRankingMode,
-  normalizeGatheringJobFilter,
-  normalizeGatheringSourceFilter,
-  resolveFfxivItemByName,
-  resolveGatherableRecipeMaterials,
-  summarizeSalesHistory,
-  textLooksLikeCraftProfitQuestion,
-  textLooksLikeMarketQuestion,
-} = require("./ffxiv-market");
+const LAZY_CAPABILITIES = [
+  createLazyCapability(
+    "ffxivMarket",
+    "./capabilities/ffxiv-market-capability",
+    "ffxivMarketCapability",
+  ),
+  createLazyCapability(
+    "dirScanner",
+    "./capabilities/dir-scanner-capability",
+    null,
+  ),
+  createLazyCapability(
+    "webAccess",
+    "./capabilities/web-access-capability",
+    "webAccessCapability",
+  ),
+];
+
+function createLazyCapability(key, modulePath, exportName) {
+  function load() {
+    const loaded = require(modulePath);
+    return exportName ? loaded[exportName] : loaded;
+  }
+  return {
+    key,
+    registerRoutes: (app, context) => load().registerRoutes(app, context),
+    getHealth: (context) => load().getHealth(context),
+  };
+}
+
+function callFfxivTool(name, ...args) {
+  return require("./ffxiv-market")[name](...args);
+}
+
+const formatCraftRankingDetails = (...args) =>
+  callFfxivTool("formatCraftRankingDetails", ...args);
+const getCraftMarketabilityRequirement = (...args) =>
+  callFfxivTool("getCraftMarketabilityRequirement", ...args);
+const getCraftRankingValue = (...args) =>
+  callFfxivTool("getCraftRankingValue", ...args);
+const getGarlandNodeGatheringJob = (...args) =>
+  callFfxivTool("getGarlandNodeGatheringJob", ...args);
+const getGarlandNodeGatheringSources = (...args) =>
+  callFfxivTool("getGarlandNodeGatheringSources", ...args);
+const getSalesHistoryAdjustedPrice = (...args) =>
+  callFfxivTool("getSalesHistoryAdjustedPrice", ...args);
+const isIgnoredGatheringMaterial = (...args) =>
+  callFfxivTool("isIgnoredGatheringMaterial", ...args);
+const materialPassesGatheringFilters = (...args) =>
+  callFfxivTool("materialPassesGatheringFilters", ...args);
+const normalizeCraftRankingMode = (...args) =>
+  callFfxivTool("normalizeCraftRankingMode", ...args);
+const normalizeGatheringSourceFilter = (...args) =>
+  callFfxivTool("normalizeGatheringSourceFilter", ...args);
+const resolveGatherableRecipeMaterials = (...args) =>
+  callFfxivTool("resolveGatherableRecipeMaterials", ...args);
+const summarizeSalesHistory = (...args) =>
+  callFfxivTool("summarizeSalesHistory", ...args);
+const clampInteger = (...args) => callFfxivTool("clampInteger", ...args);
 
 function createApp(deps = {}) {
   const app = express();
   const appEnv = deps.env || process.env;
+  const capabilityManifest =
+    deps.capabilityManifest ||
+    resolveCapabilityManifest({ ...process.env, ...appEnv });
   const networkSecurity =
     deps.networkSecurity || createNetworkSecurityConfig(appEnv);
   app.locals.networkSecurity = networkSecurity;
@@ -154,16 +156,24 @@ function createApp(deps = {}) {
   app.use(express.json({ limit: "15mb" }));
   const upload = multer({ dest: path.join(DATA_DIR, "tmp") });
 
-  	  // wire mobile device store (allow override via deps for tests)
-  	  const deviceStore = deps.deviceStore || new MobileDeviceStore();
+  let deviceStore = deps.deviceStore || null;
+  if (capabilityManifest.capabilities.mobile.enabled && !deviceStore) {
+    const { MobileDeviceStore } = require("./mobile-device-store");
+    deviceStore = new MobileDeviceStore();
+  }
 
-  	  // register existing routes with deviceStore available in deps
-  	  registerRoutes(app, upload, { ...deps, env: appEnv, deviceStore });
+  registerRoutes(app, upload, {
+    ...deps,
+    env: appEnv,
+    capabilityManifest,
+    deviceStore,
+  });
 
-	  // serve small admin UI
-	  app.use('/admin/mobile-devices', express.static(path.join(__dirname, 'admin')));
+  if (capabilityManifest.capabilities.mobile.enabled) {
+    app.use("/admin/mobile-devices", express.static(path.join(__dirname, "admin")));
+  }
 
-	  return app;
+  return app;
 }
 
 const WHISPER_BIN = process.env.WHISPER_BIN || null;
@@ -181,7 +191,7 @@ const CHATTERBOX_TTS_URL =
 const KOKORO_TTS_URL = process.env.KOKORO_TTS_URL || "http://127.0.0.1:5011";
 const MARKET_PROVIDER = process.env.MARKET_PROVIDER || "alphavantage";
 const FISH_TTS_URL = process.env.FISH_TTS_URL || "http://127.0.0.1:8080";
-const SCREEN_CONTEXT_ENABLED = process.env.SCREEN_CONTEXT_ENABLED !== "0";
+const SCREEN_CONTEXT_ENABLED = isCapabilityEnabled("vision", process.env);
 const SCREEN_CONTEXT_MAX_CHARS = Number(
   process.env.SCREEN_CONTEXT_MAX_CHARS || 1200,
 );
@@ -201,11 +211,10 @@ const WHISPER_TEMPERATURE = process.env.WHISPER_TEMPERATURE || "0";
 const LLAMA_THREADS = Number(process.env.LLAMA_THREADS || 4);
 const LLAMA_MAX_TOKENS = Number(process.env.LLAMA_MAX_TOKENS || 180);
 const VTUBE_STUDIO_URL = process.env.VTUBE_STUDIO_URL || "ws://127.0.0.1:8001";
-const VTUBE_STUDIO_ENABLED = process.env.VTUBE_STUDIO_ENABLED !== "0";
 const VTUBE_STUDIO_REACTIONS_JSON =
   process.env.VTUBE_STUDIO_REACTIONS_JSON || "{}";
 const TTS_PROVIDER =
-  process.env.TTS_PROVIDER || (TTS_BIN ? "cli" : "chatterbox");
+  process.env.TTS_PROVIDER || "kokoro";
 const DEFAULT_GAMING_PROCESS_NAMES = [
   "ffxiv_dx11.exe",
   "ffxiv.exe",
@@ -217,16 +226,6 @@ const DEFAULT_GAMING_PROCESS_NAMES = [
 const GAMING_PROCESS_NAMES = parseGamingProcessNames(
   process.env.GAMING_PROCESS_NAMES,
 );
-const vtubeStudio = VTUBE_STUDIO_ENABLED
-  ? new VTubeStudioClient({ url: VTUBE_STUDIO_URL })
-  : null;
-const vtubeRuntime = createVTubeRuntime({
-  env: process.env,
-  vtubeStudio,
-  vtubeStudioUrl: VTUBE_STUDIO_URL,
-});
-const marketDataClient = createMarketDataClient();
-
 function nowMs() {
   return Number(process.hrtime.bigint() / 1000000n);
 }
@@ -251,8 +250,6 @@ function logPerf(label, startedAt) {
   };
   console.log(`Mana perf: ${label} ${durationMs}ms`);
 }
-
-configureFfxivMarketTools({ nowMs, logPerf });
 
 const localLlamaRuntime = createLocalLlamaRuntime({
   env: process.env,
@@ -316,11 +313,19 @@ const ttsRuntime = createTtsRuntime({
   logPerf,
 });
 
-// ACP memory store (conversation/session memory)
-const acpMemoryStore = createAcpMemoryStore({
+const MEMORY_ENABLED =
+  isCapabilityEnabled("editorAcp", process.env) ||
+  isCapabilityEnabled("backgroundMemory", process.env);
+
+// ACP storage is not loaded or created by a Core process.
+const acpMemoryStore = MEMORY_ENABLED
+  ? require("./acp-memory-store").createAcpMemoryStore({
   // tokenEstimator will call the local Python retriever service /tokenize endpoint when available
   tokenEstimator: async (text) => {
     try {
+      if (!isCapabilityEnabled("retrieval", process.env)) {
+        throw Object.assign(new Error("retrieval disabled"), { disabled: true });
+      }
       const retrieverBase = (
         process.env.RETRIEVER_URL || "http://127.0.0.1:9000/retrieve"
       ).replace(/\/retrieve\/?$/, "");
@@ -369,13 +374,15 @@ const acpMemoryStore = createAcpMemoryStore({
       return summary || "";
     }
   },
-});
+  })
+  : null;
 
 // Background memory block that can be refreshed periodically from ACP session files.
 let BACKGROUND_MEMORY_BLOCK = "";
 let BACKGROUND_MEMORY_LOCK = false;
 let BACKGROUND_MEMORY_META = { files: {} };
-const BACKGROUND_MEMORY_ROOT = acpMemoryStore.dataDir;
+const BACKGROUND_MEMORY_ROOT =
+  acpMemoryStore?.dataDir || path.join(DATA_DIR, "background-memory");
 const BACKGROUND_META_PATH = path.join(
   BACKGROUND_MEMORY_ROOT,
   "background_meta.json",
@@ -402,11 +409,6 @@ function loadPersistedBackgroundMetaSync() {
     );
   }
 }
-
-// load persisted meta synchronously at startup to avoid re-reading many files
-try {
-  loadPersistedBackgroundMetaSync();
-} catch (e) {}
 
 let runBackgroundReviewerPublic = null;
 
@@ -630,22 +632,6 @@ async function appendBackgroundAudit(entry) {
   }
 }
 
-// load index at startup if present
-try {
-  loadAuditIndexSync();
-} catch (e) {}
-// if no index present, build in background
-if (
-  !BACKGROUND_AUDIT_INDEX ||
-  !Array.isArray(BACKGROUND_AUDIT_INDEX.entries) ||
-  BACKGROUND_AUDIT_INDEX.entries.length === 0
-) {
-  // don't await
-  buildIndexFromAuditFile().catch((err) =>
-    console.warn("Initial audit index build failed:", err),
-  );
-}
-
 async function asyncLoadBackgroundMemory() {
   if (BACKGROUND_MEMORY_LOCK) return;
   BACKGROUND_MEMORY_LOCK = true;
@@ -795,6 +781,14 @@ function createBackgroundMemoryLifecycle() {
   }
 
   let summarizerRunning = false;
+  async function initializeBackgroundMemory() {
+    loadPersistedBackgroundMetaSync();
+    loadAuditIndexSync();
+    if (!BACKGROUND_AUDIT_INDEX.entries?.length) {
+      await buildIndexFromAuditFile();
+    }
+    return asyncLoadBackgroundMemory();
+  }
   async function runBackgroundCompactor() {
         if (summarizerRunning) return;
         summarizerRunning = true;
@@ -1097,7 +1091,7 @@ function createBackgroundMemoryLifecycle() {
 
   runBackgroundReviewerPublic = runBackgroundReviewer;
   return createBackgroundLifecycle({
-    initialLoad: asyncLoadBackgroundMemory,
+    initialLoad: initializeBackgroundMemory,
     runCompactor: runBackgroundCompactor,
     runReviewer: runBackgroundReviewer,
     jobsPaused: backgroundJobsPausedForGaming,
@@ -1245,48 +1239,92 @@ ensureDirectory(path.join(DATA_DIR, "tmp"));
 
 function registerRoutes(app, upload, deps = {}) {
   const env = deps.env || process.env;
-  const mobileMemoryStore = deps.mobileMemoryStore || createMobileMemoryStore();
+  const capabilityManifest =
+    deps.capabilityManifest || resolveCapabilityManifest(env);
+  const capabilityEnabled = (key) =>
+    Boolean(capabilityManifest.capabilities[key]?.enabled);
+  const mobileMemoryStore = capabilityEnabled("mobile")
+    ? deps.mobileMemoryStore ||
+      require("./mobile-memory-store").createMobileMemoryStore()
+    : null;
+  const ffxivTools = capabilityEnabled("ffxivMarket")
+    ? require("./ffxiv-market")
+    : null;
+  const webTools = capabilityEnabled("webAccess")
+    ? require("./tools/web-access")
+    : null;
+  const marketTools = capabilityEnabled("stockMarket")
+    ? require("./market-data")
+    : null;
+  const marketDataClient = marketTools
+    ? deps.marketDataClient || marketTools.createMarketDataClient()
+    : null;
+  let vtubeStudio = null;
+  let vtubeRuntime = null;
+  if (capabilityEnabled("vtubeStudio")) {
+    const { VTubeStudioClient } = require("./vtube-studio-client");
+    const { createVTubeRuntime } = require("./vtube-runtime");
+    vtubeStudio =
+      deps.vtubeStudio || new VTubeStudioClient({ url: VTUBE_STUDIO_URL });
+    vtubeRuntime =
+      deps.vtubeRuntime ||
+      createVTubeRuntime({
+        env,
+        vtubeStudio,
+        vtubeStudioUrl: VTUBE_STUDIO_URL,
+      });
+  }
+  if (ffxivTools) ffxivTools.configureFfxivMarketTools({ nowMs, logPerf });
   const modelManagement =
     deps.modelManagement ||
     createModelManagement({
       env: deps.env || process.env,
     });
-  const capabilities = deps.capabilities || [
-    ffxivMarketCapability,
-    dirScannerCapability,
-    webAccessCapability,
-  ];
+  const capabilities = deps.capabilities || LAZY_CAPABILITIES;
   const capabilityContext = {
-    UNIVERSALIS_DEFAULT_WORLD,
-    FFXIV_PROFIT_TOP_LIMIT,
-    FFXIV_RECIPE_SOURCE,
-    XIVAPI_RECIPE_PAGE_SIZE,
-    XIVAPI_RECIPE_SCAN_LIMIT,
-    extractExplicitItemNameFromText,
-    extractHoveredItemName,
-    findProfitableCrafts: deps.findProfitableCrafts || findProfitableCrafts,
+    capabilityManifest,
+    UNIVERSALIS_DEFAULT_WORLD:
+      ffxivTools?.UNIVERSALIS_DEFAULT_WORLD || "Elemental",
+    FFXIV_PROFIT_TOP_LIMIT: ffxivTools?.FFXIV_PROFIT_TOP_LIMIT,
+    FFXIV_RECIPE_SOURCE: ffxivTools?.FFXIV_RECIPE_SOURCE,
+    XIVAPI_RECIPE_PAGE_SIZE: ffxivTools?.XIVAPI_RECIPE_PAGE_SIZE,
+    XIVAPI_RECIPE_SCAN_LIMIT: ffxivTools?.XIVAPI_RECIPE_SCAN_LIMIT,
+    extractExplicitItemNameFromText:
+      ffxivTools?.extractExplicitItemNameFromText,
+    extractHoveredItemName: ffxivTools?.extractHoveredItemName,
+    findProfitableCrafts:
+      deps.findProfitableCrafts || ffxivTools?.findProfitableCrafts,
     getUniversalisMarketSummary:
-      deps.getUniversalisMarketSummary || getUniversalisMarketSummary,
+      deps.getUniversalisMarketSummary ||
+      ffxivTools?.getUniversalisMarketSummary,
     logPerf,
-    normalizeCraftRankingMode,
-    normalizeGatheringJobFilter,
-    normalizeGatheringSourceFilter,
+    normalizeCraftRankingMode: ffxivTools?.normalizeCraftRankingMode,
+    normalizeGatheringJobFilter: ffxivTools?.normalizeGatheringJobFilter,
+    normalizeGatheringSourceFilter: ffxivTools?.normalizeGatheringSourceFilter,
     nowMs,
     resolveFfxivItemByName:
-      deps.resolveFfxivItemByName || resolveFfxivItemByName,
-    searchWeb: deps.searchWeb || searchWeb,
-    fetchPage: deps.fetchPage || fetchPage,
-    wikiLookup: deps.wikiLookup || wikiLookup,
+      deps.resolveFfxivItemByName || ffxivTools?.resolveFfxivItemByName,
+    searchWeb: deps.searchWeb || webTools?.searchWeb,
+    fetchPage: deps.fetchPage || webTools?.fetchPage,
+    wikiLookup: deps.wikiLookup || webTools?.wikiLookup,
   };
   registerCapabilities(app, capabilities, capabilityContext);
 
-  registerEditorRoutes(app, deps);
+  if (capabilityEnabled("editorAcp")) {
+    require("./editor-routes").registerEditorRoutes(app, deps);
+  }
   registerDebugRoutes(app);
 
   registerModelRoutes(app, { modelManagement });
   registerDiagnosticRoutes(app, {
     env: deps.env || process.env,
-    runDoctor: deps.doctor || runDoctorChecksAsync,
+    runDoctor:
+      deps.doctor ||
+      (() =>
+        require("./doctor").runDoctorChecksAsync({
+          env,
+          capabilityManifest,
+        })),
     getLlamaStatus,
     mobileMemoryStore,
     ttsBin: TTS_BIN,
@@ -1295,6 +1333,7 @@ function registerRoutes(app, upload, deps = {}) {
     whisperModel: WHISPER_MODEL,
     capabilities,
     capabilityContext,
+    capabilityManifest,
     kokoroTtsUrl: KOKORO_TTS_URL,
     chatterboxTtsUrl: CHATTERBOX_TTS_URL,
     fishTtsUrl: FISH_TTS_URL,
@@ -1435,19 +1474,21 @@ function registerRoutes(app, upload, deps = {}) {
   }
 
   function parseVTubeReactions() {
-    return vtubeRuntime.parseVTubeReactions();
+    return vtubeRuntime ? vtubeRuntime.parseVTubeReactions() : {};
   }
 
   function pickVTubeReaction(text) {
-    return vtubeRuntime.pickVTubeReaction(text);
+    return vtubeRuntime ? vtubeRuntime.pickVTubeReaction(text) : null;
   }
 
   async function triggerVTubeReactionForReply(reply) {
-    return await vtubeRuntime.triggerVTubeReactionForReply(reply);
+    return vtubeRuntime
+      ? await vtubeRuntime.triggerVTubeReactionForReply(reply)
+      : { triggered: false, reason: "disabled" };
   }
 
   function queueVTubeReaction(reply) {
-    return vtubeRuntime.queueVTubeReaction(reply);
+    return vtubeRuntime ? vtubeRuntime.queueVTubeReaction(reply) : null;
   }
   function findWhisperBin() {
     const candidates = [];
@@ -1633,6 +1674,7 @@ function registerRoutes(app, upload, deps = {}) {
 
   function getScreenOcrWorker() {
     if (!screenOcrWorkerPromise) {
+      const { createWorker } = require("tesseract.js");
       // Quick rundown: keep one OCR worker warm so screen reading is not restarted every reply.
       screenOcrWorkerPromise = createWorker("eng", 1, {
         cachePath: SCREEN_OCR_CACHE_PATH,
@@ -1660,7 +1702,7 @@ function registerRoutes(app, upload, deps = {}) {
   }
 
   async function readScreenText(imageDataUrl) {
-    if (!SCREEN_CONTEXT_ENABLED) {
+    if (!capabilityEnabled("vision")) {
       return "";
     }
 
@@ -1870,8 +1912,8 @@ function registerRoutes(app, upload, deps = {}) {
 
     // Load short session memory (if provided) and prepend to prompt
     let memoryBlock = "";
-    try {
-      if (sessionId) {
+        try {
+          if (sessionId && acpMemoryStore) {
         try {
           memoryBlock =
             (await acpMemoryStore.buildPromptMemory(sessionId)) || "";
@@ -1894,11 +1936,12 @@ function registerRoutes(app, upload, deps = {}) {
     // polluted by random repo snippets. Override with MANA_RETRIEVAL_MODES
     // (comma-separated modes, e.g. "coding,everyday").
     let retrievedText = "";
-    const retrievalModes = String(process.env.MANA_RETRIEVAL_MODES || "coding")
-      .split(",")
-      .map((value) => value.trim().toLowerCase())
-      .filter(Boolean);
-    try {
+    if (capabilityEnabled("retrieval")) {
+      const retrievalModes = String(process.env.MANA_RETRIEVAL_MODES || "coding")
+        .split(",")
+        .map((value) => value.trim().toLowerCase())
+        .filter(Boolean);
+      try {
       if (!retrievalModes.includes(String(mode || "").toLowerCase())) {
         throw Object.assign(new Error("retrieval skipped for this mode"), {
           retrievalSkipped: true,
@@ -2138,9 +2181,10 @@ function registerRoutes(app, upload, deps = {}) {
           }
         }
       }
-    } catch (e) {
-      if (!e || !e.retrievalSkipped) {
-        console.warn("Vector retriever failed:", e.message);
+      } catch (e) {
+        if (!e || !e.retrievalSkipped) {
+          console.warn("Vector retriever failed:", e.message);
+        }
       }
     }
 
@@ -2237,15 +2281,13 @@ function registerRoutes(app, upload, deps = {}) {
     }
 
     // Optional verification and auto-retry logic
-    try {
-      const { verifyReply } = require("./utils/reply-verifier");
-      const verifyEnabled =
-        String(process.env.MANA_VERIFY_REPLY || "0") === "1";
-      const autoRetry =
-        String(process.env.MANA_AUTO_RETRY_VERIFICATION || "0") === "1";
-      const maxRetries = Number(process.env.MANA_VERIFY_MAX_RETRIES || 1);
+    if (capabilityEnabled("replyVerification")) {
+      try {
+        const { verifyReply } = require("./utils/reply-verifier");
+        const autoRetry =
+          String(env.MANA_AUTO_RETRY_VERIFICATION || "0") === "1";
+        const maxRetries = Number(env.MANA_VERIFY_MAX_RETRIES || 1);
 
-      if (verifyEnabled) {
         let attempts = 0;
         while (true) {
           attempts += 1;
@@ -2289,9 +2331,9 @@ function registerRoutes(app, upload, deps = {}) {
 
           break;
         }
+      } catch (e) {
+        console.warn("Reply verification unavailable:", e?.message || e);
       }
-    } catch (e) {
-      console.warn("Reply verification unavailable:", e?.message || e);
     }
 
     try {
@@ -2324,25 +2366,46 @@ function registerRoutes(app, upload, deps = {}) {
   }
 
   registerCoreRoutes(app, upload, {
-    UNIVERSALIS_DEFAULT_WORLD,
+    UNIVERSALIS_DEFAULT_WORLD: capabilityContext.UNIVERSALIS_DEFAULT_WORLD,
     TTS_PROVIDER,
     SCREEN_CONTEXT_MAX_CHARS,
+    capabilityEnabled,
     restartController: deps.restartController || createRestartController(),
     buildAssistantReply: deps.buildAssistantReply || buildAssistantReply,
     buildCraftProfitContextForPrompt:
-      deps.buildCraftProfitContextForPrompt || buildCraftProfitContextForPrompt,
+      capabilityEnabled("ffxivMarket")
+        ? deps.buildCraftProfitContextForPrompt ||
+          ffxivTools?.buildCraftProfitContextForPrompt
+        : undefined,
     buildMarketContextForPrompt:
-      deps.buildMarketContextForPrompt || buildMarketContextForPrompt,
+      capabilityEnabled("stockMarket")
+        ? deps.buildMarketContextForPrompt ||
+          marketTools?.buildMarketContextForPrompt
+        : undefined,
     buildUniversalisContextForPrompt:
-      deps.buildUniversalisContextForPrompt || buildUniversalisContextForPrompt,
+      capabilityEnabled("ffxivMarket")
+        ? deps.buildUniversalisContextForPrompt ||
+          ffxivTools?.buildUniversalisContextForPrompt
+        : undefined,
     buildWebContextForPrompt:
-      deps.buildWebContextForPrompt || buildWebContextForPrompt,
+      capabilityEnabled("webAccess")
+        ? deps.buildWebContextForPrompt || webTools?.buildWebContextForPrompt
+        : undefined,
     textLooksLikeCraftProfitQuestion:
-      deps.textLooksLikeCraftProfitQuestion || textLooksLikeCraftProfitQuestion,
+      capabilityEnabled("ffxivMarket")
+        ? deps.textLooksLikeCraftProfitQuestion ||
+          ffxivTools?.textLooksLikeCraftProfitQuestion
+        : undefined,
     textLooksLikeMarketQuestion:
-      deps.textLooksLikeMarketQuestion || textLooksLikeMarketQuestion,
+      capabilityEnabled("ffxivMarket")
+        ? deps.textLooksLikeMarketQuestion ||
+          ffxivTools?.textLooksLikeMarketQuestion
+        : undefined,
     textLooksLikeStockMarketQuestion:
-      deps.textLooksLikeStockMarketQuestion || isMarketQuestion,
+      capabilityEnabled("stockMarket")
+        ? deps.textLooksLikeStockMarketQuestion ||
+          marketTools?.isMarketQuestion
+        : undefined,
     cleanupUploadedAudio: deps.cleanupUploadedAudio || cleanupUploadedAudio,
     clampInteger,
     clampText,
@@ -2382,40 +2445,48 @@ function registerRoutes(app, upload, deps = {}) {
           );
         }
       }),
-    runVisionReply:
-      deps.runVisionReply ||
-      ((prompt, images, maxTokens) =>
-        llamaServerRuntime.runVisionReply(prompt, images, maxTokens)),
-    getVisionStatus:
-      deps.getVisionStatus || (() => llamaServerRuntime.getVisionStatus()),
+    runVisionReply: capabilityEnabled("vision")
+      ? deps.runVisionReply ||
+        ((prompt, images, maxTokens) =>
+          llamaServerRuntime.runVisionReply(prompt, images, maxTokens))
+      : null,
+    getVisionStatus: capabilityEnabled("vision")
+      ? deps.getVisionStatus || (() => llamaServerRuntime.getVisionStatus())
+      : null,
     runWhisper: deps.runWhisper || runWhisper,
     synthesizeReply: deps.synthesizeReply || synthesizeReply,
   });
 
-  registerVTubeRoutes(app, { vtubeRuntime });
+  if (capabilityEnabled("vtubeStudio")) {
+    require("./vtube-routes").registerVTubeRoutes(app, { vtubeRuntime });
+  }
 
-  registerMobileRoutes(app, {
-    mobileAuth:
-      deps.mobileAuth ||
-      createMobileAuth({
-        passcodeHash: env.MOBILE_PASSCODE_HASH || "",
-        sessionSecret: env.MOBILE_SESSION_SECRET || "",
-        sessionTtlMs: Number(
-          env.MOBILE_SESSION_TTL_MS || 12 * 60 * 60 * 1000,
-        ),
-      }),
-    mobileMemoryStore,
-    deviceStore: deps.deviceStore,
-    buildAssistantReply: deps.buildAssistantReply || buildAssistantReply,
-    synthesizeReply: deps.synthesizeReply || synthesizeReply,
-    runWhisper: deps.runWhisper || runWhisper,
-    normalizeUploadedAudio:
-      deps.normalizeUploadedAudio || normalizeUploadedAudio,
-    cleanupUploadedAudio: deps.cleanupUploadedAudio || cleanupUploadedAudio,
-    mobileUnlockRateLimiter: deps.mobileUnlockRateLimiter,
-    mobileUnlockRateLimit: deps.mobileUnlockRateLimit,
-    env,
-  });
+  if (capabilityEnabled("mobile")) {
+    const { registerMobileRoutes } = require("./mobile-routes");
+    const { createMobileAuth } = require("./mobile-auth");
+    registerMobileRoutes(app, {
+      mobileAuth:
+        deps.mobileAuth ||
+        createMobileAuth({
+          passcodeHash: env.MOBILE_PASSCODE_HASH || "",
+          sessionSecret: env.MOBILE_SESSION_SECRET || "",
+          sessionTtlMs: Number(
+            env.MOBILE_SESSION_TTL_MS || 12 * 60 * 60 * 1000,
+          ),
+        }),
+      mobileMemoryStore,
+      deviceStore: deps.deviceStore,
+      buildAssistantReply: deps.buildAssistantReply || buildAssistantReply,
+      synthesizeReply: deps.synthesizeReply || synthesizeReply,
+      runWhisper: deps.runWhisper || runWhisper,
+      normalizeUploadedAudio:
+        deps.normalizeUploadedAudio || normalizeUploadedAudio,
+      cleanupUploadedAudio: deps.cleanupUploadedAudio || cleanupUploadedAudio,
+      mobileUnlockRateLimiter: deps.mobileUnlockRateLimiter,
+      mobileUnlockRateLimit: deps.mobileUnlockRateLimit,
+      env,
+    });
+  }
 }
 
 async function waitForPythonService(
@@ -2487,15 +2558,19 @@ async function startServer(options = {}) {
   const env = options.env || process.env;
   const port = env.PORT || 5005;
   const networkSecurity = createNetworkSecurityConfig(env);
-  const backgroundLifecycle = createBackgroundMemoryLifecycle();
+  const capabilityManifest = resolveCapabilityManifest(env);
+  const retrievalEnabled = capabilityManifest.capabilities.retrieval.enabled;
+  const backgroundLifecycle = capabilityManifest.capabilities.backgroundMemory.enabled
+    ? createBackgroundMemoryLifecycle()
+    : null;
 
   // The retriever only enriches replies (retrieval context, token counts) and
   // every caller has a heuristic fallback, so by default the backend starts
   // without it and reports its health in the background. Set
   // RETRIEVER_REQUIRED=1 to restore the old block-until-healthy behavior.
   const retrieverHealthUrl =
-    process.env.RETRIEVER_HEALTH_URL || "http://127.0.0.1:9000/health";
-  if (process.env.RETRIEVER_REQUIRED === "1") {
+    env.RETRIEVER_HEALTH_URL || "http://127.0.0.1:9000/health";
+  if (retrievalEnabled && env.RETRIEVER_REQUIRED === "1") {
     const ok = await waitForPythonService(retrieverHealthUrl);
     if (!ok) {
       console.error(
@@ -2503,10 +2578,10 @@ async function startServer(options = {}) {
       );
       process.exit(1);
     }
-  } else {
+  } else if (retrievalEnabled) {
     (async () => {
-      const retries = Number(process.env.RETRIEVER_HEALTH_RETRIES || 24);
-      const delayMs = Number(process.env.RETRIEVER_HEALTH_DELAY_MS || 5000);
+      const retries = Number(env.RETRIEVER_HEALTH_RETRIES || 24);
+      const delayMs = Number(env.RETRIEVER_HEALTH_DELAY_MS || 5000);
       for (let i = 0; i < retries; i += 1) {
         try {
           const resp = await fetch(retrieverHealthUrl, { method: "GET" });
@@ -2525,8 +2600,8 @@ async function startServer(options = {}) {
     })().catch(() => {});
   }
 
-  await backgroundLifecycle.start();
-  const app = createApp({ env, networkSecurity });
+  if (backgroundLifecycle) await backgroundLifecycle.start();
+  const app = createApp({ env, networkSecurity, capabilityManifest });
   const http = require("http");
   const server = http.createServer(app);
 
@@ -2578,12 +2653,12 @@ async function startServer(options = {}) {
     }
   });
   listener.once("close", () => {
-    backgroundLifecycle.stop().catch((error) =>
+    backgroundLifecycle?.stop().catch((error) =>
       console.warn("Background lifecycle stop failed:", error?.message || error),
     );
   });
   listener.once("error", () => {
-    backgroundLifecycle.stop().catch((error) =>
+    backgroundLifecycle?.stop().catch((error) =>
       console.warn("Background lifecycle cleanup failed:", error?.message || error),
     );
   });

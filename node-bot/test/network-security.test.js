@@ -289,6 +289,7 @@ test("CORS returns headers only for trusted exact origins", async () => {
 test("a tunneled mobile PWA may call its own exact public origin", async () => {
   const env = {
     MANA_ALLOW_REMOTE_ACCESS: "1",
+    MANA_MOBILE_ENABLED: "1",
     MOBILE_PASSCODE_HASH:
       "pbkdf2_sha256$120000$1234567890abcdef$aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     MOBILE_SESSION_SECRET: "0123456789abcdef0123456789abcdef",
@@ -312,6 +313,7 @@ test("a tunneled mobile PWA may call its own exact public origin", async () => {
 test("tunneled mobile administration still requires ADMIN_TOKEN", async () => {
   const env = {
     MANA_ALLOW_REMOTE_ACCESS: "1",
+    MANA_MOBILE_ENABLED: "1",
     MOBILE_PASSCODE_HASH:
       "pbkdf2_sha256$120000$1234567890abcdef$aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     MOBILE_SESSION_SECRET: "0123456789abcdef0123456789abcdef",

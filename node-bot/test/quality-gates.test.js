@@ -33,10 +33,13 @@ test("one quality workflow owns the required release gates", () => {
   const workflow = fs.readFileSync(path.join(workflowsDir, "ci.yml"), "utf8");
   for (const contract of [
     "Backend full suite",
+    "Backend Core profile",
     "Launcher suite",
     "Pull request contract",
     "Windows lifecycle and package",
     "npm run test:full",
+    "npm run test:core",
+    "npm ci --omit=optional",
     "windows-lifecycle-smoke.js",
     "test:electron-security",
     "npm run dist",
@@ -107,6 +110,27 @@ test("resource budgets cover CI and the complete Core release profile", () => {
         installerEvidence: { installerMiB: 150 },
       }),
     /backendRssMb.*exceeds budget/,
+  );
+});
+
+test("published capability evidence proves a quiet and smaller Core backend", () => {
+  const evidence = JSON.parse(
+    fs.readFileSync(
+      path.join(repoRoot, "quality", "capability-profiles.json"),
+      "utf8",
+    ),
+  );
+  const { core, full } = evidence.profiles;
+
+  assert.equal(core.warningCount, 0);
+  assert.deepEqual(core.optionalModulesLoaded, []);
+  assert.equal(core.activeResourceCounts.Timeout, undefined);
+  assert.deepEqual(core.plannedServices, ["backend", "kokoro"]);
+  assert.ok(core.dependencyDiskMiB < full.dependencyDiskMiB);
+  assert.ok(
+    Object.values(core.capabilityStatuses).every(
+      (status) => status === "disabled",
+    ),
   );
 });
 

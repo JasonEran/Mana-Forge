@@ -54,6 +54,33 @@ jobs:
         working-directory: node-bot
         run: npm audit --omit=dev --audit-level=high
 
+  backend-core:
+    name: Backend Core profile
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22.12.0
+          cache: npm
+          cache-dependency-path: node-bot/package-lock.json
+
+      - name: Install Core dependencies only
+        working-directory: node-bot
+        run: npm ci --omit=optional --no-audit --progress=false
+
+      - name: Run Core profile suite
+        working-directory: node-bot
+        run: npm run test:core
+
+      - name: Prove optional packages are absent
+        working-directory: node-bot
+        run: node -e "for (const name of ['tesseract.js','axios','esprima']) { try { require.resolve(name); throw new Error(name + ' should be absent'); } catch (error) { if (!String(error.message).includes('Cannot find module')) throw error; } }"
+
   launcher:
     name: Launcher suite
     runs-on: ubuntu-latest
@@ -106,7 +133,7 @@ jobs:
 
       - name: Install backend dependencies
         working-directory: node-bot
-        run: npm ci --no-audit --progress=false
+        run: npm ci --omit=optional --no-audit --progress=false
 
       - name: Install launcher dependencies
         working-directory: windows-launcher

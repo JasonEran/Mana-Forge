@@ -7,24 +7,11 @@ const { createAcpBackendBridge } = require("./acp-backend-bridge");
 const { createAcpMemoryStore } = require("./acp-memory-store");
 const { parseAllowedPathList } = require("./acp-path-guard");
 const { createAcpTestRunner } = require("./acp-test-runner");
+const { assertLocalAiPolicy } = require("./ai/local-ai-policy");
 
 const ACP_PROTOCOL_VERSION = 1;
 const AGENT_NAME = "Mana";
 const DEFAULT_BACKEND_URL = "http://127.0.0.1:5005";
-
-function assertLocalAiPolicy(env = process.env, options = {}) {
-  const remoteRequested = String(env.MANA_ALLOW_REMOTE_AI || "").trim() === "1";
-  if (remoteRequested && !options.allowRemoteOverride) {
-    throw new Error(
-      "Remote AI is disabled for the Zed External Agent. Unset MANA_ALLOW_REMOTE_AI or pass an explicit remote override.",
-    );
-  }
-
-  return {
-    remoteAllowed: remoteRequested,
-    mode: remoteRequested ? "remote-opt-in" : "local",
-  };
-}
 
 function buildZedAgentServerConfig(options = {}) {
   const repoRoot = options.repoRoot || path.resolve(__dirname, "..");

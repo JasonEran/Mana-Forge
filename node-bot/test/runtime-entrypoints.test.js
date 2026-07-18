@@ -51,7 +51,7 @@ test("backend descriptor derives one command, port, cwd, and health contract", (
       MANA_BACKEND_URL: "http://127.0.0.1:5505/api",
       MANA_BACKEND_STARTUP_TIMEOUT_MS: "1234",
       MANA_BACKEND_SHUTDOWN_TIMEOUT_MS: "4321",
-      VTUBE_STUDIO_ENABLED: "0",
+      MANA_VTUBE_STUDIO_ENABLED: "0",
     },
   });
 
@@ -62,7 +62,8 @@ test("backend descriptor derives one command, port, cwd, and health contract", (
   assert.equal(descriptor.env.PORT, "5505");
   assert.equal(descriptor.env.MANA_BACKEND_HOST, "127.0.0.1");
   assert.equal(descriptor.env.MANA_ALLOW_REMOTE_ACCESS, "0");
-  assert.equal(descriptor.env.VTUBE_STUDIO_ENABLED, "0");
+  assert.equal(descriptor.env.MANA_PROFILE, "core");
+  assert.equal(descriptor.env.MANA_VTUBE_STUDIO_ENABLED, "0");
   assert.equal(
     descriptor.env.MANA_DATA_DIR,
     path.join(repoRoot, "node-bot", "data"),

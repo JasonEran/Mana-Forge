@@ -62,6 +62,7 @@ function registerCoreRoutes(app, upload, deps) {
     restartController,
     runVisionReply,
     getVisionStatus,
+    capabilityEnabled = () => false,
   } = deps;
 
   app.post("/admin/restart", (req, res) => {
@@ -77,22 +78,25 @@ function registerCoreRoutes(app, upload, deps) {
     return res.json(payload);
   });
 
-  app.post("/screen/read", async (req, res) => {
-    try {
-      const image = typeof req.body?.image === "string" ? req.body.image : "";
-      if (!image) {
-        return res.status(400).json({ error: "no screen image" });
+  if (capabilityEnabled("vision")) {
+    app.post("/screen/read", async (req, res) => {
+      try {
+        const image = typeof req.body?.image === "string" ? req.body.image : "";
+        if (!image) {
+          return res.status(400).json({ error: "no screen image" });
+        }
+
+        const text = await readScreenText(image);
+        return res.json({ text });
+      } catch (e) {
+        console.error(e);
+        return res.status(500).json({ error: String(e) });
       }
+    });
+  }
 
-      const text = await readScreenText(image);
-      return res.json({ text });
-    } catch (e) {
-      console.error(e);
-      return res.status(500).json({ error: String(e) });
-    }
-  });
-
-  app.get("/market/stock/summary", async (req, res) => {
+  if (capabilityEnabled("stockMarket")) {
+    app.get("/market/stock/summary", async (req, res) => {
     try {
       const symbol =
         typeof req.query.symbol === "string" ? req.query.symbol : "";
@@ -105,9 +109,9 @@ function registerCoreRoutes(app, upload, deps) {
       console.error(e);
       return res.status(500).json({ error: String(e) });
     }
-  });
+    });
 
-  app.get("/market/stock/compare", async (req, res) => {
+    app.get("/market/stock/compare", async (req, res) => {
     try {
       const symbols =
         typeof req.query.symbols === "string" ? req.query.symbols : "";
@@ -122,9 +126,9 @@ function registerCoreRoutes(app, upload, deps) {
       console.error(e);
       return res.status(500).json({ error: String(e) });
     }
-  });
+    });
 
-  app.get("/market/watchlist", async (req, res) => {
+    app.get("/market/watchlist", async (req, res) => {
     try {
       const results = await marketDataClient.getWatchlistSummary();
       return res.json({
@@ -137,9 +141,11 @@ function registerCoreRoutes(app, upload, deps) {
       console.error(e);
       return res.status(500).json({ error: String(e) });
     }
-  });
+    });
+  }
 
-  app.post("/vision/describe", async (req, res) => {
+  if (capabilityEnabled("vision")) {
+    app.post("/vision/describe", async (req, res) => {
     try {
       const image = requireString(req.body?.image, "image");
       const prompt = optionalString(req.body?.prompt, "prompt", "");
@@ -170,7 +176,8 @@ function registerCoreRoutes(app, upload, deps) {
       console.error(e);
       return res.status(500).json({ error: String(e) });
     }
-  });
+    });
+  }
 
   registerConversationRoutes(app, {
     ...deps,

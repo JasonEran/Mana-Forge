@@ -38,6 +38,7 @@ function registerConversationRoutes(app, deps) {
     textLooksLikeCraftProfitQuestion,
     textLooksLikeMarketQuestion,
     textLooksLikeStockMarketQuestion,
+    capabilityEnabled = () => false,
   } = deps;
 
   app.post("/reply", async (req, res) => {
@@ -65,6 +66,9 @@ function registerConversationRoutes(app, deps) {
       }
 
       if (image) {
+        if (!capabilityEnabled("vision")) {
+          return res.status(409).json({ error: "vision capability is disabled" });
+        }
         const sessionId = optionalString(
           req.body?.sessionId,
           "sessionId",
