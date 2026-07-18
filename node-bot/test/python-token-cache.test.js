@@ -6,7 +6,31 @@ const test = require("node:test");
 const {
   countTokensForText,
   countTokensForPath,
+  shouldUsePythonPool,
 } = require("../tools/python_token_cache.async");
+
+test("Core token accounting never starts the optional Python worker pool", () => {
+  assert.equal(
+    shouldUsePythonPool({ NODE_ENV: "production", MANA_PROFILE: "core" }),
+    false,
+  );
+  assert.equal(
+    shouldUsePythonPool({
+      NODE_ENV: "production",
+      MANA_PROFILE: "core",
+      MANA_REPLY_VERIFICATION_ENABLED: "1",
+    }),
+    true,
+  );
+  assert.equal(
+    shouldUsePythonPool({ NODE_ENV: "production", MANA_PROFILE: "full" }),
+    true,
+  );
+  assert.equal(
+    shouldUsePythonPool({ NODE_ENV: "test", MANA_PROFILE: "full" }),
+    false,
+  );
+});
 
 function writeTempPy(content) {
   const tmp = path.join(

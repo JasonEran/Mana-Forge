@@ -11,6 +11,7 @@ const CORE_TESTS = Object.freeze([
   "capabilities-registry.test.js",
   "capability-manifest.test.js",
   "capability-boundaries.test.js",
+  "core-release-evidence.test.js",
   "doctor.test.js",
   "health-components.test.js",
   "kokoro-service-descriptor.test.js",

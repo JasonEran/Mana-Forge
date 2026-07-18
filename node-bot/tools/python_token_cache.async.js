@@ -1,5 +1,6 @@
 const { spawn } = require("child_process");
 const path = require("path");
+const { isCapabilityEnabled } = require("../capabilities/manifest");
 
 const PY_SCRIPT = path.join(__dirname, "python_token_cache.py");
 const PY_BIN = process.env.PYTHON || "python";
@@ -221,12 +222,19 @@ async function countTokensForText(text, ext = ".py", rebuild = false) {
   }
 }
 
-if (process.env.NODE_ENV === "test") {
-  // In tests, avoid spawning Python workers — use fast JS fallback implementations to keep tests deterministic and avoid lingering child processes.
+function shouldUsePythonPool(env = process.env) {
+  if (env.NODE_ENV === "test" || env.NODE_TEST_CONTEXT) return false;
+  return isCapabilityEnabled("replyVerification", env);
+}
+
+if (!shouldUsePythonPool()) {
+  // Core token accounting uses the bounded JS fallback. The persistent Python
+  // pool belongs to the optional reply-verification capability.
   module.exports = {
     countTokensForPath: fallbackCountPath,
     countTokensForText: fallbackCountText,
+    shouldUsePythonPool,
   };
 } else {
-  module.exports = { countTokensForPath, countTokensForText };
+  module.exports = { countTokensForPath, countTokensForText, shouldUsePythonPool };
 }

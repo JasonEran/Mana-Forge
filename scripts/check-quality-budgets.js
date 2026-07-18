@@ -61,6 +61,18 @@ function checkCiBudgets({
   );
 }
 
+function checkCoreReleaseBudgets({ budgets, evidence }) {
+  const limits = budgets?.profiles?.coreRelease?.limits;
+  assert.ok(limits, "coreRelease limits are missing.");
+  assert.ok(evidence?.metrics, "coreRelease evidence metrics are missing.");
+  return Object.fromEntries(
+    Object.entries(limits).map(([name, limit]) => [
+      name,
+      checkValue(name, evidence.metrics[name], limit),
+    ]),
+  );
+}
+
 function main(args = process.argv.slice(2)) {
   const paths = parseArgs(args);
   const budgets = readJson(paths.budgets || defaultBudgetsPath, "budget");
@@ -78,4 +90,9 @@ function main(args = process.argv.slice(2)) {
 
 if (require.main === module) main();
 
-module.exports = { checkCiBudgets, checkValue, parseArgs };
+module.exports = {
+  checkCiBudgets,
+  checkCoreReleaseBudgets,
+  checkValue,
+  parseArgs,
+};

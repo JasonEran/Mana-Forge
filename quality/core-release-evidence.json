@@ -1,0 +1,203 @@
+{
+  "schemaVersion": 1,
+  "profile": "coreRelease",
+  "measuredAt": "2026-07-18T13:43:20.113Z",
+  "machine": {
+    "platform": "win32",
+    "arch": "x64",
+    "electron": "43.1.1",
+    "node": "24.18.0",
+    "cpu": "AMD Ryzen 7 7800X3D 8-Core Processor",
+    "totalMemoryMiB": 31862,
+    "gpu": {
+      "index": 0,
+      "name": "NVIDIA GeForce RTX 5070 Ti",
+      "totalMemoryMiB": 16303,
+      "driver": "610.62"
+    }
+  },
+  "configuration": {
+    "startupPath": "windows-launcher -> node-bot -> Whisper / llama.cpp / Kokoro",
+    "profile": "core",
+    "remoteAiEnabled": false,
+    "ttsProvider": "kokoro",
+    "backendUrl": "http://127.0.0.1:5005",
+    "kokoroUrl": "http://127.0.0.1:5011",
+    "llamaServerPort": 8090,
+    "modelAssets": {
+      "llamaBin": {
+        "path": "tools/llama/llama-b9984-bin-win-cuda-13.3-x64/llama-cli.exe",
+        "bytes": 9216
+      },
+      "llamaServerBin": {
+        "path": "tools/llama/llama-b9984-bin-win-cuda-13.3-x64/llama-server.exe",
+        "bytes": 9216
+      },
+      "llamaModel": {
+        "path": "tools/llama/gguf-models/Qwen3-4B-Q4_K_M.gguf",
+        "bytes": 2497281312
+      },
+      "whisperBin": {
+        "path": "tools/whisper/Release/whisper-cli.exe",
+        "bytes": 479232
+      },
+      "whisperModel": {
+        "path": "tools/whisper/models/ggml-base.en.bin",
+        "bytes": 147964211
+      },
+      "kokoroPython": {
+        "path": "tts-service/venv/Scripts/python.exe",
+        "bytes": 274712
+      },
+      "kokoroModel": {
+        "path": "tts-service/kokoro/kokoro-v1.0.int8.onnx",
+        "bytes": 92361271
+      },
+      "kokoroVoices": {
+        "path": "tts-service/kokoro/voices-v1.0.bin",
+        "bytes": 28214398
+      }
+    }
+  },
+  "metrics": {
+    "processCount": 10,
+    "idleRamMb": 3649.4,
+    "idleVramMb": 3287,
+    "coldStartMs": 1739,
+    "warmTextLatencyMs": 93,
+    "sttLatencyMs": 820,
+    "ttsLatencyMs": 3232
+  },
+  "processInventory": [
+    {
+      "pid": 2320,
+      "parentPid": 24204,
+      "name": "electron.exe",
+      "workingSetMiB": 43.1,
+      "dedicatedVramMiB": 0
+    },
+    {
+      "pid": 14244,
+      "parentPid": 24204,
+      "name": "electron.exe",
+      "workingSetMiB": 72.9,
+      "dedicatedVramMiB": 0
+    },
+    {
+      "pid": 20148,
+      "parentPid": 31468,
+      "name": "llama-server.exe",
+      "workingSetMiB": 2831.3,
+      "dedicatedVramMiB": 3259.6
+    },
+    {
+      "pid": 22236,
+      "parentPid": 31748,
+      "name": "python.exe",
+      "workingSetMiB": 289.3,
+      "dedicatedVramMiB": 0
+    },
+    {
+      "pid": 22292,
+      "parentPid": 24204,
+      "name": "electron.exe",
+      "workingSetMiB": 91.7,
+      "dedicatedVramMiB": 27.4
+    },
+    {
+      "pid": 24204,
+      "parentPid": 35112,
+      "name": "electron.exe",
+      "workingSetMiB": 102.1,
+      "dedicatedVramMiB": 0
+    },
+    {
+      "pid": 25888,
+      "parentPid": 24204,
+      "name": "electron.exe",
+      "workingSetMiB": 67.2,
+      "dedicatedVramMiB": 0
+    },
+    {
+      "pid": 30464,
+      "parentPid": 24204,
+      "name": "electron.exe",
+      "workingSetMiB": 74.8,
+      "dedicatedVramMiB": 0
+    },
+    {
+      "pid": 31468,
+      "parentPid": 24204,
+      "name": "node.exe",
+      "workingSetMiB": 72.5,
+      "dedicatedVramMiB": 0
+    },
+    {
+      "pid": 31748,
+      "parentPid": 24204,
+      "name": "python.exe",
+      "workingSetMiB": 4.6,
+      "dedicatedVramMiB": 0
+    }
+  ],
+  "providerProof": {
+    "localLlm": true,
+    "localWhisper": true,
+    "localKokoro": true,
+    "replyLength": 20,
+    "replySha256": "23e514210255daeda243511b9f71ec0f6c2a56fce263033dbd522d85d5545630",
+    "transcript": "Mana release validation is ready.",
+    "synthesizedAudioBytes": 122924,
+    "synthesizedPhrase": "Mana release validation is ready."
+  },
+  "measurementMethods": {
+    "ram": "Win32_Process.WorkingSetSize summed for the Electron process tree",
+    "vram": "GPU Process Memory Dedicated Usage summed for the same process-tree PIDs",
+    "latency": "wall-clock milliseconds around readiness and real loopback API requests"
+  },
+  "shutdown": {
+    "allServicesStopped": true,
+    "allPortsReleased": true,
+    "descendantProcessesRemaining": 0
+  },
+  "budgets": {
+    "status": "pass",
+    "results": {
+      "processCount": {
+        "actual": 10,
+        "limit": 12,
+        "status": "pass"
+      },
+      "idleRamMb": {
+        "actual": 3649.4,
+        "limit": 4096,
+        "status": "pass"
+      },
+      "idleVramMb": {
+        "actual": 3287,
+        "limit": 6144,
+        "status": "pass"
+      },
+      "coldStartMs": {
+        "actual": 1739,
+        "limit": 180000,
+        "status": "pass"
+      },
+      "warmTextLatencyMs": {
+        "actual": 93,
+        "limit": 30000,
+        "status": "pass"
+      },
+      "sttLatencyMs": {
+        "actual": 820,
+        "limit": 15000,
+        "status": "pass"
+      },
+      "ttsLatencyMs": {
+        "actual": 3232,
+        "limit": 15000,
+        "status": "pass"
+      }
+    }
+  }
+}
