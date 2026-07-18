@@ -54,10 +54,10 @@ until a later ADR explicitly changes this decision.
 | `node-bot` | Supported | Assistant runtime | Canonical local API and assistant core. |
 | `tts-service` | Supported component | Speech runtime | Kokoro is the default provider; other providers are opt-in. |
 | `tools/` | Supported support asset | Runtime tooling | Holds locally installed binaries, models, and setup helpers; model weights remain untracked. |
-| `desktop-client` | Frozen historical source | Desktop runtime | No feature work or releases. Packaging has migrated; retain only for the Issue #9 archive review. |
+| `desktop-client` | Retired and removed | Repository history | Packaging migrated to `windows-launcher`; the reviewed source is available only from Git history. |
 | `windows-native-launcher` | Experimental | Desktop runtime | Prototype only. It must not receive parity work or become a release target without a new ADR. |
-| `wsl-bot` | Archived | Historical | No feature work. Retain as historical reference until the v0.3 archive review. |
-| `win-bot` | Archived | Historical | No feature work. Retain as historical reference until the v0.3 archive review. |
+| `wsl-bot` | Retired and removed | Repository history | Superseded Python/WSL experiment; available only from Git history. |
+| `win-bot` | Retired and removed | Repository history | Superseded native-Python launcher; available only from Git history. |
 | `zed-agent` | Optional integration | Assistant runtime | Not part of the default desktop runtime; enabled only through its explicit setup. |
 
 ## Consequences
@@ -74,16 +74,16 @@ until a later ADR explicitly changes this decision.
 
 ## Migration and Deprecation Plan
 
-1. Immediately: freeze `desktop-client`; archive `wsl-bot` and `win-bot` for
-   feature work. Mark their documentation as historical or experimental.
+1. Completed in the v0.3 decision phase: froze `desktop-client` and archived
+   `wsl-bot` and `win-bot` before migration and dependency review.
 2. Completed in v0.3: installer and bundled-Node ownership migrated from
    `desktop-client` into the canonical launcher under issues #3 and #8.
-3. Before the v0.3 release candidate: publish an archive/removal proposal for
-   frozen and archived directories, including retained docs, licenses, assets,
-   and any users that need a migration note under issue #9.
-4. After release candidate approval: remove or move superseded code only in
-   separately reviewed, reversible changes. Do not delete historical code in
-   this decision PR.
+3. Completed under Issue #9: reviewed every artifact, licensing/attribution
+   requirement, user migration, rollback path, and repository-size impact in
+   `docs/architecture/archived-runtime-retirement.md`.
+4. Completed under Issue #9: removed the three superseded source directories
+   and added a boundary test preventing active CI, setup, or packaging paths
+   from depending on them.
 
 ## Alternatives Considered
 

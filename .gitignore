@@ -9,13 +9,11 @@
 /node-bin/
 
 # electron-builder output (installer .exe, unpacked app, blockmap)
-desktop-client/dist/
 windows-launcher/dist/
 
 # Ignore virtualenvs and node modules
 **/venv/
 **/node_modules/
-win-bot/venv/
 
 # Ignore temp and logs
 node-bot/tmp/

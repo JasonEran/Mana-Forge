@@ -5,7 +5,7 @@
 .DESCRIPTION
   This smoke intentionally disables optional TTS/retriever services so a clean
   machine can prove the packaged launcher/backend contract before first-run
-  model/provider setup. It never uses the frozen desktop-client path.
+  model/provider setup. It exercises only the supported launcher path.
 #>
 [CmdletBinding()]
 param(

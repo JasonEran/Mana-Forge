@@ -7,8 +7,9 @@ This model covers the supported Windows path: `windows-launcher` -> `node-bot`
 traffic, optional mobile exposure, screen and audio data, administrative
 mutations, reverse tunnels, and supervised child processes.
 
-Public multi-user hosting is unsupported. The archived `wsl-bot` and `win-bot`
-paths are outside this boundary.
+Public multi-user hosting is unsupported. The retired WSL and native-Python
+implementations were removed from the current tree and remain outside this
+boundary.
 
 ## Assets And Trust Zones
 

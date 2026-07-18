@@ -12,10 +12,10 @@ Supported runtime policy
 - Contributions and proposals must target the supported runtime unless a
   maintainer explicitly approves an exception: `windows-launcher -> node-bot ->
   local Whisper / local Llama / Kokoro`.
-- `desktop-client` is frozen pending archive review; installer ownership has
-  migrated to `windows-launcher`;
-  `windows-native-launcher` is experimental; `wsl-bot` and `win-bot` are
-  archived. Do not add features or parity work to those paths.
+- `desktop-client`, `wsl-bot`, and `win-bot` were retired and removed after
+  Issue #9. Do not restore them as feature or release paths; their dispositions
+  are recorded in `docs/architecture/archived-runtime-retirement.md`.
+  `windows-native-launcher` remains experimental.
 - Read `docs/adr/0001-supported-windows-runtime.md` before proposing runtime,
   launcher, packaging, or lifecycle changes.
 - Read `docs/quality-gates.md` before opening a code PR. Every PR must link its

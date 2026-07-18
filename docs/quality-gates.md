@@ -67,9 +67,9 @@ The same Windows job captures real Electron frames for the procedural avatar.
 The pixel gate requires a nonblank white idle ring and a nonblank pale-green
 active ring, and uploads both PNGs with the other quality evidence.
 
-Model/provider assets remain first-run and unbundled. `desktop-client` has no
-workflow, artifact, or publication path; it remains frozen only for the archive
-review in Issue #9.
+Model/provider assets remain first-run and unbundled. The retired runtime
+sources were removed under Issue #9; the launcher suite prevents them from
+returning as workflow, setup, packaging, or publication paths.
 
 ## Resource Budgets
 

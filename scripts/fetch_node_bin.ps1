@@ -147,7 +147,7 @@ try{
 
     Write-Host "\nDone. node-bin prepared at: $nodeBinDir"
     Write-Host "Bundled Node is ready for the supported windows-launcher packaging flow."
-    Write-Host "Do not publish the frozen desktop-client path; see BUILD_DESKTOP.md."
+    Write-Host "Publish installers only through windows-launcher; see BUILD_DESKTOP.md."
 
 } catch {
     Write-Error "Error: $($_.Exception.Message)"
