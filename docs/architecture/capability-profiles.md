@@ -98,19 +98,18 @@ This backend probe intentionally does not load llama, Whisper, or TTS models.
 The complete desktop process/RAM/VRAM/latency limits remain in
 `quality/budgets.json` and the Windows lifecycle/package quality gate.
 
-## Deprecation and archive plan
+## Runtime retirement
 
 ADR 0001 remains authoritative for abandoned runtime paths:
 
 - `windows-launcher`, `node-bot`, `runtime`, `tools/llama`, `tools/whisper`, and
   `tts-service` are the supported product path.
-- `desktop-client` is frozen and excluded from build/publication. Issue #9 owns
-  its archive review after any uniquely licensed documentation is retained.
-- `wsl-bot` and `win-bot` are archived historical references. They receive no
-  feature, dependency, packaging, or security work and are candidates for
-  removal at the v0.3 archive review.
+- `desktop-client`, `wsl-bot`, and `win-bot` were reviewed and removed under
+  Issue #9. Their source remains in Git history; the artifact, license,
+  migration, size, and rollback decisions are recorded in
+  `docs/architecture/archived-runtime-retirement.md`.
 - `windows-native-launcher` remains experimental and cannot become a release
   target without a new ADR.
-- Removal requires a path/license/asset inventory, confirmation that no CI or
-  documentation entry point references the path, and a rollback tag. No asset
-  is migrated into the supported runtime without provenance and license review.
+- Boundary tests keep retired paths out of current CI, setup, and packaging
+  inputs. No historical asset may be migrated into the supported runtime
+  without provenance and license review.

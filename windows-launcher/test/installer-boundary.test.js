@@ -51,7 +51,7 @@ test("NSIS migration preserves autostart cleanup", () => {
   assert.match(source, /Mana\.exe/);
 });
 
-test("launcher package scripts do not build the frozen desktop client", () => {
+test("launcher workflows do not rebuild the retired desktop client", () => {
   const workflows = fs
     .readdirSync(path.resolve(launcherRoot, "..", ".github", "workflows"))
     .filter((file) => file.endsWith(".yml"));

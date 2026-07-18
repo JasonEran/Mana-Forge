@@ -1,7 +1,8 @@
 # Windows Packaging
 
-`windows-launcher` is the only supported Windows installer owner. The frozen
-`desktop-client` directory is not built or published.
+`windows-launcher` is the only supported Windows installer owner. The legacy
+`desktop-client` source was removed after its installer behavior migrated and
+was validated under Issues #8 and #9.
 
 ## Migration Inventory
 
@@ -11,7 +12,7 @@
 | Optional start-at-login registry value | Retained; uninstall removes the value |
 | Bundled `node.exe` resource | Retained as `resources/node_bin/node.exe` with explicit runtime resolution |
 | Backend copied beside Electron resources | Retained with production dependencies and the shared `runtime/` contract |
-| Direct `spawn()`/`kill()` lifecycle in `desktop-client` | Dropped; packaged and development launches both use `RuntimeSupervisor` |
+| Direct `spawn()`/`kill()` lifecycle in the legacy client | Dropped; packaged and development launches both use `RuntimeSupervisor` |
 | Bundled model weights | Rejected; models remain first-run/unbundled assets |
 | Frozen renderer/avatar implementation | Not migrated; `windows-launcher` remains the sole product shell |
 

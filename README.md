@@ -15,10 +15,11 @@ windows-launcher -> node-bot -> local Whisper / local Llama / Kokoro
 ```
 
 `windows-launcher` is the only supported desktop shell, development entry
-point, and installer owner. `desktop-client` is a frozen historical source,
-`windows-native-launcher` is experimental, and `wsl-bot` / `win-bot` are
-archived historical paths. See [ADR 0001](docs/adr/0001-supported-windows-runtime.md)
-for lifecycle and migration policy.
+point, and installer owner. `windows-native-launcher` remains experimental.
+The superseded `desktop-client`, `wsl-bot`, and `win-bot` sources were removed
+after the Issue #9 review; see the
+[retirement record](docs/architecture/archived-runtime-retirement.md) and
+[ADR 0001](docs/adr/0001-supported-windows-runtime.md).
 
 The product starts with the small Core capability profile. Vision, retrieval,
 web access, market integrations, VTube Studio, alternate TTS, mobile, editor/ACP,
@@ -65,13 +66,14 @@ the supported-runtime chain above are current product paths; the remaining
 directories have the lifecycle states defined in ADR 0001.
 
 - `windows-launcher`: Electron desktop launcher, microphone capture, avatar overlay control, screen capture, performance panel, and Doctor panel.
-- `desktop-client`: frozen historical source pending the Issue #9 archive review; its NSIS and bundled-Node design now belongs to `windows-launcher`.
 - `node-bot`: local backend API for transcription, replies, TTS calls, screen OCR, mobile routes, market helpers, and setup checks.
 - `tts-service`: local Python services for Chatterbox and Kokoro TTS.
 - `tools/whisper`: expected location for local `whisper.cpp` binaries and models.
 - `tools/llama`: expected location for local `llama.cpp` binaries and GGUF models.
 - `windows-native-launcher`: experimental lower-memory native Windows launcher.
-- `wsl-bot` and `win-bot`: archived Python experiments retained as historical references.
+- Retired paths: `desktop-client`, `wsl-bot`, and `win-bot` are available only
+  from Git history; their reviewed dispositions and migration notes are in the
+  [retirement record](docs/architecture/archived-runtime-retirement.md).
 
 ## Local AI And Privacy
 

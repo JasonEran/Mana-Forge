@@ -6,7 +6,6 @@
 
 # Specific owners for major areas
 /node-bot/          @Yuuzulight
-/desktop-client/    @Yuuzulight
 /windows-launcher/  @Yuuzulight
 /sprites/           @Yuuzulight
 /docs/              @Yuuzulight

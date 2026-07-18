@@ -18,12 +18,13 @@ Short install & test instructions
      a Node runtime and should start the local backend automatically without
      requiring Node.js on the target machine.
 
-2) Manual setup (if not using the standalone installer)
-   - Install Node.js v18 (LTS) and ensure `node` is on PATH.
-   - From the repo: `cd node-bot && npm ci` then `cd ../desktop-client && npm ci`
-   - Start the app in dev: `cd desktop-client && npm start`
-   - Or `tools\setup-mana.ps1` automates npm installs, `.env` scaffolding,
-     and a doctor report across all three subprojects.
+2) Current source setup (if not using the historical standalone installer)
+   - Install Node.js 22.12 or newer and ensure `node` is on PATH.
+   - From the repo: `cd node-bot && npm ci` then
+     `cd ../windows-launcher && npm ci`.
+   - From `windows-launcher`, start the app with `npm run start`.
+   - Or `tools\setup-mana.ps1` automates supported-runtime dependencies,
+     `.env` scaffolding, and a Doctor report.
 
 Quick smoke test
 

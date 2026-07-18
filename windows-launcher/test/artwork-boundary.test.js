@@ -72,7 +72,6 @@ test("avatar rendering is code-only and has no model runtime dependencies", () =
       (relative.startsWith("windows-launcher/") &&
         !relative.startsWith("windows-launcher/test/") &&
         relative !== "windows-launcher/scripts/verify-launcher-package.js") ||
-      relative.startsWith("desktop-client/") ||
       relative.startsWith("windows-native-launcher/")
     );
   });
