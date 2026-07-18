@@ -3,7 +3,7 @@
 /ManaAIManatext-generation-webui/
 /text-generation-webui/
 
-# Bundled Node runtime staged for a standalone desktop-client installer
+# Bundled Node runtime staged for a standalone windows-launcher installer
 # build (see BUILD_DESKTOP.md); never a source file, always a local copy
 # of an official Node.js binary.
 /node-bin/

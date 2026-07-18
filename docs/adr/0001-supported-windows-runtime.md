@@ -50,11 +50,11 @@ until a later ADR explicitly changes this decision.
 
 | Area | Lifecycle | Owner | v0.3 policy |
 | --- | --- | --- | --- |
-| `windows-launcher` | Supported | Desktop runtime | Canonical shell, development entry point, and future packaging target. |
+| `windows-launcher` | Supported | Desktop runtime | Canonical shell, development entry point, and NSIS installer owner. |
 | `node-bot` | Supported | Assistant runtime | Canonical local API and assistant core. |
 | `tts-service` | Supported component | Speech runtime | Kokoro is the default provider; other providers are opt-in. |
 | `tools/` | Supported support asset | Runtime tooling | Holds locally installed binaries, models, and setup helpers; model weights remain untracked. |
-| `desktop-client` | Frozen migration source | Desktop runtime | No feature work or releases. Preserve only while its NSIS/node-bundling work is migrated to `windows-launcher`. |
+| `desktop-client` | Frozen historical source | Desktop runtime | No feature work or releases. Packaging has migrated; retain only for the Issue #9 archive review. |
 | `windows-native-launcher` | Experimental | Desktop runtime | Prototype only. It must not receive parity work or become a release target without a new ADR. |
 | `wsl-bot` | Archived | Historical | No feature work. Retain as historical reference until the v0.3 archive review. |
 | `win-bot` | Archived | Historical | No feature work. Retain as historical reference until the v0.3 archive review. |
@@ -76,9 +76,8 @@ until a later ADR explicitly changes this decision.
 
 1. Immediately: freeze `desktop-client`; archive `wsl-bot` and `win-bot` for
    feature work. Mark their documentation as historical or experimental.
-2. During v0.3: migrate useful installer and bundled-Node design from
-   `desktop-client` into the canonical launcher under issue #3 and packaging
-   issue #8.
+2. Completed in v0.3: installer and bundled-Node ownership migrated from
+   `desktop-client` into the canonical launcher under issues #3 and #8.
 3. Before the v0.3 release candidate: publish an archive/removal proposal for
    frozen and archived directories, including retained docs, licenses, assets,
    and any users that need a migration note under issue #9.

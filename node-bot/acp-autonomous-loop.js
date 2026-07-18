@@ -14,7 +14,10 @@ const MAX_FILE_READ_BYTES = Number(
 function getApprovalConfig() {
   const requireApproval =
     (process.env.FILE_WRITE_REQUIRE_APPROVAL || "1") !== "0";
-  const approvalDir = path.join(__dirname, "data", "pending_writes");
+  const approvalDir = path.join(
+    process.env.MANA_DATA_DIR || path.join(__dirname, "data"),
+    "pending_writes",
+  );
   const approvalTimeoutMs = Number(
     process.env.FILE_WRITE_APPROVAL_TIMEOUT_MS || 5 * 60 * 1000,
   );

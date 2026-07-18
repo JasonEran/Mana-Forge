@@ -18,8 +18,8 @@ Mana has one supported Windows runtime for v0.3:
 windows-launcher -> node-bot -> local Whisper / local Llama / Kokoro
 ```
 
-`windows-launcher` is the only supported desktop shell and development entry
-point. `desktop-client` is a frozen installer migration source,
+`windows-launcher` is the only supported desktop shell, development entry
+point, and installer owner. `desktop-client` is a frozen historical source,
 `windows-native-launcher` is experimental, and `wsl-bot` / `win-bot` are
 archived historical paths. See [ADR 0001](docs/adr/0001-supported-windows-runtime.md)
 for lifecycle and migration policy.
@@ -63,7 +63,7 @@ the supported-runtime chain above are current product paths; the remaining
 directories have the lifecycle states defined in ADR 0001.
 
 - `windows-launcher`: Electron desktop launcher, microphone capture, avatar overlay control, screen capture, performance panel, and Doctor panel.
-- `desktop-client`: frozen installer migration source, retained while its NSIS and bundled-Node design is moved to `windows-launcher`; it is not a supported runtime or release target.
+- `desktop-client`: frozen historical source pending the Issue #9 archive review; its NSIS and bundled-Node design now belongs to `windows-launcher`.
 - `node-bot`: local backend API for transcription, replies, TTS calls, screen OCR, mobile routes, market helpers, and setup checks.
 - `tts-service`: local Python services for Chatterbox and Kokoro TTS.
 - `tools/whisper`: expected location for local `whisper.cpp` binaries and models.
@@ -216,6 +216,8 @@ Useful endpoints:
 - `GET /market/watchlist`: configured watchlist summary.
 
 See [node-bot/README.md](node-bot/README.md) for backend-specific details.
+See [BUILD_DESKTOP.md](BUILD_DESKTOP.md) for the canonical Windows installer,
+first-run, and uninstall verification flow.
 
 ## Development
 

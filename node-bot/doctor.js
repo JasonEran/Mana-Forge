@@ -535,7 +535,11 @@ function runDoctorChecks(options = {}) {
   const env = options.env || process.env;
   const versions = options.versions || { node: process.version };
   const paths = options.paths || {
-    dataDir: env.MOBILE_MEMORY_DIR || path.join(__dirname, "data"),
+    dataDir:
+      env.MOBILE_MEMORY_DIR ||
+      (env.MANA_DATA_DIR
+        ? path.join(env.MANA_DATA_DIR, "mobile")
+        : path.join(__dirname, "data")),
   };
 
   const checks = [

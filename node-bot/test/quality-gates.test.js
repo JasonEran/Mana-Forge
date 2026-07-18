@@ -39,7 +39,10 @@ test("one quality workflow owns the required release gates", () => {
     "npm run test:full",
     "windows-lifecycle-smoke.js",
     "test:electron-security",
+    "npm run dist",
     "verify:package",
+    "verify:installer",
+    "windows-installer-smoke.ps1",
     "check-quality-budgets.js",
     "upload-artifact@v4",
   ]) {
@@ -61,6 +64,7 @@ test("resource budgets cover CI and the complete Core release profile", () => {
     "backendRssMb",
     "coldStartMs",
     "healthLatencyMs",
+    "installerMiB",
     "localRequestLatencyMs",
     "ownedProcessCount",
     "packageAsarMiB",
@@ -85,6 +89,7 @@ test("resource budgets cover CI and the complete Core release profile", () => {
         ownedProcessCount: 1,
       },
       packageEvidence: { asarMiB: 50 },
+      installerEvidence: { installerMiB: 150 },
     }),
   );
   assert.throws(
@@ -99,6 +104,7 @@ test("resource budgets cover CI and the complete Core release profile", () => {
           ownedProcessCount: 1,
         },
         packageEvidence: { asarMiB: 50 },
+        installerEvidence: { installerMiB: 150 },
       }),
     /backendRssMb.*exceeds budget/,
   );

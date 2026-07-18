@@ -27,6 +27,13 @@ const ELECTRON_RUNTIME_BINARIES = new Set([
   "snapshot_blob.bin",
   "v8_context_snapshot.bin",
 ]);
+const REQUIRED_EXTERNAL_FILES = Object.freeze([
+  "node-bot/server.js",
+  "node-bot/package.json",
+  "node-bot/node_modules/express/package.json",
+  "runtime/config.js",
+  "runtime/services/backend.js",
+]);
 
 function listPhysicalFiles(rootDir) {
   const files = [];
@@ -56,6 +63,16 @@ function findAsar(rootDir) {
   return null;
 }
 
+function findUnpackedRoot(rootDir) {
+  if (!fs.existsSync(rootDir)) return null;
+  for (const entry of fs.readdirSync(rootDir, { withFileTypes: true })) {
+    if (!entry.isDirectory() || !entry.name.endsWith("-unpacked")) continue;
+    const candidate = path.join(rootDir, entry.name);
+    if (fs.existsSync(path.join(candidate, "resources"))) return candidate;
+  }
+  return null;
+}
+
 function verifyPackage(asarPath) {
   assert.ok(asarPath, `No app.asar found under ${distRoot}. Run npm run pack first.`);
   const files = asar.listPackage(asarPath).map((file) => file.replace(/\\/g, "/"));
@@ -71,6 +88,20 @@ function verifyPackage(asarPath) {
       MODEL_WEIGHT_PATTERN.test(file) &&
       !ELECTRON_RUNTIME_BINARIES.has(path.basename(file).toLowerCase()),
   );
+  const unpackedRoot = findUnpackedRoot(distRoot);
+  const resourcesRoot = unpackedRoot
+    ? path.join(unpackedRoot, "resources")
+    : null;
+  const missingExternal = resourcesRoot
+    ? REQUIRED_EXTERNAL_FILES.filter(
+        (relativePath) => !fs.existsSync(path.join(resourcesRoot, relativePath)),
+      )
+    : REQUIRED_EXTERNAL_FILES;
+  const bundledNode = resourcesRoot
+    ? process.platform === "win32"
+      ? path.join(resourcesRoot, "node_bin", "node.exe")
+      : path.join(resourcesRoot, "node_bin", "bin", "node")
+    : null;
   assert.deepEqual(missing, [], `Packaged security files are missing: ${missing.join(", ")}`);
   assert.deepEqual(forbidden, [], `Forbidden development/model files found: ${forbidden.join(", ")}`);
   assert.deepEqual(
@@ -78,6 +109,17 @@ function verifyPackage(asarPath) {
     [],
     `Model weights found outside ASAR: ${externalModelWeights.join(", ")}`,
   );
+  assert.deepEqual(
+    missingExternal,
+    [],
+    `Packaged runtime resources are missing: ${missingExternal.join(", ")}`,
+  );
+  if (process.env.MANA_REQUIRE_BUNDLED_NODE === "1") {
+    assert.ok(
+      bundledNode && fs.existsSync(bundledNode),
+      `Bundled Node runtime is missing: ${bundledNode || "resources/node_bin/node.exe"}`,
+    );
+  }
 
   const asarBytes = fs.statSync(asarPath).size;
   const evidence = {
@@ -88,6 +130,8 @@ function verifyPackage(asarPath) {
     forbiddenFiles: forbidden.length,
     modelWeights: 0,
     requiredFiles: `${REQUIRED_FILES.length}/${REQUIRED_FILES.length}`,
+    externalResources: `${REQUIRED_EXTERNAL_FILES.length}/${REQUIRED_EXTERNAL_FILES.length}`,
+    bundledNode: bundledNode && fs.existsSync(bundledNode) ? "present" : "not-staged",
   };
   if (process.env.MANA_EVIDENCE_FILE) {
     fs.writeFileSync(
@@ -101,4 +145,9 @@ function verifyPackage(asarPath) {
 
 if (require.main === module) verifyPackage(findAsar(distRoot));
 
-module.exports = { findAsar, listPhysicalFiles, verifyPackage };
+module.exports = {
+  findAsar,
+  findUnpackedRoot,
+  listPhysicalFiles,
+  verifyPackage,
+};

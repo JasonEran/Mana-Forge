@@ -9,7 +9,8 @@
         "coldStartMs": 30000,
         "healthLatencyMs": 2000,
         "localRequestLatencyMs": 5000,
-        "packageAsarMiB": 150
+        "packageAsarMiB": 150,
+        "installerMiB": 250
       }
     },
     "coreRelease": {

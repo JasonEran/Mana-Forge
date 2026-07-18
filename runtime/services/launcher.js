@@ -9,11 +9,18 @@ function createLauncherServicePlan(options = {}) {
   const env = options.env || process.env;
   const fsImpl = options.fsImpl || fs;
   const repoRoot = path.resolve(options.repoRoot || path.join(__dirname, "..", ".."));
-  const descriptors = [createBackendServiceDescriptor({ env, repoRoot })];
+  const descriptors = [
+    createBackendServiceDescriptor({
+      env,
+      repoRoot,
+      command: options.command,
+      dataDir: options.dataDir,
+    }),
+  ];
   const warnings = [];
   const provider = String(env.TTS_PROVIDER || "kokoro").trim().toLowerCase();
 
-  if (provider === "kokoro") {
+  if (provider === "kokoro" && env.MANA_START_KOKORO !== "0") {
     descriptors.push(createKokoroServiceDescriptor({ env, fsImpl, repoRoot }));
   } else if (provider === "chatterbox") {
     descriptors.push(createChatterboxDescriptor({ env, repoRoot }));

@@ -2,6 +2,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const DEFAULT_REPO_ROOT = path.resolve(__dirname, "..");
+const DEFAULT_DATA_DIR = path.join(DEFAULT_REPO_ROOT, "node-bot", "data");
 const SECRET_NAME_PATTERN = /(API_KEY|TOKEN|SECRET|PASSCODE|PASSWORD|PRIVATE_KEY)/i;
 
 const SAFE_DEFAULTS = {
@@ -228,7 +229,13 @@ function loadManaConfig(options = {}) {
   };
 }
 
+function resolveDataDir(env = process.env, fallback = DEFAULT_DATA_DIR) {
+  const configured = String(env?.MANA_DATA_DIR || "").trim();
+  return configured || fallback;
+}
+
 module.exports = {
+  DEFAULT_DATA_DIR,
   DEFAULT_REPO_ROOT,
   SAFE_DEFAULTS,
   buildDiagnostics,
@@ -237,5 +244,6 @@ module.exports = {
   parseEnv,
   rankRuntimePaths,
   redactValue,
+  resolveDataDir,
   withPath,
 };

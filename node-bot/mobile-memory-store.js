@@ -61,7 +61,11 @@ function normalizeSummary(input, createdAt) {
 
 function createMobileMemoryStore(options = {}) {
   const dataDir =
-    options.dataDir || process.env.MOBILE_MEMORY_DIR || path.join(__dirname, "data");
+    options.dataDir ||
+    process.env.MOBILE_MEMORY_DIR ||
+    (process.env.MANA_DATA_DIR
+      ? path.join(process.env.MANA_DATA_DIR, "mobile")
+      : path.join(__dirname, "data"));
   const now = options.now || (() => new Date().toISOString());
   const filePath = path.join(dataDir, "mobile-summaries.json");
 
