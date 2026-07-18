@@ -16,6 +16,7 @@ function hasEnvValue(env, names) {
 }
 
 function buildHealthComponents({
+  capabilityManifest,
   env,
   llamaStatus,
   mobileMemoryStore,
@@ -24,6 +25,15 @@ function buildHealthComponents({
   whisperBin,
   whisperModel,
 }) {
+  const capabilityEnabled = (key) =>
+    Boolean(capabilityManifest?.capabilities?.[key]?.enabled);
+  const disabled = (key) =>
+    makeHealthComponent(
+      "disabled",
+      false,
+      `${capabilityManifest?.capabilities?.[key]?.label || key} is disabled.`,
+      { enabled: false },
+    );
   const mobileAuthConfigured =
     hasEnvValue(env, ["MOBILE_PASSCODE_HASH", "MANA_MOBILE_PASSCODE_HASH"]) &&
     hasEnvValue(env, ["MOBILE_SESSION_SECRET", "MANA_MOBILE_SESSION_SECRET"]);
@@ -33,7 +43,8 @@ function buildHealthComponents({
     "CLOUDFLARE_TUNNEL_URL",
     "MANA_TUNNEL_URL",
   ]);
-  const vtubeEnabled = env.VTUBE_STUDIO_ENABLED !== "0";
+  const mobileEnabled = capabilityEnabled("mobile");
+  const vtubeEnabled = capabilityEnabled("vtubeStudio");
   const whisperConfigured = Boolean(whisperBin && whisperModel);
   const ttsConfigured = ttsProvider !== "none";
   const ttsStatus = !ttsConfigured
@@ -67,36 +78,62 @@ function buildHealthComponents({
       ttsConfigured ? `TTS provider is ${ttsProvider}.` : "TTS is disabled.",
       { provider: ttsProvider },
     ),
-    mobileAuth: makeHealthComponent(
-      mobileAuthConfigured ? "available" : "unavailable",
-      mobileAuthConfigured,
-      mobileAuthConfigured
-        ? "Mobile auth is configured."
-        : "Mobile auth secrets are missing.",
-    ),
-    localMemory: makeHealthComponent(
-      mobileMemoryStore?.filePath ? "available" : "degraded",
-      Boolean(mobileMemoryStore?.filePath),
-      mobileMemoryStore?.filePath
-        ? "Local mobile memory store is available."
-        : "Local mobile memory store path is unavailable.",
-      { filePath: mobileMemoryStore?.filePath || null },
-    ),
-    cloudflareTunnel: makeHealthComponent(
-      cloudflareConfigured ? "configured" : "unavailable",
-      cloudflareConfigured,
-      cloudflareConfigured
-        ? "Cloudflare Tunnel is configured."
-        : "Cloudflare Tunnel is not configured.",
-    ),
-    vtubeStudio: makeHealthComponent(
-      vtubeEnabled ? "configured" : "unavailable",
-      vtubeEnabled,
-      vtubeEnabled
-        ? "VTube Studio integration is enabled."
-        : "VTube Studio integration is disabled.",
-    ),
+    mobileAuth: mobileEnabled
+      ? makeHealthComponent(
+          mobileAuthConfigured ? "configured" : "degraded",
+          mobileAuthConfigured,
+          mobileAuthConfigured
+            ? "Mobile auth is configured."
+            : "Mobile auth is enabled but secrets are missing.",
+          { enabled: true },
+        )
+      : disabled("mobile"),
+    localMemory: mobileEnabled
+      ? makeHealthComponent(
+          mobileMemoryStore?.filePath ? "available" : "degraded",
+          Boolean(mobileMemoryStore?.filePath),
+          mobileMemoryStore?.filePath
+            ? "Local mobile memory store is available."
+            : "Local mobile memory store path is unavailable.",
+          { enabled: true, filePath: mobileMemoryStore?.filePath || null },
+        )
+      : disabled("mobile"),
+    cloudflareTunnel: mobileEnabled
+      ? makeHealthComponent(
+          cloudflareConfigured ? "configured" : "degraded",
+          cloudflareConfigured,
+          cloudflareConfigured
+            ? "Cloudflare Tunnel is configured."
+            : "Mobile is enabled without a configured Cloudflare Tunnel.",
+          { enabled: true },
+        )
+      : disabled("mobile"),
+    vtubeStudio: vtubeEnabled
+      ? makeHealthComponent(
+          "configured",
+          true,
+          "VTube Studio integration is configured.",
+          { enabled: true },
+        )
+      : disabled("vtubeStudio"),
   };
+}
+
+function addManifestHealth(components, capabilityManifest) {
+  for (const capability of Object.values(
+    capabilityManifest?.capabilities || {},
+  )) {
+    if (capability.profile !== "optional" || components[capability.key]) continue;
+    components[capability.key] = makeHealthComponent(
+      capability.enabled ? "configured" : "disabled",
+      capability.enabled,
+      capability.enabled
+        ? `${capability.label} is configured for this profile.`
+        : `${capability.label} is disabled.`,
+      { enabled: capability.enabled },
+    );
+  }
+  return components;
 }
 
 function registerDiagnosticRoutes(app, deps) {
@@ -112,6 +149,7 @@ function registerDiagnosticRoutes(app, deps) {
   app.get("/health", (req, res) => {
     const llamaStatus = deps.getLlamaStatus();
     const components = buildHealthComponents({
+      capabilityManifest: deps.capabilityManifest,
       env: deps.env,
       llamaStatus,
       mobileMemoryStore: deps.mobileMemoryStore,
@@ -124,6 +162,7 @@ function registerDiagnosticRoutes(app, deps) {
       components,
       buildCapabilityHealth(deps.capabilities, deps.capabilityContext),
     );
+    addManifestHealth(components, deps.capabilityManifest);
 
     return res.json({
       ok: true,
@@ -140,13 +179,14 @@ function registerDiagnosticRoutes(app, deps) {
       vtubeStudioConfigured: Boolean(deps.vtubeStudio),
       vtubeStudioUrl: deps.vtubeStudioUrl,
       marketProvider: deps.marketProvider,
-      marketConfigured: deps.marketDataClient.isConfigured,
+      marketConfigured: Boolean(deps.marketDataClient?.isConfigured),
       components,
     });
   });
 }
 
 module.exports = {
+  addManifestHealth,
   buildHealthComponents,
   registerDiagnosticRoutes,
 };

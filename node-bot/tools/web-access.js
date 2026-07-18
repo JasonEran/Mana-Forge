@@ -7,6 +7,7 @@ const dns = require("node:dns").promises;
 const net = require("node:net");
 const { URL } = require("node:url");
 const { ValidationError } = require("../request-validation");
+const { isCapabilityEnabled } = require("../capabilities/manifest");
 
 const DEFAULT_SEARXNG_URL = "http://127.0.0.1:8890";
 const FETCH_TIMEOUT_MS = 15000;
@@ -15,7 +16,7 @@ const MAX_PAGE_TEXT_CHARS = 6000; // how much page text we hand to the prompt
 const MAX_REDIRECTS = 5;
 
 function isWebAccessEnabled(env = process.env) {
-  return env.MANA_WEB_ACCESS_ENABLED !== "0";
+  return isCapabilityEnabled("webAccess", env);
 }
 
 function getSearxngUrl(env = process.env) {

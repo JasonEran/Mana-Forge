@@ -2,6 +2,9 @@ const path = require("node:path");
 
 const { resolveDataDir, withPath } = require("../config");
 const { createNetworkSecurityConfig } = require("../network-security");
+const {
+  OPTIONAL_CAPABILITIES,
+} = require("../../node-bot/capabilities/manifest");
 
 function createBackendServiceDescriptor(options = {}) {
   const env = options.env || process.env;
@@ -42,6 +45,13 @@ function createBackendServiceDescriptor(options = {}) {
     args: [path.join(repoRoot, "node-bot", "server.js")],
     cwd: path.join(repoRoot, "node-bot"),
     env: {
+      MANA_PROFILE: env.MANA_PROFILE || "core",
+      ...Object.fromEntries(
+        OPTIONAL_CAPABILITIES.map((capability) => [
+          capability.flag,
+          env[capability.flag] || "0",
+        ]),
+      ),
       MANA_ALLOW_REMOTE_ACCESS: networkSecurity.remoteAccessRequested ? "1" : "0",
       MANA_BACKEND_HOST: networkSecurity.host,
       MANA_CORS_ALLOWED_ORIGINS: env.MANA_CORS_ALLOWED_ORIGINS || "",
@@ -61,7 +71,6 @@ function createBackendServiceDescriptor(options = {}) {
       PORT: String(port),
       VTUBE_STUDIO_URL:
         env.VTUBE_STUDIO_URL || "ws://127.0.0.1:8001",
-      VTUBE_STUDIO_ENABLED: env.VTUBE_STUDIO_ENABLED || "1",
     },
     healthUrl: backendUrl,
     allowExisting: options.allowExisting !== false,

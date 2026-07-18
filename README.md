@@ -20,11 +20,17 @@ point, and installer owner. `desktop-client` is a frozen historical source,
 archived historical paths. See [ADR 0001](docs/adr/0001-supported-windows-runtime.md)
 for lifecycle and migration policy.
 
+The product starts with the small Core capability profile. Vision, retrieval,
+web access, market integrations, VTube Studio, alternate TTS, mobile, editor/ACP,
+and background jobs require explicit enablement. See
+[Capability profiles](docs/architecture/capability-profiles.md) for install,
+runtime, health, uninstall, and measurement contracts.
+
 ## Quick Start
 
 ```powershell
 cd C:\ManaAI\Mana\node-bot
-npm install
+npm ci --omit=optional
 
 cd C:\ManaAI\Mana\windows-launcher
 npm install
@@ -76,10 +82,10 @@ Default behavior:
 - `OPENAI_API_KEY` is ignored unless `MANA_ALLOW_REMOTE_AI=1`.
 - Local replies use the configured `LLAMA_BIN` and `LLAMA_MODEL`.
 - Audio transcription uses local Whisper binaries.
-- Screen awareness uses local OCR through `tesseract.js`.
-- Chat summaries and mobile memory are stored locally unless you intentionally sync or expose them.
+- Screen awareness uses local OCR through `tesseract.js` only when vision is enabled.
+- Background summaries and mobile memory are created only when their capabilities are enabled.
 - The backend binds to `127.0.0.1`; explicit remote mode exposes only the authenticated mobile gateway.
-- Web search runs through a local SearXNG instance (no third-party search API, no key); wiki lookups and page reads Mana is pointed at do reach the public internet, since that's inherent to what they do. See [docs/web_access_setup.md](docs/web_access_setup.md). Set `MANA_WEB_ACCESS_ENABLED=0` to turn all of it off.
+- Web access is off by default. Set `MANA_WEB_ACCESS_ENABLED=1` to register web search, wiki, and page-read routes; SearXNG remains local while requested public pages use the internet. See [docs/web_access_setup.md](docs/web_access_setup.md).
 
 Remote AI is an explicit escape hatch, not the default path.
 

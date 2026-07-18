@@ -1,4 +1,5 @@
 const { loadManaConfig } = require("../runtime/config");
+const { isCapabilityEnabled } = require("../node-bot/capabilities/manifest");
 const fs = require("node:fs");
 const {
   createLauncherServicePlan,
@@ -58,6 +59,7 @@ const AVATAR_BOTTOM = Number(process.env.MANA_AVATAR_BOTTOM || 0);
 const AVATAR_TOP_LEVEL = process.env.MANA_AVATAR_TOP_LEVEL || "screen-saver";
 // Global "look at my screen" hotkey; set MANA_VISION_HOTKEY=off to disable.
 const VISION_HOTKEY = process.env.MANA_VISION_HOTKEY || "Control+Alt+M";
+const VISION_ENABLED = isCapabilityEnabled("vision", process.env);
 // Global hotkey that toggles the Mana chat window; set to off to disable.
 const WINDOW_HOTKEY = process.env.MANA_WINDOW_HOTKEY || "Control+Alt+Space";
 const runtimeSupervisor = new RuntimeSupervisor();
@@ -421,6 +423,7 @@ function registerWindowHotkey() {
 }
 
 function registerVisionHotkey() {
+  if (!VISION_ENABLED) return;
   const disabled =
     !VISION_HOTKEY ||
     VISION_HOTKEY === "0" ||
@@ -484,6 +487,7 @@ ipcMain.handle(IPC_CHANNELS.RENDERER_CONFIG, async (event) => {
   }
   return {
     silenceBufferMs: normalizeSilenceBufferMs(process.env.MANA_SILENCE_BUFFER_MS),
+    visionEnabled: VISION_ENABLED,
   };
 });
 ipcMain.handle(IPC_CHANNELS.OPEN_LOCAL_WEB_UI, async (event) => {
@@ -499,6 +503,9 @@ ipcMain.handle(IPC_CHANNELS.OPEN_LOCAL_WEB_UI, async (event) => {
 ipcMain.handle(IPC_CHANNELS.SCREEN_CAPTURE_PRIMARY, async (event) => {
   if (!isTrustedSender(event, mainWindow?.webContents, MAIN_DOCUMENT_URL)) {
     throw new Error("Untrusted screen capture request.");
+  }
+  if (!VISION_ENABLED) {
+    throw new Error("Vision capability is disabled.");
   }
   const primaryDisplay = screen.getPrimaryDisplay();
   const sources = await desktopCapturer.getSources({

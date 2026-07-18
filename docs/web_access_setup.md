@@ -31,7 +31,8 @@ installs one Windows compatibility shim
 locally.
 
 The launcher starts SearXNG automatically alongside the backend and TTS
-services once it's set up. Set `MANA_START_SEARXNG=0` to skip that.
+services once it is set up. Set `MANA_WEB_ACCESS_ENABLED=1`; use
+`MANA_START_SEARXNG=0` only when SearXNG is managed separately.
 
 ## How Mana decides what to do
 
@@ -45,7 +46,7 @@ Sent to the backend on every `/reply`, in this priority order:
 4. Otherwise, no web context is added — ordinary chat doesn't touch the
    network.
 
-Toggle the whole feature with `MANA_WEB_ACCESS_ENABLED=0`.
+Enable the whole feature explicitly with `MANA_WEB_ACCESS_ENABLED=1`.
 
 ## API endpoints
 

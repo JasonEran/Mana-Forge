@@ -1,5 +1,12 @@
 Node bot (Mana) — local backend
 
+The backend defaults to the Core capability profile. For a dependency-minimal
+install use `npm ci --omit=optional`; use `npm ci` plus `MANA_PROFILE=full` only
+for an explicitly selected Full environment. Individual optional capabilities
+can instead be enabled with their `MANA_*_ENABLED=1` flag. The authoritative
+inventory and lifecycle contract is in
+[`docs/architecture/capability-profiles.md`](../docs/architecture/capability-profiles.md).
+
 [... existing README content ...]
 
 Local Embedding Service (optional, local-only)

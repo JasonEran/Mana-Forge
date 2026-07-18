@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "measuredAt": "2026-07-18T12:26:13.824Z",
+  "machine": {
+    "platform": "win32",
+    "arch": "x64",
+    "node": "v24.15.0",
+    "cpu": "AMD Ryzen 7 7800X3D 8-Core Processor",
+    "totalMemoryMiB": 31862
+  },
+  "profiles": {
+    "core": {
+      "profile": "core",
+      "coldStartMs": 153,
+      "rssMb": 65.1,
+      "vramMb": 0,
+      "processCount": 1,
+      "plannedServices": [
+        "backend",
+        "kokoro"
+      ],
+      "launcherWarnings": [],
+      "ports": [
+        56723
+      ],
+      "activeResourceCounts": {
+        "Immediate": 1,
+        "PipeWrap": 2,
+        "TCPServerWrap": 1,
+        "TCPSocketWrap": 2
+      },
+      "warningCount": 0,
+      "optionalModulesLoaded": [],
+      "capabilityStatuses": {
+        "mobileAuth": "disabled",
+        "localMemory": "disabled",
+        "cloudflareTunnel": "disabled",
+        "vtubeStudio": "disabled",
+        "ffxivMarket": "disabled",
+        "dirScanner": "disabled",
+        "webAccess": "disabled",
+        "vision": "disabled",
+        "retrieval": "disabled",
+        "stockMarket": "disabled",
+        "alternateTts": "disabled",
+        "mobile": "disabled",
+        "editorAcp": "disabled",
+        "backgroundMemory": "disabled",
+        "replyVerification": "disabled"
+      },
+      "dependencyDiskMiB": 2.8
+    },
+    "full": {
+      "profile": "full",
+      "coldStartMs": 541,
+      "rssMb": 64.5,
+      "vramMb": 0,
+      "processCount": 1,
+      "plannedServices": [
+        "backend",
+        "kokoro",
+        "retriever"
+      ],
+      "launcherWarnings": [
+        "SearXNG runtime is missing at <repo>\\tools\\searxng\\venv\\Scripts\\python.exe; skipping optional service."
+      ],
+      "ports": [
+        56725
+      ],
+      "activeResourceCounts": {
+        "FSReqPromise": 1,
+        "Immediate": 1,
+        "PipeWrap": 2,
+        "TCPServerWrap": 1,
+        "TCPSocketWrap": 2,
+        "Timeout": 2
+      },
+      "warningCount": 0,
+      "optionalModulesLoaded": [
+        "ffxiv-market",
+        "market-data",
+        "mobile-routes",
+        "vtube-studio-client",
+        "zed-integration",
+        "acp-memory-store"
+      ],
+      "capabilityStatuses": {
+        "mobileAuth": "degraded",
+        "localMemory": "available",
+        "cloudflareTunnel": "degraded",
+        "vtubeStudio": "configured",
+        "ffxivMarket": "configured",
+        "dirScanner": "available",
+        "webAccess": "configured",
+        "vision": "configured",
+        "retrieval": "configured",
+        "stockMarket": "configured",
+        "alternateTts": "configured",
+        "mobile": "configured",
+        "editorAcp": "configured",
+        "backgroundMemory": "configured",
+        "replyVerification": "configured"
+      },
+      "dependencyDiskMiB": 54.5
+    }
+  },
+  "delta": {
+    "dependencyDiskMiB": 51.7,
+    "rssMb": -0.6,
+    "coldStartMs": 388,
+    "processCount": 0,
+    "vramMb": 0
+  },
+  "notes": [
+    "Lifecycle measurements cover the local backend composition; desktop shell, model, STT, and TTS process budgets remain governed by quality/budgets.json.",
+    "A null VRAM value means nvidia-smi was unavailable. No model process was started by this profile probe."
+  ]
+}

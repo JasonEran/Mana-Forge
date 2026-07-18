@@ -64,7 +64,7 @@ const PERF_STATUS_POLL_MS = 3000;
 const AUTO_LISTEN_RETRY_MS = 1500;
 const AUTO_LISTEN_MAX_ATTEMPTS = 20;
 const MAX_TTS_CHUNK_CHARS = 180;
-const SCREEN_CONTEXT_ENABLED = true;
+let screenContextEnabled = false;
 const SCREEN_CONTEXT_MIN_INTERVAL_MS = 8000;
 const SCREEN_CONTEXT_GAMING_MIN_INTERVAL_MS = 30000;
 const SCREEN_CONTEXT_KEYWORDS = [
@@ -959,7 +959,7 @@ function shouldReadScreenForCommand(text, gamingModeActive) {
 }
 
 async function readScreenContext(text, gamingModeActive) {
-  if (!SCREEN_CONTEXT_ENABLED) {
+  if (!screenContextEnabled) {
     return "";
   }
 
@@ -1023,6 +1023,7 @@ async function requestScreenAwareReply(text, gamingModeActive) {
 let visionHotkeyBusy = false;
 
 async function handleVisionHotkey() {
+  if (!screenContextEnabled) return;
   if (visionHotkeyBusy) {
     return;
   }
@@ -1279,6 +1280,7 @@ async function initializeRenderer() {
   try {
     const config = await desktop.getRendererConfig();
     silenceBufferMs = Number(config.silenceBufferMs) || DEFAULT_SILENCE_BUFFER_MS;
+    screenContextEnabled = config.visionEnabled === true;
   } catch (error) {
     console.warn("Failed to load renderer configuration; using defaults:", error);
   }

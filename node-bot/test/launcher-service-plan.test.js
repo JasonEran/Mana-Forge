@@ -15,7 +15,7 @@ function ids(plan) {
   return plan.descriptors.map((descriptor) => descriptor.id);
 }
 
-test("default launcher plan owns core services and reports missing optional assets", () => {
+test("default launcher plan owns only Core services without optional warnings", () => {
   const dataDir = path.join(repoRoot, "user-data");
   const plan = createLauncherServicePlan({
     repoRoot,
@@ -30,9 +30,7 @@ test("default launcher plan owns core services and reports missing optional asse
   assert.equal(plan.descriptors[0].command, "C:\\Mana\\node_bin\\node.exe");
   assert.equal(plan.descriptors[0].env.MANA_DATA_DIR, dataDir);
   assert.equal(plan.descriptors[1].required, true);
-  assert.equal(plan.warnings.length, 2);
-  assert.match(plan.warnings[0], /Retriever script is missing/);
-  assert.match(plan.warnings[1], /SearXNG runtime is missing/);
+  assert.deepEqual(plan.warnings, []);
 });
 
 test("disabled optional services produce neither descriptors nor warnings", () => {
@@ -67,6 +65,7 @@ test("Chatterbox provider and Kokoro fallback remain optional supervised service
     repoRoot,
     env: {
       TTS_PROVIDER: "chatterbox",
+      MANA_ALTERNATE_TTS_ENABLED: "1",
       CHATTERBOX_TTS_URL: "http://127.0.0.1:5510",
       KOKORO_TTS_URL: "http://127.0.0.1:5511",
       MANA_START_RETRIEVER: "0",
@@ -87,6 +86,7 @@ test("missing GPT-SoVITS yields one warning and exactly one Kokoro fallback", ()
     repoRoot,
     env: {
       TTS_PROVIDER: "gpt_sovits",
+      MANA_ALTERNATE_TTS_ENABLED: "1",
       MANA_START_KOKORO_FALLBACK: "0",
       MANA_START_RETRIEVER: "0",
       MANA_START_SEARXNG: "0",
@@ -104,6 +104,8 @@ test("installed optional processes are registered as non-required", () => {
     repoRoot,
     env: {
       TTS_PROVIDER: "fish",
+      MANA_RETRIEVAL_ENABLED: "1",
+      MANA_WEB_ACCESS_ENABLED: "1",
       RETRIEVER_HEALTH_URL: "http://127.0.0.1:9000/health",
       SEARXNG_URL: "http://127.0.0.1:8890",
     },
@@ -126,6 +128,7 @@ test("launcher plan rejects remote or credentialed service ownership URLs", () =
         repoRoot,
         env: {
           TTS_PROVIDER: "chatterbox",
+          MANA_ALTERNATE_TTS_ENABLED: "1",
           CHATTERBOX_TTS_URL: "http://voice.example.com:5010",
           MANA_START_RETRIEVER: "0",
           MANA_START_SEARXNG: "0",
@@ -140,6 +143,7 @@ test("launcher plan rejects remote or credentialed service ownership URLs", () =
         repoRoot,
         env: {
           TTS_PROVIDER: "fish",
+          MANA_RETRIEVAL_ENABLED: "1",
           RETRIEVER_HEALTH_URL: "http://user:password@127.0.0.1:9000/health",
         },
         fsImpl: installedFs,
